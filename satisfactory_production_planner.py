@@ -334,7 +334,7 @@ class Planner(App):
         for cell, col in zip(summary_row, columns + columns_ingredients):
             value = cell.get() or 0
             if value < 0:
-                summary_inputs += [(col.name, value)]
+                summary_inputs += [(col.name, abs(value))]
             elif value > 0:
                 summary_outputs += [(col.name, value)]
         self.summary_recipe = Recipe("summary", 60, summary_inputs, summary_outputs)
