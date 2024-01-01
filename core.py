@@ -125,7 +125,7 @@ class Purity(Enum):
 
 class Node:
     yaml_tag = "!Node"
-    blueprint_listings = None
+    blueprint_listings = {}
 
     def __init__(self, producer, recipe, count=1, clock_rate=100, mk=1, purity=Purity.NORMAL, is_dummy=False):
         # a dummy is a read-only, non-interactable, row - for example expanded from a blueprint
@@ -142,12 +142,6 @@ class Node:
         self.ui_elems = []
         self.energy = 0
         self.ingredients = {}
-        if self.blueprint_listings is None:
-            # we only want to do this on startup and when required
-            # otherwise we risk an ~infinite recursion loop
-            self.__class__.blueprint_listings = {}
-            self.update_blueprint_listings()
-        self.update_blueprint_rows()
         self.update()
 
     def producer_reset(self):
@@ -174,7 +168,12 @@ class Node:
     def update_blueprint(self, fname):
         if not self.producer.name == "Blueprint":
             return
+        if not fname.lower().endswith(".yaml"):
+            fname += ".yaml"
+
         try:
+            if not (DPATH_DATA / fname).is_file():
+                return False
             with open(DPATH_DATA / fname, "r") as fp:
                 data = yaml.unsafe_load(fp)
                 bp_nodes = []
@@ -197,10 +196,12 @@ class Node:
         except Exception as e:
             print("nOOOO!")
             print(e)
+        return True
 
-    def update_blueprint_rows(self):
+    @property
+    def blueprint_rows(self):
         if not self.producer.name == "Blueprint":
-            return
+            return []
 
     def update(self):
         self.energy = 0
@@ -263,6 +264,8 @@ def node_constructor(loader, node):
                 mk         = data["mk"],
                 purity     = Purity(data["purity"]))
     if prod.name == "Blueprint":
+        node.update_blueprint(data["recipe"])
+        prod.update_recipe_map()
         if data["recipe"] in prod.recipe_map:
             node.recipe = prod.recipe_map[data["recipe"]]
         else:
