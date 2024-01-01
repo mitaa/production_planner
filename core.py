@@ -15,7 +15,7 @@ def get_path(obj, path):
     if not subpaths:
         return getattr(obj, path)
     else:
-        return get_path(getattr(obj, primpath), subpaths)
+        return get_path(getattr(obj, primpath), ".".join(subpaths))
 
 def set_path(obj, path, value):
     paths = path.split(".", maxsplit=1)

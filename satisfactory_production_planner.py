@@ -3,7 +3,7 @@
 
 from core import Node, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
 from screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, DataFileNamer, OverwriteScreen
-from datatable import ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, NumberCell
+from datatable import EmptyCell, SummaryCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, NumberCell
 
 from textual import events
 from textual.app import App, ComposeResult
@@ -274,14 +274,15 @@ class Planner(App):
 
 
     def update(self):
+        columns_ingredients = []
         columns = [
-                    Column("Building Name", False),
-                    Column("Recipe", False),
-                    Column("QTY", False),
-                    Column("Mk", False),
-                    Column("Purity", False),
-                    Column("Clockrate", False),
-                    Column("Energy"),
+                    ProducerCell,
+                    RecipeCell,
+                    CountCell,
+                    MkCell,
+                    PurityCell,
+                    ClockRateCell,
+                    PowerCell,
                    ]
 
         inputs_mixed  = set()
@@ -297,33 +298,30 @@ class Planner(App):
         output_only = outputs_mixed - inputs_mixed
 
         col_add = list(inputs_only) + list((inputs_mixed|outputs_mixed)-(inputs_only|outputs_only)) + list(outputs_only)
-        columns += [Column(c) for c in col_add]
+        for column in col_add:
+            IngredientColumn = type(column, (NumberCell,), {"name": column, "path": column})
+            columns_ingredients += [IngredientColumn]
 
+        self.cells = []
         self.rows = []
         sums = []
         for node in self.data:
             node.update()
-            row = [
-                node.producer.name,
-                node.recipe.name,
-                node.count,
-                node.mk if node.producer.is_miner else "",
-                node.purity.name if node.purity != Purity.NA else "",
-                node.clock_rate,
-                node.energy,
-            ]
+            row = [Column(node) for Column in columns]
             for c in col_add:
-                row += [node.ingredients[c] if c in node.ingredients.keys() else ""]
-            self.rows += [row]
-        cols_to_sum = []
-        for c in list(zip(*self.rows))[6:]:
-            cols_to_sum += [[r if r else 0 for r in c]]
-        sums = ["", "", "", "", "", ""] + list(map(sum, cols_to_sum))
-        self.rows.insert(0, sums)
+                row += [NumberCell(node, c)]
+            self.cells += [row]
+
+        summary_row = [EmptyCell()] * len(columns)
+        summary_row += [SummaryCell(self.data, Column.path) for Column in columns_ingredients]
+        self.cells.insert(0, summary_row)
+
+        for row in self.cells:
+            self.rows += [[cell.get_styled() for cell in row]]
 
         table = self.query_one(DataTable)
         table.clear(columns=True)
-        table.add_columns(*(c.name for c in columns))
+        table.add_columns(*(c.name for c in (columns + columns_ingredients)))
         table.add_rows(self.rows)
         table.fixed_columns = 3
 
