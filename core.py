@@ -1,11 +1,17 @@
 # -*- coding:utf-8 -*-
 
+import os
 import math
 from enum import Enum
 from dataclasses import dataclass
 import json
+from pathlib import Path
 
 import yaml
+import appdirs
+
+
+DPATH_DATA = Path(appdirs.user_data_dir("satisfactory_production_planner", "mitaa"))
 
 
 def get_path(obj, path):
@@ -36,7 +42,8 @@ class Ingredient:
         return f"({self.count}x {self.name})"
 
 
-class Recipe:
+class Recipe(yaml.YAMLObject):
+    yaml_tag = u"!recipe"
     def __init__(self, name, cycle_rate, inputs, outputs):
         self.name = name
         self.cycle_rate = cycle_rate
@@ -49,6 +56,10 @@ class Recipe:
     def __repr__(self):
         return str(self)
 
+    @classmethod
+    def empty(cls, name=""):
+        return cls(name, 60, [], [])
+
 
 class Producer:
     def __init__(self, name, *, is_miner, is_pow_gen, max_mk, base_power, recipes):
@@ -57,12 +68,14 @@ class Producer:
         self.is_pow_gen = is_pow_gen
         self.max_mk = max_mk
         self.base_power = base_power
-        self.recipes = []
+        self.recipes = [Recipe(k, v[0], v[1], v[2]) for k, v in recipes.items()]
         self.recipe_map = dict()
-        for k, v in recipes.items():
-            recipe = Recipe(k, v[0], v[1], v[2])
-            self.recipes += [recipe]
-            self.recipe_map[k] = recipe
+        self.update_recipe_map()
+
+    def update_recipe_map(self):
+        self.recipe_map = {}
+        for recipe in self.recipes:
+            self.recipe_map[recipe.name] = recipe
 
 
 class Producers:
@@ -112,8 +125,13 @@ class Purity(Enum):
 
 class Node:
     yaml_tag = "!Node"
+    blueprint_listings = None
 
-    def __init__(self, producer, recipe, count=1, clock_rate=100, mk=1, purity=Purity.NORMAL):
+    def __init__(self, producer, recipe, count=1, clock_rate=100, mk=1, purity=Purity.NORMAL, is_dummy=False):
+        # a dummy is a read-only, non-interactable, row - for example expanded from a blueprint
+        # (can't shift it, can't delete it)
+        self.is_dummy = is_dummy
+        self.blueprint_children = []
         self.producer = producer
         self.recipe = recipe
         self.count = count
@@ -123,13 +141,17 @@ class Node:
         self.uirow = None
         self.ui_elems = []
         self.energy = 0
-
         self.ingredients = {}
-
+        if self.blueprint_listings is None:
+            # we only want to do this on startup and when required
+            # otherwise we risk an ~infinite recursion loop
+            self.__class__.blueprint_listings = {}
+            self.update_blueprint_listings()
+        self.update_blueprint_rows()
         self.update()
 
     def producer_reset(self):
-        self.recipe = self.producer.recipes[0]
+        self.recipe = self.producer.recipes[0] if self.producer.recipes else Recipe.empty()
         if self.producer.is_miner:
             if self.purity == Purity.NA:
                 self.purity = Purity.NORMAL
@@ -137,6 +159,48 @@ class Node:
             self.purity = Purity.NA
         self.energy = 0
         self.update()
+
+    def update_blueprint_listings(self):
+        if not self.producer.name == "Blueprint":
+            return
+        print("update")
+        self.producer.recipes = [Recipe.empty()]
+        names = list(os.scandir(DPATH_DATA))
+        fnames = [entry.name for entry in names if entry.is_file() if not entry.name.startswith(".")]
+        for fname in fnames:
+            self.update_blueprint(fname)
+        self.producer.update_recipe_map()
+
+    def update_blueprint(self, fname):
+        if not self.producer.name == "Blueprint":
+            return
+        try:
+            with open(DPATH_DATA / fname, "r") as fp:
+                data = yaml.unsafe_load(fp)
+                bp_nodes = []
+                bp_recipe = None
+                if data:
+                    if isinstance(data[0], Recipe):
+                        bp_recipe, bp_nodes = data
+                    elif isinstance(data[0], Node):
+                        bp_nodes = data
+                    else:
+                        raise ValueError("Unexpected Data Format:\n" + str(data))
+
+            if not isinstance(bp_recipe, Recipe):
+                bp_recipe = Recipe(fname, 60, [], [])
+            bp_recipe.name = os.path.splitext(fname)[0]
+            # FIXME: deal with nested blueprints and circular references
+            # WARNING: we're not shadowing the class variable here - it should stay that way!
+            self.blueprint_listings[fname] = (bp_recipe, bp_nodes)
+            self.producer.recipes += [bp_recipe]
+        except Exception as e:
+            print("nOOOO!")
+            print(e)
+
+    def update_blueprint_rows(self):
+        if not self.producer.name == "Blueprint":
+            return
 
     def update(self):
         self.energy = 0
@@ -159,7 +223,15 @@ class Node:
             self.enegry = round(self.producer.base_power * math.pow((self.clock_rate/100), 1.321928) * self.count)
 
 
-PRODUCERS = []
+blueprint_producer = Producer(
+        "Blueprint",
+        is_miner=False,
+        is_pow_gen=False,
+        max_mk=0,
+        base_power=0,
+        recipes={"":     [60, [], []],}
+)
+PRODUCERS = [blueprint_producer]
 data_fpath = "satisfactory_production_buildings.json"
 with open(data_fpath) as fp:
     data = json.load(fp)
@@ -185,12 +257,35 @@ def node_constructor(loader, node):
     data = loader.construct_mapping(node)
     prod = PRODUCER_MAP[data["producer"]]
     node = Node(producer   = prod,
-                recipe     = prod.recipe_map[data["recipe"]],
+                recipe     = Recipe.empty(),
                 count      = data["count"],
                 clock_rate = data["clock_rate"],
                 mk         = data["mk"],
                 purity     = Purity(data["purity"]))
+    if prod.name == "Blueprint":
+        if data["recipe"] in prod.recipe_map:
+            node.recipe = prod.recipe_map[data["recipe"]]
+        else:
+            node.recipe = Recipe.empty("! " + data["recipe"])
+    else:
+        node.recipe = prod.recipe_map[data["recipe"]]
     return node
 
 yaml.add_representer(Node, node_representer)
 yaml.add_constructor(u'!node', node_constructor)
+
+
+def ingredient_representer(dumper, ingredient):
+    # FIXME: why does the yaml dumper reverse the list sequence.... WHY ???
+    return dumper.represent_sequence(u"!ingredient", [ingredient.count, ingredient.name])
+
+
+def ingredient_constructor(loader, data):
+    data = loader.construct_sequence(data)
+    return Ingredient(*data)
+
+yaml.add_representer(Ingredient, ingredient_representer)
+yaml.add_constructor(u'!ingredient', ingredient_constructor)
+
+
+# bp = Node(blueprint_producer, blueprint_producer.recipes[0])

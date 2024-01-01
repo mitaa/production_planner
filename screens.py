@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 
-from core import get_path, set_path, Producer, Purity, Recipe, PRODUCERS
+from core import DPATH_DATA, get_path, set_path, Producer, Purity, Recipe, PRODUCERS
 
 import os
 
@@ -116,11 +116,9 @@ class SelectDataFile(ModalScreen[str]):
         yield Footer()
 
     def on_mount(self) -> None:
-        fnames = list(os.scandir(self.app.dpath_data))
+        fnames = list(os.scandir(DPATH_DATA))
 
-        self.data = [[entry.name] for entry in fnames if entry.is_file()]
-        if [".cached.yaml"] in self.data:
-            self.data.remove([".cached.yaml"])
+        self.data = [[entry.name] for entry in fnames if entry.is_file() if not entry.name.startswith(".")]
 
         table = self.query_one(DataTable)
         table.cursor_type = "row"
@@ -145,7 +143,7 @@ class DataFileNamer(ModalScreen[str]):
         def has_dot(value: str) -> bool:
             return not "." in value
         # def is_unique(value: str) -> bool:
-        #     return not os.path.isfile(self.app.dpath_data / (value + ".yaml"))
+        #     return not os.path.isfile(DPATH_DATA / (value + ".yaml"))
 
         yield Pretty([])
         yield Input(placeholder="file name", validators=[
@@ -155,7 +153,7 @@ class DataFileNamer(ModalScreen[str]):
         yield Footer()
 
     def on_mount(self) -> None:
-        fnames = list(os.scandir(self.app.dpath_data))
+        fnames = list(os.scandir(DPATH_DATA))
 
         self.data = [[entry.name] for entry in fnames if entry.is_file()]
         if [".cached.yaml"] in self.data:
@@ -184,7 +182,7 @@ class DataFileNamer(ModalScreen[str]):
     def on_input_submitted(self, event: Input.Submitted):
         if event.validation_result.is_valid:
             fname = event.value + ".yaml"
-            fpath = self.app.dpath_data / fname
+            fpath = DPATH_DATA / fname
             if fpath.is_file():
                 def handle_overwrite(overwrite: bool):
                     if overwrite:

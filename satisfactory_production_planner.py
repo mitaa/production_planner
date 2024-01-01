@@ -1,7 +1,7 @@
 #! /bin/env python
 # -*- coding:utf-8 -*-
 
-from core import Node, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
+from core import DPATH_DATA, Node, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
 from screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, DataFileNamer, OverwriteScreen
 from datatable import EmptyCell, SummaryCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, NumberCell
 
@@ -14,12 +14,9 @@ from rich.text import Text
 
 import yaml
 
-import appdirs
-
 import tkinter as tk
 import os
 from copy import copy
-from pathlib import Path
 
 from collections import OrderedDict
 from itertools import zip_longest
@@ -54,8 +51,10 @@ class Planner(App):
     cells = []
     rows = []
     data = []
+    summary_recipe = None
     num_write_mode = False
     selected_producer = None
+    selected_node = None
     active_file = ".cached.yaml"
 
     def compose(self) -> ComposeResult:
@@ -64,9 +63,8 @@ class Planner(App):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.dpath_data = Path(appdirs.user_data_dir("satisfactory_production_planner", "mitaa"))
-        if not self.dpath_data.is_dir():
-            os.makedirs(self.dpath_data)
+        if not DPATH_DATA.is_dir():
+            os.makedirs(DPATH_DATA)
         self.title = self.active_file
 
         p = PRODUCERS[0]
@@ -83,22 +81,31 @@ class Planner(App):
         self.update()
 
     def load_data(self, fname=".cached.yaml", skip_on_nonexist=False) -> bool:
-        fpath = self.dpath_data / fname
+        fpath = DPATH_DATA / fname
         if not fpath.is_file():
             if not skip_on_nonexist:
                 self.notify(f"File does not exist: `{fpath}`", severity="error", timeout=10)
             return
         with open(fpath, "r") as fp:
-            self.data = yaml.unsafe_load(fp)
+            data = yaml.unsafe_load(fp)
+            if data:
+                if isinstance(data[0], Recipe):
+                    self.summary_recipe, self.data = data
+                elif isinstance(data[0], Node):
+                    self.data = data
+                    self.summary_recipe = Recipe.empty("summary")
+                else:
+                    self.summary_recipe = Recipe.empty("summary")
+                    self.data = []
             if fname != ".cached.yaml":
                 self.notify(f"File loaded: `{fpath}`", timeout=10)
 
     def save_data(self, fname=".cached.yaml") -> bool:
-        if not self.dpath_data.is_dir():
-            os.makedirs(self.dpath_data)
-        fpath = self.dpath_data / fname
+        if not DPATH_DATA.is_dir():
+            os.makedirs(DPATH_DATA)
+        fpath = DPATH_DATA / fname
         with open(fpath, "w") as fp:
-            yaml.dump(self.data, fp)
+            yaml.dump([self.summary_recipe, self.data], fp)
             self.active_file = fname
             self.title = fname
             if fname != ".cached.yaml":
@@ -109,7 +116,7 @@ class Planner(App):
             if not fname:
                 self.notify("Saving File Canceled")
                 return
-            fpath = self.dpath_data / fname
+            fpath = DPATH_DATA / fname
             self.save_data(fname)
         self.push_screen(DataFileNamer() , save_file)
 
@@ -118,7 +125,7 @@ class Planner(App):
             if not fname:
                 self.notify("Loading File Canceled")
                 return
-            fpath = self.dpath_data / fname
+            fpath = DPATH_DATA / fname
             self.load_data(fname)
             self.update()
         self.push_screen(SelectDataFile() , load_file)
@@ -128,7 +135,7 @@ class Planner(App):
             if not fname:
                 self.notify("File Deletion Canceled")
                 return
-            fpath = self.dpath_data / fname
+            fpath = DPATH_DATA / fname
             if not fpath.is_file():
                 self.notify(f"File does not exist: `{fpath}`", severity="error", timeout=10)
                 return
@@ -138,6 +145,8 @@ class Planner(App):
     def on_data_table_cell_selected(self):
         table = self.query_one(DataTable)
         row = table.cursor_coordinate.row
+        if row == 0:
+            return
         col = table.cursor_coordinate.column
         idx_data = row - 1
         paths = ["producer", "recipe", "", "", "purity"]
@@ -159,11 +168,14 @@ class Planner(App):
             self.update()
             table.cursor_coordinate = Coordinate(row, col)
 
+        # FIXME: preselect what has been the selected value until now
         if col == 0:   # Building
             node.producer_reset()
             self.push_screen(SelectProducer(), set_producer)
         elif col == 1: # Recipe
             self.selected_producer = node.producer
+            self.selected_node = node
+            self.selected_node.update_blueprint_listings()
             self.push_screen(SelectRecipe(), set_recipe)
         elif col == 4: # Purity
             if node.producer.is_miner:
@@ -315,6 +327,17 @@ class Planner(App):
         summary_row = [EmptyCell()] * len(columns)
         summary_row += [SummaryCell(self.data, Column.path) for Column in columns_ingredients]
         self.cells.insert(0, summary_row)
+
+        summary_inputs = []
+        summary_outputs = []
+
+        for cell, col in zip(summary_row, columns + columns_ingredients):
+            value = cell.get() or 0
+            if value < 0:
+                summary_inputs += [(col.name, value)]
+            elif value > 0:
+                summary_outputs += [(col.name, value)]
+        self.summary_recipe = Recipe("summary", 60, summary_inputs, summary_outputs)
 
         for row in self.cells:
             self.rows += [[cell.get_styled() for cell in row]]
