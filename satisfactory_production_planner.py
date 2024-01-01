@@ -274,7 +274,6 @@ class Planner(App):
 
 
     def update(self):
-        self.save_data()
         columns = [
                     Column("Building Name", False),
                     Column("Recipe", False),
@@ -331,7 +330,10 @@ class Planner(App):
 
 def main():
     planner = Planner()
-    planner.run()
+    try:
+        planner.run()
+    finally:
+        planner.save_data()
 
 
 if __name__ == "__main__":
