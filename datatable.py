@@ -2,7 +2,10 @@
 
 from core import get_path, set_path, Purity
 
+from textual.widgets import DataTable
+
 from rich.text import Text
+from rich.style import Style
 
 
 class Cell:
@@ -101,3 +104,36 @@ class SummaryCell(NumberCell):
     def get(self):
         return sum(NumberCell(node, self.path).get() for node in self.data)
 
+
+class PlannerTable(DataTable):
+    cols_to_highlight = []
+
+    def _render_cell(
+        self,
+        row_index: int,
+        column_index: int,
+        base_style: Style,
+        width: int,
+        cursor: bool = False,
+        hover: bool = False):
+        """Render the given cell.
+
+        Args:
+            row_index: Index of the row.
+            column_index: Index of the column.
+            base_style: Style to apply.
+            width: Width of the cell.
+            cursor: Is this cell affected by cursor highlighting?
+            hover: Is this cell affected by hover cursor highlighting?
+
+        Returns:
+            A list of segments per line.
+        """
+        if len(self.cols_to_highlight) > column_index and self.cols_to_highlight[column_index]:
+            base_style += self.get_component_rich_style("datatable--hover" if row_index>0 else "datatable--header-hover")
+
+        return super()._render_cell(row_index,
+                                    column_index,
+                                    base_style,
+                                    width, cursor,
+                                    hover)

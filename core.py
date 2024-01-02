@@ -224,6 +224,7 @@ class Node:
 
     @property
     def blueprint_rows(self):
+        # TODO: implement blueprint expansion (insert blueprint child nodes into data table)
         if not self.producer.name == "Blueprint":
             return []
 

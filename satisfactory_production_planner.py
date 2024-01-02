@@ -3,7 +3,7 @@
 
 from core import CONFIG, DPATH_DATA, Node, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
 from screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, DataFileNamer, OverwriteScreen
-from datatable import EmptyCell, SummaryCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, NumberCell
+from datatable import PlannerTable, EmptyCell, SummaryCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, NumberCell
 
 from textual import events
 from textual.app import App, ComposeResult
@@ -58,7 +58,7 @@ class Planner(App):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield DataTable()
+        yield PlannerTable()
         yield Footer()
 
     def on_mount(self) -> None:
@@ -74,7 +74,7 @@ class Planner(App):
                 continue
             self.planner_nodes += [Node(p, p.recipes[0])]
 
-        table = self.query_one(DataTable)
+        table = self.query_one(PlannerTable)
         table.zebra_stripes = True
         # TODO: add modified marked if cached/in-memory != saved file
         self.load_data(skip_on_nonexist=True)
@@ -145,7 +145,7 @@ class Planner(App):
         self.push_screen(SelectDataFile(), delete_file)
 
     def on_data_table_cell_selected(self):
-        table = self.query_one(DataTable)
+        table = self.query_one(PlannerTable)
         row = table.cursor_coordinate.row
         if row == 0:
             return
@@ -186,7 +186,7 @@ class Planner(App):
 
     def action_move_up(self):
         self.num_write_mode = False
-        table = self.query_one(DataTable)
+        table = self.query_one(PlannerTable)
         row = table.cursor_coordinate.row
         col = table.cursor_coordinate.column
         idx_data = row - 1
@@ -199,7 +199,7 @@ class Planner(App):
 
     def action_move_down(self):
         self.num_write_mode = False
-        table = self.query_one(DataTable)
+        table = self.query_one(PlannerTable)
         row = table.cursor_coordinate.row
         col = table.cursor_coordinate.column
         idx_data = row - 1
@@ -211,7 +211,7 @@ class Planner(App):
             table.cursor_coordinate = Coordinate(row + 1, col)
 
     def action_row_add(self):
-        table = self.query_one(DataTable)
+        table = self.query_one(PlannerTable)
         row = table.cursor_coordinate.row
         col = table.cursor_coordinate.column
         idx_data = row
@@ -220,7 +220,7 @@ class Planner(App):
         table.cursor_coordinate = Coordinate(idx_data + 1, col)
 
     def action_row_remove(self):
-        table = self.query_one(DataTable)
+        table = self.query_one(PlannerTable)
         row = table.cursor_coordinate.row
         col = table.cursor_coordinate.column
 
@@ -233,7 +233,7 @@ class Planner(App):
     def on_key(self, event: events.Key) -> None:
         if len(self.screen_stack) > 1:
             return
-        table = self.query_one(DataTable)
+        table = self.query_one(PlannerTable)
         paths = ["", "", "count", "mk", "", "clock_rate"]
 
         row = table.cursor_coordinate.row
@@ -286,6 +286,20 @@ class Planner(App):
         else:
             self.num_write_mode = False
 
+    def on_data_table_cell_highlighted(self, event):
+        # Highlight ingredient columns relevant to current row
+        # TODO: customize highlighting
+        row= event.coordinate.row
+        idx_data = row - 1
+        if idx_data >= 0:
+            node = self.data[idx_data]
+            ingredients = [ingr.name for ingr in (node.recipe.inputs + node.recipe.outputs)]
+        else:
+            ingredients = []
+
+        table = self.query_one(PlannerTable)
+        table.cols_to_highlight = [col.name in ingredients for idx, col in enumerate(self.columns)]
+        table.refresh()
 
     def update(self):
         columns_ingredients = []
@@ -344,9 +358,11 @@ class Planner(App):
         for row in self.cells:
             self.rows += [[cell.get_styled() for cell in row]]
 
-        table = self.query_one(DataTable)
+        self.columns = (columns + columns_ingredients)
+
+        table = self.query_one(PlannerTable)
         table.clear(columns=True)
-        table.add_columns(*(c.name for c in (columns + columns_ingredients)))
+        table.add_columns(*(c.name for c in self.columns))
         table.add_rows(self.rows)
         table.fixed_columns = 3
 
