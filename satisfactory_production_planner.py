@@ -76,6 +76,7 @@ class Planner(App):
 
         table = self.query_one(DataTable)
         table.zebra_stripes = True
+        # TODO: add modified marked if cached/in-memory != saved file
         self.load_data(skip_on_nonexist=True)
         self.update()
 

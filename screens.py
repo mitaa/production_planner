@@ -160,6 +160,11 @@ class SelectDataFile(ModalScreen[str]):
         table.cursor_type = "row"
         table.add_columns("File Name")
         table.add_rows(self.data)
+        try:
+            row = self.data.index([CONFIG["last_file"]])
+        except ValueError as e:
+            row = 0
+        table.cursor_coordinate = Coordinate(row, 0)
 
     def action_cancel(self):
         self.dismiss("")
