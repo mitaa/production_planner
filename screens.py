@@ -16,6 +16,9 @@ from rich.text import Text
 
 
 class SelectProducer(ModalScreen[Producer]):
+    BINDINGS = [
+        ("escape", "cancel", "Cancel"),
+    ]
     data = []
     def compose(self) -> ComposeResult:
         yield DataTable()
@@ -39,6 +42,9 @@ class SelectProducer(ModalScreen[Producer]):
             row = 0
         table.cursor_coordinate = Coordinate(row, 0)
 
+    def action_cancel(self):
+        self.dismiss(None)
+
     def on_data_table_row_selected(self):
         table = self.query_one(DataTable)
         row = table.cursor_coordinate.row
@@ -46,7 +52,11 @@ class SelectProducer(ModalScreen[Producer]):
 
 
 class SelectPurity(ModalScreen[Purity]):
+    BINDINGS = [
+        ("escape", "cancel", "Cancel"),
+    ]
     data = []
+
     def compose(self) -> ComposeResult:
         yield DataTable()
         yield Footer()
@@ -70,6 +80,9 @@ class SelectPurity(ModalScreen[Purity]):
             row = 0
         table.cursor_coordinate = Coordinate(row, 0)
 
+    def action_cancel(self):
+        self.dismiss(None)
+
     def on_data_table_row_selected(self):
         table = self.query_one(DataTable)
         row = table.cursor_coordinate.row
@@ -77,7 +90,11 @@ class SelectPurity(ModalScreen[Purity]):
 
 
 class SelectRecipe(ModalScreen[Recipe]):
+    BINDINGS = [
+        ("escape", "cancel", "Cancel"),
+    ]
     data = []
+
     def compose(self) -> ComposeResult:
         yield DataTable()
         yield Footer()
@@ -115,6 +132,9 @@ class SelectRecipe(ModalScreen[Recipe]):
         except ValueError as e:
             row = 0
         table.cursor_coordinate = Coordinate(row, 0)
+
+    def action_cancel(self):
+        self.dismiss(None)
 
     def on_data_table_row_selected(self):
         table = self.query_one(DataTable)

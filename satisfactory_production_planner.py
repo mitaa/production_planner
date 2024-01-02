@@ -173,7 +173,6 @@ class Planner(App):
             self.update()
             table.cursor_coordinate = Coordinate(row, col)
 
-        # FIXME: preselect what has been the selected value until now
         if col == 0:   # Building
             self.push_screen(SelectProducer(), set_producer)
         elif col == 1: # Recipe
