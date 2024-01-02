@@ -10,6 +10,7 @@ from textual.screen import ModalScreen
 from textual.app import App, ComposeResult
 from textual.widgets import Label, Button, Footer, Input, Pretty, DataTable
 from textual.validation import Function
+from textual.coordinate import Coordinate
 
 from rich.text import Text
 
@@ -32,6 +33,11 @@ class SelectProducer(ModalScreen[Producer]):
         for p in self.data:
             rows += [[p.name, p.base_power, bool_to_mark(p.is_miner), bool_to_mark(p.is_pow_gen)]]
         table.add_rows(rows)
+        try:
+            row = self.data.index(self.app.selected_node.producer)
+        except ValueError as e:
+            row = 0
+        table.cursor_coordinate = Coordinate(row, 0)
 
     def on_data_table_row_selected(self):
         table = self.query_one(DataTable)
@@ -58,6 +64,11 @@ class SelectPurity(ModalScreen[Purity]):
         table.cursor_type = "row"
         table.add_columns("Purity")
         table.add_rows([[p.name.title()] for p in self.data])
+        try:
+            row = self.data.index(self.app.selected_node.purity)
+        except ValueError as e:
+            row = 0
+        table.cursor_coordinate = Coordinate(row, 0)
 
     def on_data_table_row_selected(self):
         table = self.query_one(DataTable)
@@ -99,6 +110,11 @@ class SelectRecipe(ModalScreen[Recipe]):
 
         table.add_columns(*(["Recipe Name"] + [f"I #{i}" for i in range(max_input_count)] + [f"O #{i}" for i in range(max_output_count)]))
         table.add_rows(rows)
+        try:
+            row = self.data.index(self.app.selected_node.recipe)
+        except ValueError as e:
+            row = 0
+        table.cursor_coordinate = Coordinate(row, 0)
 
     def on_data_table_row_selected(self):
         table = self.query_one(DataTable)

@@ -151,6 +151,8 @@ class Planner(App):
         idx_data = row - 1
         paths = ["producer", "recipe", "", "", "purity"]
         node = self.data[idx_data]
+        self.selected_producer = node.producer
+        self.selected_node = node
 
         def set_producer(producer: Producer) -> None:
             node.producer = producer
@@ -173,8 +175,6 @@ class Planner(App):
             node.producer_reset()
             self.push_screen(SelectProducer(), set_producer)
         elif col == 1: # Recipe
-            self.selected_producer = node.producer
-            self.selected_node = node
             self.selected_node.update_blueprint_listings()
             self.push_screen(SelectRecipe(), set_recipe)
         elif col == 4: # Purity
