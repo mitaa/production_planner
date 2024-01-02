@@ -1,5 +1,7 @@
 # -*- coding:utf-8 -*-
 
+import jsonshelve
+
 import os
 import math
 from enum import Enum
@@ -11,7 +13,27 @@ import yaml
 import appdirs
 
 
+def ensure_key(store, key, default):
+    if key in store:
+        actual = store[key]
+        if type(actual) is dict and type(default) is dict:
+            ensure_keys(actual, key_def_pairings=default)
+            store[key] = actual
+    else:
+        store[key] = default
+
+def ensure_keys(store, key_def_pairings={}):
+    for k, v in key_def_pairings.items():
+        ensure_key(store, k, v)
+
+
 DPATH_DATA = Path(appdirs.user_data_dir("satisfactory_production_planner", "mitaa"))
+FPATH_CONFIG = os.path.join(DPATH_DATA, ".config.json")
+CONFIG = jsonshelve.FlatShelf(FPATH_CONFIG, dump_kwargs={"indent": 4})
+
+ensure_keys(CONFIG, {
+    "last_file": ".cached.yaml"
+})
 
 
 def get_path(obj, path):

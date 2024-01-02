@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 
-from core import DPATH_DATA, get_path, set_path, Producer, Purity, Recipe, PRODUCERS
+from core import CONFIG, DPATH_DATA, get_path, set_path, Producer, Purity, Recipe, PRODUCERS
 
 import os
 
@@ -196,8 +196,8 @@ class DataFileNamer(ModalScreen[str]):
             self.data.remove([".cached.yaml"])
 
         entry = self.query_one(Input)
-        if self.app.active_file != ".cached.yaml":
-            entry.value = self.app.active_file.split(".")[0]
+        if not CONFIG["last_file"].startswith("."):
+            entry.value = os.path.splitext(CONFIG["last_file"])[0]
 
         table = self.query_one(DataTable)
         table.cursor_type = "row"

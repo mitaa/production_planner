@@ -1,7 +1,7 @@
 #! /bin/env python
 # -*- coding:utf-8 -*-
 
-from core import DPATH_DATA, Node, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
+from core import CONFIG, DPATH_DATA, Node, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
 from screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, DataFileNamer, OverwriteScreen
 from datatable import EmptyCell, SummaryCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, NumberCell
 
@@ -55,7 +55,6 @@ class Planner(App):
     num_write_mode = False
     selected_producer = None
     selected_node = None
-    active_file = ".cached.yaml"
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -65,7 +64,7 @@ class Planner(App):
     def on_mount(self) -> None:
         if not DPATH_DATA.is_dir():
             os.makedirs(DPATH_DATA)
-        self.title = self.active_file
+        self.title = CONFIG["last_file"]
 
         p = PRODUCERS[0]
         self.planner_nodes = []
@@ -97,7 +96,9 @@ class Planner(App):
                 else:
                     self.summary_recipe = Recipe.empty("summary")
                     self.data = []
-            if fname != ".cached.yaml":
+            if not fname.startswith("."):
+                CONFIG["last_file"] = fname
+                self.title = fname
                 self.notify(f"File loaded: `{fpath}`", timeout=10)
 
     def save_data(self, fname=".cached.yaml") -> bool:
@@ -106,9 +107,9 @@ class Planner(App):
         fpath = DPATH_DATA / fname
         with open(fpath, "w") as fp:
             yaml.dump([self.summary_recipe, self.data], fp)
-            self.active_file = fname
-            self.title = fname
-            if fname != ".cached.yaml":
+            if not fname.startswith("."):
+                CONFIG["last_file"] = fname
+                self.title = fname
                 self.notify(f"File saved: `{fpath}`", timeout=10)
 
     def action_save(self):
@@ -355,6 +356,7 @@ def main():
         planner.run()
     finally:
         planner.save_data()
+        CONFIG.save()
 
 
 if __name__ == "__main__":
