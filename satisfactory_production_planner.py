@@ -252,7 +252,6 @@ class Planner(App):
                 self.num_write_mode = True
                 if ((col==2 and ccount>2) or (col==3 and ccount>0) or (col==5 and ccount>2)):
                     prev = ""
-                    self.num_write_mode = False
                 prev += event.key
                 prev = int(prev)
                 if col==3 and prev > 3:
