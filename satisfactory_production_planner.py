@@ -289,15 +289,17 @@ class Planner(App):
     def on_data_table_cell_highlighted(self, event):
         # Highlight ingredient columns relevant to current row
         # TODO: customize highlighting
-        row= event.coordinate.row
+        table = self.query_one(PlannerTable)
+        row = event.coordinate.row
         idx_data = row - 1
+
         if idx_data >= 0:
             node = self.data[idx_data]
             ingredients = [ingr.name for ingr in (node.recipe.inputs + node.recipe.outputs)]
+            table.rows_to_highlight = [row]
         else:
             ingredients = []
 
-        table = self.query_one(PlannerTable)
         table.cols_to_highlight = [col.name in ingredients for idx, col in enumerate(self.columns)]
         table.refresh()
 

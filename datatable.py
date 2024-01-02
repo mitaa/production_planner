@@ -106,6 +106,7 @@ class SummaryCell(NumberCell):
 
 
 class PlannerTable(DataTable):
+    rows_to_highlight = []
     cols_to_highlight = []
 
     def _render_cell(
@@ -129,7 +130,7 @@ class PlannerTable(DataTable):
         Returns:
             A list of segments per line.
         """
-        if len(self.cols_to_highlight) > column_index and self.cols_to_highlight[column_index]:
+        if len(self.cols_to_highlight) > column_index and self.cols_to_highlight[column_index] or row_index in self.rows_to_highlight:
             base_style += self.get_component_rich_style("datatable--hover" if row_index>0 else "datatable--header-hover")
 
         return super()._render_cell(row_index,
