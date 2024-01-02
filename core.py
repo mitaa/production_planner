@@ -145,7 +145,9 @@ class Node:
         self.update()
 
     def producer_reset(self):
-        self.recipe = self.producer.recipes[0] if self.producer.recipes else Recipe.empty()
+        if not self.recipe or not self.recipe.name in self.producer.recipe_map:
+            self.recipe = self.producer.recipes[0] if self.producer.recipes else Recipe.empty()
+
         if self.producer.is_miner:
             if self.purity == Purity.NA:
                 self.purity = Purity.NORMAL

@@ -155,24 +155,26 @@ class Planner(App):
         self.selected_node = node
 
         def set_producer(producer: Producer) -> None:
-            node.producer = producer
-            node.producer_reset()
+            if producer:
+                node.producer = producer
+                node.producer_reset()
             self.update()
             table.cursor_coordinate = Coordinate(row, col)
 
         def set_purity(purity: Purity) -> None:
-            node.purity = purity
-            self.update()
+            if purity:
+                node.purity = purity
+                self.update()
             table.cursor_coordinate = Coordinate(row, col)
 
         def set_recipe(recipe: Recipe) -> None:
-            node.recipe = recipe
+            if recipe:
+                node.recipe = recipe
             self.update()
             table.cursor_coordinate = Coordinate(row, col)
 
         # FIXME: preselect what has been the selected value until now
         if col == 0:   # Building
-            node.producer_reset()
             self.push_screen(SelectProducer(), set_producer)
         elif col == 1: # Recipe
             self.selected_node.update_blueprint_listings()
