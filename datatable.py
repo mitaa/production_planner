@@ -10,6 +10,7 @@ from rich.style import Style
 
 class Cell:
     name = ""
+    # TODO: delete / This can't be accessed later because Cells are ephemeral
     read_only = False
     style_balance = False
     style_summary = False
@@ -99,10 +100,10 @@ class NumberCell(Cell):
     def get(self):
         return self.data.ingredients[self.path] if self.path in self.data.ingredients else 0
 
+
 class SummaryCell(NumberCell):
     name = ""
-    def get(self):
-        return sum(NumberCell(node, self.path).get() for node in self.data)
+    style_summary = True
 
 
 class PlannerTable(DataTable):
@@ -130,6 +131,7 @@ class PlannerTable(DataTable):
         Returns:
             A list of segments per line.
         """
+        # FIXME: make highlighting based on cell texts already present in DataTable
         if len(self.cols_to_highlight) > column_index and self.cols_to_highlight[column_index] or row_index in self.rows_to_highlight:
             base_style += self.get_component_rich_style("datatable--hover" if row_index>0 else "datatable--header-hover")
 

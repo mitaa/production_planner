@@ -1,16 +1,19 @@
 # -*- coding:utf-8 -*-
 
-import jsonshelve
-
 import os
 import math
 from enum import Enum
 from dataclasses import dataclass
 import json
 from pathlib import Path
+from typing import Self
 
+from textual.app import App
 import yaml
 import appdirs
+
+import jsonshelve
+from textual.widgets import DataTable
 
 
 def ensure_key(store, key, default):
@@ -43,7 +46,8 @@ def get_path(obj, path):
     if not subpaths:
         return getattr(obj, path)
     else:
-        return get_path(getattr(obj, primpath), ".".join(subpaths))
+        return get_path(getattr(obj, primpath), subpaths[0])
+
 
 def set_path(obj, path, value):
     paths = path.split(".", maxsplit=1)
@@ -52,7 +56,7 @@ def set_path(obj, path, value):
     if not subpaths:
         return setattr(obj, path, value)
     else:
-        return set_path(getattr(obj, primpath), subpaths, value)
+        return set_path(getattr(obj, primpath), subpaths[0], value)
 
 
 @dataclass
@@ -66,14 +70,14 @@ class Ingredient:
 
 class Recipe(yaml.YAMLObject):
     yaml_tag = u"!recipe"
-    def __init__(self, name, cycle_rate, inputs, outputs):
+    def __init__(self, name, cycle_rate, inputs: [(int, str)], outputs: [(int, str)]):
         self.name = name
         self.cycle_rate = cycle_rate
         self.inputs = list(Ingredient(name, count) for count, name in inputs)
         self.outputs = list(Ingredient(name, count) for count, name in outputs)
 
     def __str__(self):
-        return f"{self.name}/{self.cycle_rate} < {', '.join(map(str, self.inputs))} > {', '.join(map(str, self.outputs))}"
+        return f"{self.name}/{self.cycle_rate} {', '.join(map(str, self.inputs))} <> {', '.join(map(str, self.outputs))}"
 
     def __repr__(self):
         return str(self)
@@ -81,6 +85,17 @@ class Recipe(yaml.YAMLObject):
     @classmethod
     def empty(cls, name=""):
         return cls(name, 60, [], [])
+
+    @classmethod
+    def from_dict(cls, ingredients: {str: int}, name="", cycle_rate=60) -> Self:
+        inputs = []
+        outputs = []
+        for ingredient, quantity in sorted(ingredients.items()):
+            if quantity < 0:
+                inputs += [(abs(quantity), ingredient)]
+            else:
+                outputs += [(quantity, ingredient)]
+        return cls(name, cycle_rate, inputs, outputs)
 
 
 class Producer:
@@ -203,6 +218,7 @@ class Node:
                 bp_nodes = []
                 bp_recipe = None
                 if data:
+                    # FIXME: update for NodeInstances
                     if isinstance(data[0], Recipe):
                         bp_recipe, bp_nodes = data
                     elif isinstance(data[0], Node):
@@ -225,6 +241,7 @@ class Node:
     @property
     def blueprint_rows(self):
         # TODO: implement blueprint expansion (insert blueprint child nodes into data table)
+        #       -> move expansion code from here to NodeInstance
         if not self.producer.name == "Blueprint":
             return []
 
@@ -248,14 +265,23 @@ class Node:
         else:
             self.enegry = round(self.producer.base_power * math.pow((self.clock_rate/100), 1.321928) * self.count)
 
+empty_producer = Producer(
+        "",
+        is_miner=False,
+        is_pow_gen=False,
+        max_mk=0,
+        base_power=0,
+        recipes={"":     [60, [], []],}
+)
 
+# TODO rename `blueprint` to `module`
 blueprint_producer = Producer(
         "Blueprint",
         is_miner=False,
         is_pow_gen=False,
         max_mk=0,
         base_power=0,
-        recipes={"":     [60, [], []],}
+        recipes={"": [60, [], []], }
 )
 PRODUCERS = [blueprint_producer]
 data_fpath = "satisfactory_production_buildings.json"
@@ -266,16 +292,19 @@ for k, v in data.items():
     producer = Producer(k, **v)
     PRODUCERS += [producer]
 
-PRODUCER_MAP = { p.name: p for p in PRODUCERS }
+PRODUCERS += [empty_producer]
+
+PRODUCER_MAP = {p.name: p for p in PRODUCERS}
+
 
 def node_representer(dumper, data):
     return dumper.represent_mapping(u"!node", {
-        "producer":   data.producer.name,
-        "recipe":     data.recipe.name,
-        "count":      data.count,
+        "producer": data.producer.name,
+        "recipe": data.recipe.name,
+        "count": data.count,
         "clock_rate": data.clock_rate,
-        "mk":         data.mk,
-        "purity":     data.purity.value
+        "mk": data.mk,
+        "purity": data.purity.value
     })
 
 
@@ -297,7 +326,9 @@ def node_constructor(loader, node):
             node.recipe = Recipe.empty("! " + data["recipe"])
     else:
         node.recipe = prod.recipe_map[data["recipe"]]
+    node.update()
     return node
+
 
 yaml.add_representer(Node, node_representer)
 yaml.add_constructor(u'!node', node_constructor)
@@ -312,8 +343,201 @@ def ingredient_constructor(loader, data):
     data = loader.construct_sequence(data)
     return Ingredient(*data)
 
+
 yaml.add_representer(Ingredient, ingredient_representer)
 yaml.add_constructor(u'!ingredient', ingredient_constructor)
 
 
-# bp = Node(blueprint_producer, blueprint_producer.recipes[0])
+class SummaryNode(Node):
+    def __init__(self, nodes):
+        super().__init__(empty_producer, self.update_recipe(nodes), is_dummy=True)
+
+    def producer_reset(self):
+        ...
+
+    def update_recipe(self, nodes: [Node]) -> Recipe:
+        sums = {}
+        for node in nodes:
+            # TODO: handle and update Blueprint nodes here before processing it's dependent recipe
+            for ingredient, quantity in node.ingredients.items():
+                sums[ingredient] = sums.get(ingredient, 0) + quantity
+        # TODO: perhpas cull ingredients with zero quantity ?
+        self.recipe = Recipe.from_dict(sums)
+        return self.recipe
+
+
+def summary_representer(dumper, data):
+    return dumper.represent_yaml_object(u"!summary", data.recipe, Recipe)
+
+
+def summary_constructor(loader, data):
+    recipe = loader.construct_yaml_object(data)
+    summary = SummaryNode([])
+    summary.recipe = recipe
+    # FIXME: this might not quite make sense since the child nodes for calculating the summary are missing ...
+    return summary
+
+
+yaml.add_representer(SummaryNode, summary_representer)
+yaml.add_constructor(u'!summary', summary_constructor)
+
+
+class NodeInstance:
+    row_to_node_index = []
+
+    def __init__(self, node:Node, children:[Self]=None, parent:[Self]=None, shown=True, expanded=True, row_idx=None, level=0):
+        self.parent = parent
+        self.node_main = node
+        # FIXME: add blueprint children nodes automatically
+        if children:
+            for child in children:
+                child.parent = self
+        self.node_children = children if children else []
+        self.shown = shown
+        self.expanded = expanded
+        # TODO: self.activated = activated
+        self.row_idx = row_idx
+        self.level = level
+
+    def add_child(self, instance: Self, at_idx=None):
+        root = self
+        if at_idx is None:
+            at_idx = len(self.node_children)
+            instance.parent = self
+        elif isinstance(at_idx, NodeInstance):
+            if at_idx.parent is None:
+                at_idx = 0
+                instance.parent = self
+            else:
+                root = at_idx.parent
+                instance.parent = root
+                at_idx = root.node_children.index(at_idx) + 1
+
+        root.node_children.insert(at_idx, instance)
+
+    def get_node(self, row_idx: int) -> None | Self:
+        # Force row index to be in bounds
+        row_idx = min(max(0, row_idx), len(self.row_to_node_index) - 1)
+        node = self.row_to_node_index[row_idx] if self.row_to_node_index else None
+        return node  # None if isinstance(node, NodeTree) else node
+
+    def shift_child(self, child: Self, offset: int) -> bool:
+        if offset == 0:
+            return True
+
+        if child not in self.node_children:
+            return False
+        idx = self.node_children.index(child)
+        del self.node_children[idx]
+        self.node_children.insert(max(0, idx + offset), child)
+
+    def remove_node(self, row_idx: int):
+        node = self.get_node(row_idx)
+        if node is None:
+            return
+        self.node_children.remove(node)
+
+    def get_nodes(self, level=0) -> [Self]:
+        if level == 0:
+            NodeInstance.row_to_node_index = []
+
+        if not self.shown:
+            return []
+
+        self.level = level
+        nodes = [self]
+
+        self.row_idx = len(NodeInstance.row_to_node_index)
+
+        if level < 1:
+            NodeInstance.row_to_node_index += [self]
+
+        if self.expanded:
+            for cnode in self.node_children:
+                cnodes = cnode.get_nodes(level=level + 1)
+                nodes += cnodes
+
+        if isinstance(self.node_main, SummaryNode):
+            # Note: the innermost nodes get their recipe updated before the outer nodes
+            #       because of the `get_nodes` calls above
+            self.node_main.update_recipe([cinstance.node_main for cinstance in self.node_children])
+
+        if level == 1:
+            NodeInstance.row_to_node_index += [self] * len(nodes)
+
+        return nodes
+
+    def update_summaries(self):
+        for child in self.node_children:
+            child.update_summaries()
+
+        if not isinstance(self.node_main, SummaryNode):
+            return
+
+        self.node_main.update_recipe([cinstance.node_main for cinstance in self.node_children])
+
+    def update_parents(self):
+        for child in self.node_children:
+            child.parent = self
+            child.update_parents()
+
+    def __getitem__(self, row_idx):
+        self.get_node(row_idx)
+
+    def __delitem__(self, row_idx):
+        self.remove_node(row_idx)
+
+
+class NodeTree(NodeInstance):
+    def __init__(self, planner: App, *args, **kwargs):
+        self._planner = planner
+        super().__init__(*args, **kwargs)
+
+    @property
+    def table(self) -> DataTable:
+        return self._planner.query_one(DataTable)
+
+    @classmethod
+    def from_nodeinstances(cls, app, instances: [NodeInstance]) -> Self:
+        nodes = [instance.node_main for instance in instances]
+        return cls(app, SummaryNode(nodes), instances)
+
+    @classmethod
+    def from_nodes(cls, app, nodes: [Node]) -> Self:
+        return cls.from_nodeinstances(app, [NodeInstance(node) for node in nodes])
+
+
+def instance_representer(dumper, data):
+    return dumper.represent_mapping(u"!instance", {
+        "shown":    data.shown,
+        "expanded": data.expanded,
+        "main":     data.node_main,
+        "children": data.node_children,
+    })
+
+
+def instance_constructor(loader, data):
+    data = loader.construct_mapping(data)
+    instance = NodeInstance(data["main"],
+                            data["children"],
+                            shown=data["shown"],
+                            expanded=data["expanded"])
+    return instance
+
+
+def tree_representer(dumper, data):
+    return dumper.represent_sequence(u"!tree", data.node_children)
+
+
+def tree_constructor(loader, data):
+    data = loader.construct_sequence(data)
+    tree = NodeTree.from_nodeinstances(None, # _planner attribute needs to be fixed after loading...
+                                       data)
+    return tree
+
+
+yaml.add_representer(NodeInstance, instance_representer)
+yaml.add_constructor(u'!instance', instance_constructor)
+
+yaml.add_representer(NodeTree, tree_representer)
+yaml.add_constructor(u'!tree', tree_constructor)

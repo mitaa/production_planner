@@ -1,7 +1,7 @@
 #! /bin/env python
 # -*- coding:utf-8 -*-
 
-from core import CONFIG, DPATH_DATA, Node, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
+from core import CONFIG, DPATH_DATA, Node, SummaryNode, NodeInstance, NodeTree, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
 from screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, DataFileNamer, OverwriteScreen
 from datatable import PlannerTable, EmptyCell, SummaryCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, NumberCell
 
@@ -28,13 +28,6 @@ from pprint import pprint
 # As the fuel consumption rate is directly proportional to generator power production, verify that demand matches the production capacity to ensure that Power Shards are used to their full potential. Fuel efficiency is unchanged, but consumption and power generation rates may be unexpectedly uneven[EA].
 
 
-class Column:
-    def __init__(self, name, read_only=True):
-        self.name = name
-        self.read_only = read_only
-
-
-
 class Planner(App):
     BINDINGS = [
         ("+", "row_add", "Add"),
@@ -44,13 +37,14 @@ class Planner(App):
         ("s", "save", "Save"),
         ("l", "load", "Load"),
         ("d", "delete", "Delete"),
+        ("f2", "show_hide", "Show/Hide"),
+        ("f3", "swap_vis_space", "Swap Shown/Hidden"),
     ]
 
     # 1-Building Name, 2-Recipe Name, 3-QTY, 4-Mk, 5-Purity, 6-Clockrate        //, 7-Energy, 8*-Inputs, 9*-Outputs
     columns = []
-    cells = []
-    rows = []
-    data = []
+    data = None             # total node list
+    rows = []               # text-like representation of filtered node list
     summary_recipe = None
     num_write_mode = False
     selected_producer = None
@@ -62,6 +56,7 @@ class Planner(App):
         yield Footer()
 
     def on_mount(self) -> None:
+        self.log("hello ??")
         if not DPATH_DATA.is_dir():
             os.makedirs(DPATH_DATA)
         self.title = CONFIG["last_file"]
@@ -76,6 +71,7 @@ class Planner(App):
 
         table = self.query_one(PlannerTable)
         table.zebra_stripes = True
+        self.data = NodeTree.from_nodes(self, [])
         # TODO: add modified marked if cached/in-memory != saved file
         self.load_data(skip_on_nonexist=True)
         self.update()
@@ -88,15 +84,25 @@ class Planner(App):
             return
         with open(fpath, "r") as fp:
             data = yaml.unsafe_load(fp)
-            if data:
-                if isinstance(data[0], Recipe):
-                    self.summary_recipe, self.data = data
-                elif isinstance(data[0], Node):
+            match data:
+                case NodeTree():
+                    data._planner = self
                     self.data = data
                     self.summary_recipe = Recipe.empty("summary")
-                else:
+                case[Node(), *_]:
+                    self.data = NodeTree.from_nodes(self, data)
                     self.summary_recipe = Recipe.empty("summary")
-                    self.data = []
+                case[Recipe(), NodeTree()]:
+                    self.summary_recipe, data = data
+                    data._planner = self
+                    self.data = data
+                case[Recipe(), *_]:
+                    self.summary_recipe, data = data
+                    self.data = NodeTree.from_nodes(self, data)
+                case _:
+                    self.notify(f"Could not parse file: `{fpath}`", timeout=10)
+                    return
+
             if not fname.startswith("."):
                 CONFIG["last_file"] = fname
                 self.title = fname
@@ -107,7 +113,7 @@ class Planner(App):
             os.makedirs(DPATH_DATA)
         fpath = DPATH_DATA / fname
         with open(fpath, "w") as fp:
-            yaml.dump([self.summary_recipe, self.data], fp)
+            yaml.dump(self.data, fp)
             if not fname.startswith("."):
                 CONFIG["last_file"] = fname
                 self.title = fname
@@ -132,6 +138,23 @@ class Planner(App):
             self.update()
         self.push_screen(SelectDataFile() , load_file)
 
+    def action_show_hide(self):
+        # FIXME
+        self.num_write_mode = False
+        table = self.query_one(PlannerTable)
+        row = table.cursor_coordinate.row
+        col = table.cursor_coordinate.column
+        idx_data = row - 1
+        node = self.data[idx_data]
+        table.cursor_coordinate = Coordinate(row, col)
+
+    def action_swap_vis_space(self):
+        # FIXME
+        buf = self.rows_data
+        self.rows_data = self.rows_data_hidden
+        self.rows_data_hidden = buf
+        self.update()
+
     def action_delete(self):
         def delete_file(fname: str) -> None:
             if not fname:
@@ -147,12 +170,13 @@ class Planner(App):
     def on_data_table_cell_selected(self):
         table = self.query_one(PlannerTable)
         row = table.cursor_coordinate.row
-        if row == 0:
-            return
+
         col = table.cursor_coordinate.column
-        idx_data = row - 1
         paths = ["producer", "recipe", "", "", "purity"]
-        node = self.data[idx_data]
+        node = self.data.get_node(row).node_main
+        if isinstance(node, SummaryNode):
+            return
+
         self.selected_producer = node.producer
         self.selected_node = node
 
@@ -166,12 +190,14 @@ class Planner(App):
         def set_purity(purity: Purity) -> None:
             if purity:
                 node.purity = purity
+                node.update()
                 self.update()
             table.cursor_coordinate = Coordinate(row, col)
 
         def set_recipe(recipe: Recipe) -> None:
             if recipe:
                 node.recipe = recipe
+                node.update()
             self.update()
             table.cursor_coordinate = Coordinate(row, col)
 
@@ -189,35 +215,35 @@ class Planner(App):
         table = self.query_one(PlannerTable)
         row = table.cursor_coordinate.row
         col = table.cursor_coordinate.column
-        idx_data = row - 1
-        if idx_data > 0:
-            buf = self.data[idx_data]
-            del self.data[idx_data]
-            self.data.insert(idx_data-1, buf)
+        node = self.data.get_node(row)
+
+        if node and node.parent:
+            node.parent.shift_child(node, -1)
             self.update()
-            table.cursor_coordinate = Coordinate(row - 1, col)
+            table.cursor_coordinate = Coordinate(node.row_idx, col)
 
     def action_move_down(self):
         self.num_write_mode = False
         table = self.query_one(PlannerTable)
         row = table.cursor_coordinate.row
         col = table.cursor_coordinate.column
-        idx_data = row - 1
-        if 0 <= idx_data < (len(self.data) - 1):
-            buf = self.data[idx_data]
-            del self.data[idx_data]
-            self.data.insert(idx_data + 1, buf)
+        node = self.data.get_node(row)
+
+        if node and node.parent:
+            node.parent.shift_child(node, 1)
             self.update()
-            table.cursor_coordinate = Coordinate(row + 1, col)
+            table.cursor_coordinate = Coordinate(node.row_idx, col)
 
     def action_row_add(self):
         table = self.query_one(PlannerTable)
         row = table.cursor_coordinate.row
         col = table.cursor_coordinate.column
-        idx_data = row
-        self.data.insert(idx_data, copy(self.planner_nodes[0]))
+
+        current_node = self.data.get_node(row)
+
+        self.data.add_child(NodeInstance(copy(self.planner_nodes[0])), at_idx=current_node)
         self.update()
-        table.cursor_coordinate = Coordinate(idx_data + 1, col)
+        table.cursor_coordinate = Coordinate(row + 1, col)
 
     def action_row_remove(self):
         table = self.query_one(PlannerTable)
@@ -226,7 +252,7 @@ class Planner(App):
 
         if not self.data or row < 1:
             return
-        del self.data[row - 1]
+        del self.data[row]
         self.update()
         table.cursor_coordinate = Coordinate(row, col)
 
@@ -235,20 +261,22 @@ class Planner(App):
             return
         table = self.query_one(PlannerTable)
         paths = ["", "", "count", "mk", "", "clock_rate"]
+        paths = [f"node_main.{p}" if p else "" for p in paths]
+        # FIXME: verify if it works
 
         row = table.cursor_coordinate.row
         col = table.cursor_coordinate.column
         coord = Coordinate(row, col)
         idx_data = row - 1
-        if row == 0:
-            return
+
+        node = self.data.get_node(row)
 
         # TODO: prevent too large numbers, if too large reset number
-        if col in {2, 3, 5}:
+        if col in {2, 3, 5} and not isinstance(node.node_main, SummaryNode):
             path = paths[col]
 
             if len(event.key) == 1 and 58 > ord(event.key) > 47:
-                prev = str(get_path(self.data[idx_data], path))
+                prev = str(get_path(node, path))
                 ccount = len(prev)
                 if not self.num_write_mode:
                     prev = ""
@@ -264,20 +292,23 @@ class Planner(App):
                     prev = 250
                     self.num_write_mode = False
 
-                set_path(self.data[idx_data], path, prev)
+                set_path(node, path, prev)
+                node.node_main.update()
                 self.update()
                 table.cursor_coordinate = coord
             elif event.key == "delete":
-                set_path(self.data[idx_data], path, 0)
+                set_path(node, path, 0)
+                node.node_main.update()
                 self.num_write_mode = False
                 self.update()
                 table.cursor_coordinate = coord
             elif event.key == "backspace":
-                prev = str(get_path(self.data[idx_data], path))
+                prev = str(get_path(node, path))
                 new = prev[:-1]
                 if len(new) == 0:
                     new = 0
-                set_path(self.data[idx_data], path, int(new))
+                set_path(node, path, int(new))
+                node.node_main.update()
                 self.num_write_mode = False
                 self.update()
                 table.cursor_coordinate = coord
@@ -289,16 +320,22 @@ class Planner(App):
     def on_data_table_cell_highlighted(self, event):
         # Highlight ingredient columns relevant to current row
         # TODO: customize highlighting
+        # FIXME: can be moved into table class and avoid the unneccessary redraw
+        #        just for highlighting by doing it right the first time
         table = self.query_one(PlannerTable)
         row = event.coordinate.row
+        # FIXME: delme
         idx_data = row - 1
 
-        if idx_data >= 0:
-            node = self.data[idx_data]
+        instance = self.data.get_node(row)
+
+        if instance:
+            node = instance.node_main
             ingredients = [ingr.name for ingr in (node.recipe.inputs + node.recipe.outputs)]
             table.rows_to_highlight = [row]
         else:
             ingredients = []
+            table.rows_to_highlight = []
 
         table.cols_to_highlight = [col.name in ingredients for idx, col in enumerate(self.columns)]
         table.refresh()
@@ -319,8 +356,11 @@ class Planner(App):
         outputs_mixed = set()
         inputs_only  = set()
         outputs_only = set()
-        x = self.data
-        for node in self.data:
+
+        nodes = self.data.get_nodes()
+
+        for node_instance in nodes:
+            node = node_instance.node_main
             inputs_mixed |= set(i.name for i in node.recipe.inputs)
             outputs_mixed |= set(o.name for o in node.recipe.outputs)
 
@@ -332,34 +372,20 @@ class Planner(App):
             IngredientColumn = type(column, (NumberCell,), {"name": column, "path": column})
             columns_ingredients += [IngredientColumn]
 
-        self.cells = []
         self.rows = []
         sums = []
-        for node in self.data:
+        for node_instance in nodes:
+            node = node_instance.node_main
             node.update()
-            row = [Column(node) for Column in columns]
+            is_summary = isinstance(node, SummaryNode)
+            if is_summary:
+                row = [EmptyCell()] * len(columns)
+            else:
+                row = [Column(node) for Column in columns]
+
             for c in col_add:
-                row += [NumberCell(node, c)]
-            self.cells += [row]
-
-        summary_row = [EmptyCell()] * len(columns)
-        summary_row += [SummaryCell(self.data, Column.path) for Column in columns_ingredients]
-        self.cells.insert(0, summary_row)
-
-        summary_inputs = []
-        summary_outputs = []
-
-        for cell, col in zip(summary_row, columns + columns_ingredients):
-            value = cell.get() or 0
-            if value < 0:
-                summary_inputs += [(col.name, abs(value))]
-            elif value > 0:
-                summary_outputs += [(col.name, value)]
-        self.summary_recipe = Recipe("summary", 60, summary_inputs, summary_outputs)
-
-        for row in self.cells:
+                row += [SummaryCell(node, c) if is_summary else NumberCell(node, c)]
             self.rows += [[cell.get_styled() for cell in row]]
-
         self.columns = (columns + columns_ingredients)
 
         table = self.query_one(PlannerTable)
