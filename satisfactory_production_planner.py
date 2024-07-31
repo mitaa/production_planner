@@ -140,20 +140,25 @@ class Planner(App):
         self.push_screen(SelectDataFile() , load_file)
 
     def action_show_hide(self):
-        # FIXME
         self.num_write_mode = False
         table = self.query_one(PlannerTable)
         row = table.cursor_coordinate.row
         col = table.cursor_coordinate.column
-        idx_data = row - 1
-        node = self.data[idx_data]
-        table.cursor_coordinate = Coordinate(row, col)
+        instance = self.data.get_node(row)
+        if instance:
+            instance.show_hide()
+            self.update()
+            table.cursor_coordinate = Coordinate(row, col)
 
     def action_swap_vis_space(self):
-        # FIXME
-        buf = self.rows_data
-        self.rows_data = self.rows_data_hidden
-        self.rows_data_hidden = buf
+        self.num_write_mode = False
+        table = self.query_one(PlannerTable)
+        row = table.cursor_coordinate.row
+        col = table.cursor_coordinate.column
+        instance = self.data.get_node(row)
+        if not instance:
+            instance = self.data
+        self.data.swap_vis_space()
         self.update()
 
     def action_collapse(self):

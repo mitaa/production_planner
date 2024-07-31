@@ -388,7 +388,6 @@ class NodeInstance:
     def __init__(self, node:Node, children:[Self]=None, parent:[Self]=None, shown=True, expanded=True, row_idx=None, level=0):
         self.parent = parent
         self.node_main = node
-        # FIXME: add module children nodes automatically
         if children is None:
             children = []
 
@@ -401,6 +400,16 @@ class NodeInstance:
         self.row_idx = row_idx
         self.level = level
 
+    def show_hide(self, shown=None):
+        self.shown = shown or (not self.shown)
+        if self.shown and self.parent:
+            self.parent.show_hide(shown=True)
+
+    def swap_vis_space(self):
+        self.show_hide()
+        for child in self.node_children:
+            child.swap_vis_space()
+
     def add_children(self, instances: [Self], at_idx=None):
         root = self
         if at_idx is None:
@@ -408,7 +417,7 @@ class NodeInstance:
         elif isinstance(at_idx, NodeInstance):
             if at_idx.parent is None:
                 at_idx = 0
-                instance.parent = self
+                root = self
             else:
                 root = at_idx.parent
                 at_idx = root.node_children.index(at_idx) + 1
