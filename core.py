@@ -9,11 +9,14 @@ from pathlib import Path
 from typing import Self
 
 from textual.app import App
+from textual import log
 import yaml
 import appdirs
 
 import jsonshelve
 from textual.widgets import DataTable
+
+APP = None
 
 
 def ensure_key(store, key, default):
@@ -200,44 +203,38 @@ class Node:
         names = list(os.scandir(DPATH_DATA))
         fnames = [entry.name for entry in names if entry.is_file() if not entry.name.startswith(".")]
         for fname in fnames:
-            self.update_module(fname)
+            self.update_module_listing(fname)
         self.producer.update_recipe_map()
 
-    def update_module(self, fname):
-        if not self.producer.name == "Module":
+    def update_module_listing(self, fname) -> bool:
+        if not self.producer.name in ["Module", "Blueprint"]:
             return
         if not fname.lower().endswith(".yaml"):
             fname += ".yaml"
 
-        try:
-            if not (DPATH_DATA / fname).is_file():
-                return False
-            with open(DPATH_DATA / fname, "r") as fp:
-                data = yaml.unsafe_load(fp)
-                tree = load_data(data)
-                if tree is None:
-                    raise ValueError("Unexpected Data Format:\n" + str(data))
+        if not (DPATH_DATA / fname).is_file():
+            return False
 
-                tree.update_summaries()
-                module_recipe = tree.node_main.recipe
-                module_nodes = []
+        tree = load_data(DPATH_DATA / fname)
+        if tree is None:
+            raise ValueError("Unexpected Data Format")
 
-            module_recipe.name = os.path.splitext(fname)[0]
-            # FIXME: deal with nested modules and circular references
-            # WARNING: we're not shadowing the class variable here - it should stay that way!
-            self.module_listings[fname] = (module_recipe, tree)
-            self.producer.recipes += [module_recipe]
-        except Exception as e:
-            print("nOOOO!")
-            print(e)
+        tree.update_summaries()
+        module_recipe = tree.node_main.recipe
+        module_nodes = []
+
+        module_recipe.name = os.path.splitext(fname)[0]
+        # WARNING: we're not shadowing the class variable here - it should stay that way!
+        self.module_listings[fname] = (module_recipe, tree)
+        idx_delete = None
+        idx_insert = len(self.producer.recipes)
+        for idx, recipe in enumerate(self.producer.recipes):
+            if recipe.name == module_recipe.name:
+                idx_delete = idx_insert = idx
+        if idx_delete is not None:
+            del self.producer.recipes[idx_delete]
+        self.producer.recipes.insert(idx_insert, module_recipe)
         return True
-
-    @property
-    def module_rows(self):
-        # TODO: implement module expansion (insert module child nodes into data table)
-        #       -> move expansion code from here to NodeInstance
-        if not self.producer.name == "Module":
-            return []
 
     def update(self):
         self.energy = 0
@@ -269,7 +266,6 @@ empty_producer = Producer(
         recipes={"":     [60, [], []],}
 )
 
-# TODO rename `module` to `module`
 module_producer = Producer(
         "Module",
         is_miner=False,
@@ -304,7 +300,11 @@ def node_representer(dumper, data):
     })
 
 
+SEEN_MODULES = set()
+
+
 def node_constructor(loader, node):
+    global SEEN_MODULES
     data = loader.construct_mapping(node)
     prod = PRODUCER_MAP[data["producer"]]
     node = Node(producer   = prod,
@@ -314,8 +314,10 @@ def node_constructor(loader, node):
                 mk         = data["mk"],
                 purity     = Purity(data["purity"]))
     if prod.name in ["Blueprint", "Module"]:
-        node.update_module(data["recipe"])
-        prod.update_recipe_map()
+        if not data["recipe"] in SEEN_MODULES:
+            SEEN_MODULES.add(data["recipe"])
+            node.update_module_listing(data["recipe"])
+            prod.update_recipe_map()
         if data["recipe"] in prod.recipe_map:
             node.recipe = prod.recipe_map[data["recipe"]]
         else:
@@ -381,6 +383,7 @@ yaml.add_constructor(u'!summary', summary_constructor)
 
 class NodeInstance:
     row_to_node_index = []
+    blueprints = set()
 
     def __init__(self, node:Node, children:[Self]=None, parent:[Self]=None, shown=True, expanded=True, row_idx=None, level=0):
         self.parent = parent
@@ -481,6 +484,26 @@ class NodeInstance:
             child.parent = self
             child.update_parents()
 
+    def set_module(self, module_name: str):
+        if not self.node_main.producer.name in ["Module", "Blueprint"]:
+            return
+        fname = f"{module_name}.yaml"
+        if not self.node_main.update_module_listing(fname):
+            return
+        module_tree = self.node_main.module_listings[fname][1]
+        self.node_children.clear()
+        self.add_children([module_tree])
+
+    def collect_modules(self, level=0):
+        if level == 0:
+            self.blueprints.clear()
+
+        if self.node_main.producer.name in ["Module", "Blueprint"]:
+            self.blueprints.add(self.node_main.recipe.name)
+
+        for child in self.node_children:
+            child.collect_modules(level + 1)
+
     def __getitem__(self, row_idx):
         self.get_node(row_idx)
 
@@ -515,6 +538,41 @@ class NodeTree(NodeInstance):
     @classmethod
     def from_nodes(cls, app, nodes: [Node]) -> Self:
         return cls.from_nodeinstances(app, [NodeInstance(node) for node in nodes])
+
+    def reload_modules(self, instances=None, module_stack=None):
+        module_stack = module_stack or []
+        def reload_module(instance) -> str | bool | None:
+            if instance.node_main.producer.name in ["Module", "Blueprint"]:
+                module = instance.node_main.recipe.name
+                log(f"reloading module: {module}")
+                self.blueprints.add(module)
+                if module in module_stack:
+                    log("Error: Recursive Modules!")
+                    APP.notify(f"Error; Resursive Modules: ({'>'.join(module_stack)})",
+                               severity="error",
+                               timeout=10)
+                    idx = module_stack.index(module)
+                    substack = module_stack[idx:] + [module]
+                    log("\n".join(substack))
+                    return None
+                instance.set_module(module)
+                return True
+            else:
+                return False
+
+        if instances is None:
+            instances = self.node_children
+
+        for instance in instances:
+            res = reload_module(instance)
+            match res:
+                case str():
+                    self.reload_modules(instance.node_children, module_stack + res)
+                case None:
+                    log("Error reloading module")
+                case _:
+                    self.reload_modules(instance.node_children, module_stack)
+        log(f"blueprints: {self.blueprints}")
 
 
 def instance_representer(dumper, data):
@@ -553,18 +611,20 @@ yaml.add_representer(NodeTree, tree_representer)
 yaml.add_constructor(u'!tree', tree_constructor)
 
 
-def load_data(data) -> None | NodeTree:
-    match data:
-        case NodeTree():
-            ...
-        case[Node(), *_]:
-            data = NodeTree.from_nodes(None, data)
-        case[Recipe(), NodeTree()]:
-            _, data = data
-        case[Recipe(), *_]:
-            _, data = data
-            data = NodeTree.from_nodes(None, data)
-        case _:
-            log(f"Could not parse file: `{fpath}`", timeout=10)
-            return
-    return data
+def load_data(fpath) -> None | NodeTree:
+    with open(fpath, "r") as fp:
+        data = yaml.unsafe_load(fp)
+        match data:
+            case NodeTree():
+                tree = data
+            case[Node(), *_]:
+                tree = NodeTree.from_nodes(None, data)
+            case[Recipe(), NodeTree()]:
+                _, tree = data
+            case[Recipe(), *_]:
+                _, data = data
+                tree = NodeTree.from_nodes(None, data)
+            case _:
+                log(f"Could not parse file: `{fpath}`", timeout=10)
+                return
+    return tree

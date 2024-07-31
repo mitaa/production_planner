@@ -59,7 +59,7 @@ class Planner(App):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.log("hello ??")
+        core.APP = self
         if not DPATH_DATA.is_dir():
             os.makedirs(DPATH_DATA)
         self.title = CONFIG["last_file"]
@@ -85,18 +85,20 @@ class Planner(App):
             if not skip_on_nonexist:
                 self.notify(f"File does not exist: `{fpath}`", severity="error", timeout=10)
             return
-        with open(fpath, "r") as fp:
-            data = yaml.unsafe_load(fp)
-            tree = core.load_data(data)
-            if tree is None:
-                self.notify(f"Could not parse file: `{fpath}`", timeout=10)
-            else:
-                self.data = tree
 
-            if not fname.startswith("."):
-                CONFIG["last_file"] = fname
-                self.title = fname
-                self.notify(f"File loaded: `{fpath}`", timeout=10)
+        tree = core.load_data(fpath)
+        if tree is None:
+            self.notify(f"Could not parse file: `{fpath}`", severity="error", timeout=10)
+        else:
+            self.data = tree
+
+        curname = os.path.splitext(CONFIG["last_file"])[0]
+        self.data.reload_modules(module_stack=[curname])
+
+        if not fname.startswith("."):
+            CONFIG["last_file"] = fname
+            self.title = fname
+            self.notify(f"File loaded: `{fpath}`", timeout=10)
 
     def save_data(self, fname=".cached.yaml") -> bool:
         if not DPATH_DATA.is_dir():
@@ -113,6 +115,15 @@ class Planner(App):
         def save_file(fname: str) -> None:
             if not fname:
                 self.notify("Saving File Canceled")
+                return
+            self.data.collect_modules()
+            if os.path.splitext(fname)[0] in self.data.blueprints:
+                self.notify(f"Saving to `{fname}` would create recursive modules",
+                            severity="error",
+                            timeout=10)
+                self.notify(f"Modules included: {repr(self.data.blueprints)}",
+                            severity="warning",
+                            timeout=10)
                 return
             fpath = DPATH_DATA / fname
             self.save_data(fname)
@@ -207,11 +218,9 @@ class Planner(App):
             if recipe:
                 node.recipe = recipe
                 node.update()
-                if node.producer.name in ["Module", "Blueprint"]:
-                    module_name = node.recipe.name
-                    module_tree = node.module_listings[f"{module_name}.yaml"][1]
-                    instance.node_children.clear()
-                    instance.add_children([module_tree])
+                instance.set_module(node.recipe.name)
+                curname = os.path.splitext(CONFIG["last_file"])[0]
+                self.data.reload_modules([instance], module_stack=[curname])
             self.update()
             table.cursor_coordinate = Coordinate(row, col)
 
@@ -339,7 +348,6 @@ class Planner(App):
         #        just for highlighting by doing it right the first time
         table = self.query_one(PlannerTable)
         row = event.coordinate.row
-        # FIXME: delme
         idx_data = row - 1
 
         instance = self.data.get_node(row)
