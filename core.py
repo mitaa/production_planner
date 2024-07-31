@@ -162,13 +162,13 @@ class Purity(Enum):
 
 class Node:
     yaml_tag = "!Node"
-    blueprint_listings = {}
+    module_listings = {}
 
     def __init__(self, producer, recipe, count=1, clock_rate=100, mk=1, purity=Purity.NORMAL, is_dummy=False):
-        # a dummy is a read-only, non-interactable, row - for example expanded from a blueprint
+        # a dummy is a read-only, non-interactable, row - for example expanded from a module
         # (can't shift it, can't delete it)
         self.is_dummy = is_dummy
-        self.blueprint_children = []
+        self.module_children = []
         self.producer = producer
         self.recipe = recipe
         self.count = count
@@ -193,18 +193,18 @@ class Node:
         self.energy = 0
         self.update()
 
-    def update_blueprint_listings(self):
-        if not self.producer.name == "Blueprint":
+    def update_module_listings(self):
+        if not self.producer.name == "Module":
             return
         self.producer.recipes = [Recipe.empty()]
         names = list(os.scandir(DPATH_DATA))
         fnames = [entry.name for entry in names if entry.is_file() if not entry.name.startswith(".")]
         for fname in fnames:
-            self.update_blueprint(fname)
+            self.update_module(fname)
         self.producer.update_recipe_map()
 
-    def update_blueprint(self, fname):
-        if not self.producer.name == "Blueprint":
+    def update_module(self, fname):
+        if not self.producer.name == "Module":
             return
         if not fname.lower().endswith(".yaml"):
             fname += ".yaml"
@@ -219,33 +219,24 @@ class Node:
                     raise ValueError("Unexpected Data Format:\n" + str(data))
 
                 tree.update_summaries()
-                bp_recipe = tree.node_main.recipe
-                bp_nodes = []
+                module_recipe = tree.node_main.recipe
+                module_nodes = []
 
-                # if data:
-                #     # FIXME: update for NodeInstances
-                #     if isinstance(data[0], Recipe):
-                #         bp_recipe, bp_nodes = data
-                #     elif isinstance(data[0], Node):
-                #         bp_nodes = data
-                #     else:
-                #         raise ValueError("Unexpected Data Format:\n" + str(data))
-
-            bp_recipe.name = os.path.splitext(fname)[0]
-            # FIXME: deal with nested blueprints and circular references
+            module_recipe.name = os.path.splitext(fname)[0]
+            # FIXME: deal with nested modules and circular references
             # WARNING: we're not shadowing the class variable here - it should stay that way!
-            self.blueprint_listings[fname] = (bp_recipe, tree)
-            self.producer.recipes += [bp_recipe]
+            self.module_listings[fname] = (module_recipe, tree)
+            self.producer.recipes += [module_recipe]
         except Exception as e:
             print("nOOOO!")
             print(e)
         return True
 
     @property
-    def blueprint_rows(self):
-        # TODO: implement blueprint expansion (insert blueprint child nodes into data table)
+    def module_rows(self):
+        # TODO: implement module expansion (insert module child nodes into data table)
         #       -> move expansion code from here to NodeInstance
-        if not self.producer.name == "Blueprint":
+        if not self.producer.name == "Module":
             return []
 
     def update(self):
@@ -278,16 +269,16 @@ empty_producer = Producer(
         recipes={"":     [60, [], []],}
 )
 
-# TODO rename `blueprint` to `module`
-blueprint_producer = Producer(
-        "Blueprint",
+# TODO rename `module` to `module`
+module_producer = Producer(
+        "Module",
         is_miner=False,
         is_pow_gen=False,
         max_mk=0,
         base_power=0,
         recipes={"": [60, [], []], }
 )
-PRODUCERS = [blueprint_producer]
+PRODUCERS = [module_producer]
 data_fpath = "satisfactory_production_buildings.json"
 with open(data_fpath) as fp:
     data = json.load(fp)
@@ -299,6 +290,7 @@ for k, v in data.items():
 PRODUCERS += [empty_producer]
 
 PRODUCER_MAP = {p.name: p for p in PRODUCERS}
+PRODUCER_MAP["Blueprint"] = PRODUCER_MAP["Module"]
 
 
 def node_representer(dumper, data):
@@ -321,8 +313,8 @@ def node_constructor(loader, node):
                 clock_rate = data["clock_rate"],
                 mk         = data["mk"],
                 purity     = Purity(data["purity"]))
-    if prod.name == "Blueprint":
-        node.update_blueprint(data["recipe"])
+    if prod.name in ["Blueprint", "Module"]:
+        node.update_module(data["recipe"])
         prod.update_recipe_map()
         if data["recipe"] in prod.recipe_map:
             node.recipe = prod.recipe_map[data["recipe"]]
@@ -363,7 +355,7 @@ class SummaryNode(Node):
         # TODO: also handle power consumption
         sums = {}
         for node in nodes:
-            # TODO: handle and update Blueprint nodes here before processing it's dependent recipe
+            # TODO: handle and update Module nodes here before processing it's dependent recipe
             for ingredient, quantity in node.ingredients.items():
                 sums[ingredient] = sums.get(ingredient, 0) + quantity
         # TODO: perhpas cull ingredients with zero quantity ?
@@ -393,7 +385,7 @@ class NodeInstance:
     def __init__(self, node:Node, children:[Self]=None, parent:[Self]=None, shown=True, expanded=True, row_idx=None, level=0):
         self.parent = parent
         self.node_main = node
-        # FIXME: add blueprint children nodes automatically
+        # FIXME: add module children nodes automatically
         if children is None:
             children = []
 

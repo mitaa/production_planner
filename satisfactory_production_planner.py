@@ -38,6 +38,8 @@ class Planner(App):
         ("s", "save", "Save"),
         ("l", "load", "Load"),
         ("d", "delete", "Delete"),
+        ("ctrl+left", "collapse", "Collapse"),
+        ("ctrl+right", "expand", "Expand"),
         ("f2", "show_hide", "Show/Hide"),
         ("f3", "swap_vis_space", "Swap Shown/Hidden"),
     ]
@@ -143,6 +145,24 @@ class Planner(App):
         self.rows_data_hidden = buf
         self.update()
 
+    def action_collapse(self):
+        table = self.query_one(PlannerTable)
+        row = table.cursor_coordinate.row
+        col = table.cursor_coordinate.column
+        instance = self.data.get_node(row)
+        instance.expanded = False
+        self.update()
+        table.cursor_coordinate = Coordinate(row, col)
+
+    def action_expand(self):
+        table = self.query_one(PlannerTable)
+        row = table.cursor_coordinate.row
+        col = table.cursor_coordinate.column
+        instance = self.data.get_node(row)
+        instance.expanded = True
+        self.update()
+        table.cursor_coordinate = Coordinate(row, col)
+
     def action_delete(self):
         def delete_file(fname: str) -> None:
             if not fname:
@@ -188,17 +208,17 @@ class Planner(App):
                 node.recipe = recipe
                 node.update()
                 if node.producer.name in ["Module", "Blueprint"]:
-                    bp_name = node.recipe.name
-                    bp_tree = node.blueprint_listings[f"{bp_name}.yaml"][1]
+                    module_name = node.recipe.name
+                    module_tree = node.module_listings[f"{module_name}.yaml"][1]
                     instance.node_children.clear()
-                    instance.add_children([bp_tree])
+                    instance.add_children([module_tree])
             self.update()
             table.cursor_coordinate = Coordinate(row, col)
 
         if col == 0:   # Building
             self.push_screen(SelectProducer(), set_producer)
         elif col == 1: # Recipe
-            self.selected_node.update_blueprint_listings()
+            self.selected_node.update_module_listings()
             self.push_screen(SelectRecipe(), set_recipe)
         elif col == 4: # Purity
             if node.producer.is_miner:
