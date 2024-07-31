@@ -263,7 +263,7 @@ class Node:
         if self.producer.is_pow_gen:
             pass # TODO
         else:
-            self.enegry = round(self.producer.base_power * math.pow((self.clock_rate/100), 1.321928) * self.count)
+            self.energy = round(self.producer.base_power * math.pow((self.clock_rate/100), 1.321928) * self.count)
 
 empty_producer = Producer(
         "",
@@ -356,6 +356,7 @@ class SummaryNode(Node):
         ...
 
     def update_recipe(self, nodes: [Node]) -> Recipe:
+        # TODO: also handle power consumption
         sums = {}
         for node in nodes:
             # TODO: handle and update Blueprint nodes here before processing it's dependent recipe
