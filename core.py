@@ -182,7 +182,7 @@ class Node:
         self.update()
 
     def producer_reset(self):
-        if not self.recipe or not self.recipe.name in self.producer.recipe_map:
+        if not self.recipe or self.recipe.name not in self.producer.recipe_map:
             self.recipe = self.producer.recipes[0] if self.producer.recipes else Recipe.empty()
 
         if self.producer.is_miner:
@@ -196,7 +196,6 @@ class Node:
     def update_blueprint_listings(self):
         if not self.producer.name == "Blueprint":
             return
-        print("update")
         self.producer.recipes = [Recipe.empty()]
         names = list(os.scandir(DPATH_DATA))
         fnames = [entry.name for entry in names if entry.is_file() if not entry.name.startswith(".")]
@@ -215,23 +214,27 @@ class Node:
                 return False
             with open(DPATH_DATA / fname, "r") as fp:
                 data = yaml.unsafe_load(fp)
-                bp_nodes = []
-                bp_recipe = None
-                if data:
-                    # FIXME: update for NodeInstances
-                    if isinstance(data[0], Recipe):
-                        bp_recipe, bp_nodes = data
-                    elif isinstance(data[0], Node):
-                        bp_nodes = data
-                    else:
-                        raise ValueError("Unexpected Data Format:\n" + str(data))
+                tree = load_data(data)
+                if tree is None:
+                    raise ValueError("Unexpected Data Format:\n" + str(data))
 
-            if not isinstance(bp_recipe, Recipe):
-                bp_recipe = Recipe(fname, 60, [], [])
+                tree.update_summaries()
+                bp_recipe = tree.node_main.recipe
+                bp_nodes = []
+
+                # if data:
+                #     # FIXME: update for NodeInstances
+                #     if isinstance(data[0], Recipe):
+                #         bp_recipe, bp_nodes = data
+                #     elif isinstance(data[0], Node):
+                #         bp_nodes = data
+                #     else:
+                #         raise ValueError("Unexpected Data Format:\n" + str(data))
+
             bp_recipe.name = os.path.splitext(fname)[0]
             # FIXME: deal with nested blueprints and circular references
             # WARNING: we're not shadowing the class variable here - it should stay that way!
-            self.blueprint_listings[fname] = (bp_recipe, bp_nodes)
+            self.blueprint_listings[fname] = (bp_recipe, tree)
             self.producer.recipes += [bp_recipe]
         except Exception as e:
             print("nOOOO!")
@@ -248,7 +251,7 @@ class Node:
     def update(self):
         self.energy = 0
         self.ingredients = {}
-        rate_mult = 60/self.recipe.cycle_rate
+        rate_mult = 60 / self.recipe.cycle_rate
 
         ingredient_mult = rate_mult * (self.clock_rate * self.count) / 100
         for inp in self.recipe.inputs:
@@ -264,6 +267,7 @@ class Node:
             pass # TODO
         else:
             self.energy = round(self.producer.base_power * math.pow((self.clock_rate/100), 1.321928) * self.count)
+
 
 empty_producer = Producer(
         "",
@@ -400,21 +404,22 @@ class NodeInstance:
         self.row_idx = row_idx
         self.level = level
 
-    def add_child(self, instance: Self, at_idx=None):
+    def add_children(self, instances: [Self], at_idx=None):
         root = self
         if at_idx is None:
             at_idx = len(self.node_children)
-            instance.parent = self
         elif isinstance(at_idx, NodeInstance):
             if at_idx.parent is None:
                 at_idx = 0
                 instance.parent = self
             else:
                 root = at_idx.parent
-                instance.parent = root
                 at_idx = root.node_children.index(at_idx) + 1
 
-        root.node_children.insert(at_idx, instance)
+        for instance in instances:
+            instance.parent = root
+            root.node_children.insert(at_idx, instance)
+            at_idx += 1
 
     def get_node(self, row_idx: int) -> None | Self:
         # Force row index to be in bounds
@@ -532,7 +537,7 @@ def tree_representer(dumper, data):
 
 def tree_constructor(loader, data):
     data = loader.construct_sequence(data)
-    tree = NodeTree.from_nodeinstances(None, # _planner attribute needs to be fixed after loading...
+    tree = NodeTree.from_nodeinstances(None,  # _planner attribute needs to be fixed after loading...
                                        data)
     return tree
 
@@ -542,3 +547,20 @@ yaml.add_constructor(u'!instance', instance_constructor)
 
 yaml.add_representer(NodeTree, tree_representer)
 yaml.add_constructor(u'!tree', tree_constructor)
+
+
+def load_data(data) -> None | NodeTree:
+    match data:
+        case NodeTree():
+            ...
+        case[Node(), *_]:
+            data = NodeTree.from_nodes(None, data)
+        case[Recipe(), NodeTree()]:
+            _, data = data
+        case[Recipe(), *_]:
+            _, data = data
+            data = NodeTree.from_nodes(None, data)
+        case _:
+            log(f"Could not parse file: `{fpath}`", timeout=10)
+            return
+    return data

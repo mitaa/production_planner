@@ -1,6 +1,7 @@
 #! /bin/env python
 # -*- coding:utf-8 -*-
 
+import core
 from core import CONFIG, DPATH_DATA, Node, SummaryNode, NodeInstance, NodeTree, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
 from screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, DataFileNamer, OverwriteScreen
 from datatable import PlannerTable, EmptyCell, SummaryCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, NumberCell
@@ -84,24 +85,11 @@ class Planner(App):
             return
         with open(fpath, "r") as fp:
             data = yaml.unsafe_load(fp)
-            match data:
-                case NodeTree():
-                    data._planner = self
-                    self.data = data
-                    self.summary_recipe = Recipe.empty("summary")
-                case[Node(), *_]:
-                    self.data = NodeTree.from_nodes(self, data)
-                    self.summary_recipe = Recipe.empty("summary")
-                case[Recipe(), NodeTree()]:
-                    self.summary_recipe, data = data
-                    data._planner = self
-                    self.data = data
-                case[Recipe(), *_]:
-                    self.summary_recipe, data = data
-                    self.data = NodeTree.from_nodes(self, data)
-                case _:
-                    self.notify(f"Could not parse file: `{fpath}`", timeout=10)
-                    return
+            tree = core.load_data(data)
+            if tree is None:
+                self.notify(f"Could not parse file: `{fpath}`", timeout=10)
+            else:
+                self.data = tree
 
             if not fname.startswith("."):
                 CONFIG["last_file"] = fname
@@ -173,7 +161,8 @@ class Planner(App):
 
         col = table.cursor_coordinate.column
         paths = ["producer", "recipe", "", "", "purity"]
-        node = self.data.get_node(row).node_main
+        instance = self.data.get_node(row)
+        node = instance.node_main
         if isinstance(node, SummaryNode):
             return
 
@@ -198,6 +187,11 @@ class Planner(App):
             if recipe:
                 node.recipe = recipe
                 node.update()
+                if node.producer.name in ["Module", "Blueprint"]:
+                    bp_name = node.recipe.name
+                    bp_tree = node.blueprint_listings[f"{bp_name}.yaml"][1]
+                    instance.node_children.clear()
+                    instance.add_children([bp_tree])
             self.update()
             table.cursor_coordinate = Coordinate(row, col)
 
@@ -241,7 +235,8 @@ class Planner(App):
 
         current_node = self.data.get_node(row)
 
-        self.data.add_child(NodeInstance(copy(self.planner_nodes[0])), at_idx=current_node)
+        self.data.add_children([NodeInstance(copy(self.planner_nodes[0]))],
+                               at_idx=current_node)
         self.update()
         table.cursor_coordinate = Coordinate(row + 1, col)
 
