@@ -394,10 +394,12 @@ class NodeInstance:
         self.parent = parent
         self.node_main = node
         # FIXME: add blueprint children nodes automatically
-        if children:
-            for child in children:
-                child.parent = self
-        self.node_children = children if children else []
+        if children is None:
+            children = []
+
+        for child in children:
+            child.parent = self
+        self.node_children = children
         self.shown = shown
         self.expanded = expanded
         # TODO: self.activated = activated
@@ -492,6 +494,16 @@ class NodeInstance:
 
     def __delitem__(self, row_idx):
         self.remove_node(row_idx)
+
+    def __str__(self) -> str:
+        # FIXME
+        buf = "├ " if self.node_children else "└"
+        buf += self.node_main.producer.name
+        for child in self.node_children:
+            lines = str(child).splitlines()
+            for line in lines:
+                buf += f"\n {line}"
+        return buf
 
 
 class NodeTree(NodeInstance):
