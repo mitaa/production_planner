@@ -21,6 +21,7 @@ from copy import copy
 
 from collections import OrderedDict
 from itertools import zip_longest
+from dataclasses import dataclass
 
 from pprint import pprint
 
@@ -29,17 +30,39 @@ from pprint import pprint
 # As the fuel consumption rate is directly proportional to generator power production, verify that demand matches the production capacity to ensure that Power Shards are used to their full potential. Fuel efficiency is unchanged, but consumption and power generation rates may be unexpectedly uneven[EA].
 
 
+@dataclass
+class SelectionContext:
+    app: App
+    reselect_node = True
+    reselect_offset = 0
+    reselect = True
+    reselected = False
+
+    def __enter__(self):
+        self.row = self.app.table.cursor_coordinate.row
+        self.col = self.app.table.cursor_coordinate.column
+        self.instance = self.app.data.get_node(self.row)
+        return self.instance
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        no_exc = (exc_type, exc_value, traceback) == (None, None, None)
+        if no_exc and self.reselect and not self.reselected:
+            if self.reselect_node:
+                self.row = self.instance.row_idx
+            self.app.table.cursor_coordinate = Coordinate(self.row + self.reselect_offset, self.col)
+
+
 class Planner(App):
     BINDINGS = [
         ("+", "row_add", "Add"),
         ("-", "row_remove", "Remove"),
         ("ctrl+up", "move_up", "Shift Up"),
         ("ctrl+down", "move_down", "Shift Down"),
+        ("ctrl+right", "expand", "Expand"),
+        ("ctrl+left", "collapse", "Collapse"),
         ("s", "save", "Save"),
         ("l", "load", "Load"),
         ("d", "delete", "Delete"),
-        ("ctrl+left", "collapse", "Collapse"),
-        ("ctrl+right", "expand", "Expand"),
         ("f2", "show_hide", "Show/Hide"),
         ("f3", "swap_vis_space", "Swap Shown/Hidden"),
     ]
@@ -72,8 +95,7 @@ class Planner(App):
                 continue
             self.planner_nodes += [Node(p, p.recipes[0])]
 
-        table = self.query_one(PlannerTable)
-        table.zebra_stripes = True
+        self.table.zebra_stripes = True
         self.data = NodeTree.from_nodes(self, [])
         # TODO: add modified marked if cached/in-memory != saved file
         self.load_data(skip_on_nonexist=True)
@@ -139,45 +161,37 @@ class Planner(App):
             self.update()
         self.push_screen(SelectDataFile() , load_file)
 
+    @property
+    def table(self):
+        return self.query_one(PlannerTable)
+
     def action_show_hide(self):
         self.num_write_mode = False
-        table = self.query_one(PlannerTable)
-        row = table.cursor_coordinate.row
-        col = table.cursor_coordinate.column
-        instance = self.data.get_node(row)
-        if instance:
+        with SelectionContext(self) as instance:
+            if instance is None:
+                return
             instance.show_hide()
             self.update()
-            table.cursor_coordinate = Coordinate(row, col)
 
     def action_swap_vis_space(self):
         self.num_write_mode = False
-        table = self.query_one(PlannerTable)
-        row = table.cursor_coordinate.row
-        col = table.cursor_coordinate.column
-        instance = self.data.get_node(row)
-        if not instance:
-            instance = self.data
         self.data.swap_vis_space()
         self.update()
+        # FIXME: which line should be reselected?
 
     def action_collapse(self):
-        table = self.query_one(PlannerTable)
-        row = table.cursor_coordinate.row
-        col = table.cursor_coordinate.column
-        instance = self.data.get_node(row)
-        instance.expanded = False
-        self.update()
-        table.cursor_coordinate = Coordinate(row, col)
+        with SelectionContext(self) as instance:
+            if instance is None:
+                return
+            instance.expanded = False
+            self.update()
 
     def action_expand(self):
-        table = self.query_one(PlannerTable)
-        row = table.cursor_coordinate.row
-        col = table.cursor_coordinate.column
-        instance = self.data.get_node(row)
-        instance.expanded = True
-        self.update()
-        table.cursor_coordinate = Coordinate(row, col)
+        with SelectionContext(self) as instance:
+            if instance is None:
+                return
+            instance.expanded = True
+            self.update()
 
     def action_delete(self):
         def delete_file(fname: str) -> None:
@@ -192,10 +206,9 @@ class Planner(App):
         self.push_screen(SelectDataFile(), delete_file)
 
     def on_data_table_cell_selected(self):
-        table = self.query_one(PlannerTable)
-        row = table.cursor_coordinate.row
+        row = self.table.cursor_coordinate.row
 
-        col = table.cursor_coordinate.column
+        col = self.table.cursor_coordinate.column
         paths = ["producer", "recipe", "", "", "purity"]
         instance = self.data.get_node(row)
         node = instance.node_main
@@ -210,14 +223,14 @@ class Planner(App):
                 node.producer = producer
                 node.producer_reset()
             self.update()
-            table.cursor_coordinate = Coordinate(row, col)
+            self.table.cursor_coordinate = Coordinate(row, col)
 
         def set_purity(purity: Purity) -> None:
             if purity:
                 node.purity = purity
                 node.update()
                 self.update()
-            table.cursor_coordinate = Coordinate(row, col)
+            self.table.cursor_coordinate = Coordinate(row, col)
 
         def set_recipe(recipe: Recipe) -> None:
             if recipe:
@@ -227,7 +240,7 @@ class Planner(App):
                 curname = os.path.splitext(CONFIG["last_file"])[0]
                 self.data.reload_modules([instance], module_stack=[curname])
             self.update()
-            table.cursor_coordinate = Coordinate(row, col)
+            self.table.cursor_coordinate = Coordinate(row, col)
 
         if col == 0:   # Building
             self.push_screen(SelectProducer(), set_producer)
@@ -240,61 +253,48 @@ class Planner(App):
 
     def action_move_up(self):
         self.num_write_mode = False
-        table = self.query_one(PlannerTable)
-        row = table.cursor_coordinate.row
-        col = table.cursor_coordinate.column
-        node = self.data.get_node(row)
-
-        if node and node.parent:
-            node.parent.shift_child(node, -1)
-            self.update()
-            table.cursor_coordinate = Coordinate(node.row_idx, col)
+        with SelectionContext(self) as instance:
+            if instance and instance.parent:
+                instance.parent.shift_child(instance, -1)
+                self.update()
 
     def action_move_down(self):
         self.num_write_mode = False
-        table = self.query_one(PlannerTable)
-        row = table.cursor_coordinate.row
-        col = table.cursor_coordinate.column
-        node = self.data.get_node(row)
-
-        if node and node.parent:
-            node.parent.shift_child(node, 1)
-            self.update()
-            table.cursor_coordinate = Coordinate(node.row_idx, col)
+        with SelectionContext(self) as instance:
+            if instance and instance.parent:
+                instance.parent.shift_child(instance, 1)
+                self.update()
 
     def action_row_add(self):
-        table = self.query_one(PlannerTable)
-        row = table.cursor_coordinate.row
-        col = table.cursor_coordinate.column
+        row = self.table.cursor_coordinate.row
+        col = self.table.cursor_coordinate.column
 
         current_node = self.data.get_node(row)
 
         self.data.add_children([NodeInstance(copy(self.planner_nodes[0]))],
                                at_idx=current_node)
         self.update()
-        table.cursor_coordinate = Coordinate(row + 1, col)
+        self.table.cursor_coordinate = Coordinate(row + 1, col)
 
     def action_row_remove(self):
-        table = self.query_one(PlannerTable)
-        row = table.cursor_coordinate.row
-        col = table.cursor_coordinate.column
+        row = self.table.cursor_coordinate.row
+        col = self.table.cursor_coordinate.column
 
         if not self.data or row < 1:
             return
         del self.data[row]
         self.update()
-        table.cursor_coordinate = Coordinate(row, col)
+        self.table.cursor_coordinate = Coordinate(row, col)
 
     def on_key(self, event: events.Key) -> None:
         if len(self.screen_stack) > 1:
             return
-        table = self.query_one(PlannerTable)
         paths = ["", "", "count", "mk", "", "clock_rate"]
         paths = [f"node_main.{p}" if p else "" for p in paths]
         # FIXME: verify if it works
 
-        row = table.cursor_coordinate.row
-        col = table.cursor_coordinate.column
+        row = self.table.cursor_coordinate.row
+        col = self.table.cursor_coordinate.column
         coord = Coordinate(row, col)
         idx_data = row - 1
 
@@ -324,13 +324,13 @@ class Planner(App):
                 set_path(node, path, prev)
                 node.node_main.update()
                 self.update()
-                table.cursor_coordinate = coord
+                self.table.cursor_coordinate = coord
             elif event.key == "delete":
                 set_path(node, path, 0)
                 node.node_main.update()
                 self.num_write_mode = False
                 self.update()
-                table.cursor_coordinate = coord
+                self.table.cursor_coordinate = coord
             elif event.key == "backspace":
                 prev = str(get_path(node, path))
                 new = prev[:-1]
@@ -340,7 +340,7 @@ class Planner(App):
                 node.node_main.update()
                 self.num_write_mode = False
                 self.update()
-                table.cursor_coordinate = coord
+                self.table.cursor_coordinate = coord
             else:
                 self.num_write_mode = False
         else:
@@ -351,7 +351,6 @@ class Planner(App):
         # TODO: customize highlighting
         # FIXME: can be moved into table class and avoid the unneccessary redraw
         #        just for highlighting by doing it right the first time
-        table = self.query_one(PlannerTable)
         row = event.coordinate.row
         idx_data = row - 1
 
@@ -360,13 +359,13 @@ class Planner(App):
         if instance:
             node = instance.node_main
             ingredients = [ingr.name for ingr in (node.recipe.inputs + node.recipe.outputs)]
-            table.rows_to_highlight = [row]
+            self.table.rows_to_highlight = [row]
         else:
             ingredients = []
-            table.rows_to_highlight = []
+            self.table.rows_to_highlight = []
 
-        table.cols_to_highlight = [col.name in ingredients for idx, col in enumerate(self.columns)]
-        table.refresh()
+        self.table.cols_to_highlight = [col.name in ingredients for idx, col in enumerate(self.columns)]
+        self.table.refresh()
 
     def update(self):
         columns_ingredients = []
@@ -416,11 +415,10 @@ class Planner(App):
             self.rows += [[cell.get_styled() for cell in row]]
         self.columns = (columns + columns_ingredients)
 
-        table = self.query_one(PlannerTable)
-        table.clear(columns=True)
-        table.add_columns(*(c.name for c in self.columns))
-        table.add_rows(self.rows)
-        table.fixed_columns = 3
+        self.table.clear(columns=True)
+        self.table.add_columns(*(c.name for c in self.columns))
+        self.table.add_rows(self.rows)
+        self.table.fixed_columns = 3
 
 
 def main():
