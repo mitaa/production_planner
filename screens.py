@@ -3,52 +3,157 @@
 from core import CONFIG, DPATH_DATA, get_path, set_path, Producer, Purity, Recipe, PRODUCERS
 
 import os
+import re
 
 from textual import on
 from textual.containers import Grid
 from textual.screen import ModalScreen
 from textual.app import App, ComposeResult
-from textual.widgets import Label, Button, Footer, Input, Pretty, DataTable
+from textual.widgets import Label, Button, Header, Footer, Input, Pretty, DataTable
 from textual.validation import Function
 from textual.coordinate import Coordinate
+from textual import events
 
 from rich.text import Text
 
 
-class SelectProducer(ModalScreen[Producer]):
+class FilteredListSelector(ModalScreen[Producer]):
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
     ]
     data = []
+    data_filtered = []
+    filter_str = ""
+
+    def on_mount(self) -> None:
+        self.header.tall = True
+        self.query_one(DataTable).cursor_type = "row"
+        self.set_filt()
+
     def compose(self) -> ComposeResult:
+        yield Header()
         yield DataTable()
         yield Footer()
 
-    def on_mount(self) -> None:
-        def bool_to_mark(a, mark="x"):
-            return mark if a else ""
+    @property
+    def header(self):
+        return self.query_one(Header)
 
-        self.data = PRODUCERS
+    def action_cancel(self):
+        self.app.sub_title = ""
+        self.header.tall = False
+        self.dismiss(None)
+
+    def on_data_table_row_selected(self):
+        self.app.sub_title = ""
+        self.header.tall = False
         table = self.query_one(DataTable)
-        table.cursor_type = "row"
-        table.add_columns("Building", "Power", "Miner", "Power Gen")
-        rows = []
-        for p in self.data:
-            rows += [[p.name, p.base_power, bool_to_mark(p.is_miner), bool_to_mark(p.is_pow_gen)]]
-        table.add_rows(rows)
+        row = table.cursor_coordinate.row
+        self.dismiss(self.data_filtered[row])
+
+    def set_filt(self):
+        to_filt = self.filter_str if self.filter_str else "<type anywhere>"
+        self.app.sub_title = f"Filter: `{to_filt}`"
+
+        self.data_filtered = []
+        words = re.split(r"\s+", self.filter_str)
+        for item in self.data:
+            item_str = str(item).lower()
+            if all(word in item_str for word in words):
+                self.data_filtered += [item]
+        self.update()
+
+    def update(self):
+        pass
+
+    def on_key(self, event: events.Key) -> None:
+        if len(self.app.screen_stack) > 2:
+            return
+
+        prev_filter_str = self.filter_str
+        match event.key:
+            case "delete":
+                self.filter_str = ""
+            case "backspace":
+                self.filter_str = self.filter_str[:-1]
+            case "space":
+                event.key = " "
+
+        if len(event.key) == 1 and event.key.isprintable():
+            self.filter_str += event.key
+
+        if prev_filter_str != self.filter_str:
+            self.set_filt()
+
+
+
+
+class SelectProducer(FilteredListSelector):
+    screen_title = "Producers"
+
+    def on_mount(self) -> None:
+        self.data = PRODUCERS
         try:
             row = self.data.index(self.app.selected_node.producer)
         except ValueError as e:
             row = 0
-        table.cursor_coordinate = Coordinate(row, 0)
-
-    def action_cancel(self):
-        self.dismiss(None)
-
-    def on_data_table_row_selected(self):
         table = self.query_one(DataTable)
-        row = table.cursor_coordinate.row
-        self.dismiss(self.data[row])
+        table.cursor_coordinate = Coordinate(row, 0)
+        super().on_mount()
+
+    def update(self):
+        def bool_to_mark(a, mark="x"):
+            return mark if a else ""
+        table = self.query_one(DataTable)
+        table.clear(columns=True)
+        table.add_columns("Building", "Power", "Miner", "Power Gen")
+        rows = []
+        for p in self.data_filtered:
+            rows += [[p.name, p.base_power, bool_to_mark(p.is_miner), bool_to_mark(p.is_pow_gen)]]
+        table.add_rows(rows)
+
+
+class SelectRecipe(FilteredListSelector):
+    screen_title = "Recipes"
+
+    def on_mount(self) -> None:
+        self.data = self.app.selected_producer.recipes
+        table = self.query_one(DataTable)
+        try:
+            row = self.data.index(self.app.selected_node.recipe)
+        except ValueError as e:
+            row = 0
+        table.cursor_coordinate = Coordinate(row, 0)
+        super().on_mount()
+
+    def update(self):
+        def ingredient_count(attr):
+            if self.data_filtered:
+                return max(len(getattr(recipe, attr)) for recipe in self.data_filtered)
+            else:
+                return 0
+
+        table = self.query_one(DataTable)
+        table.clear(columns=True)
+        max_input_count = ingredient_count("inputs")
+        max_output_count = ingredient_count("outputs")
+        rows = []
+
+        for recipe in self.data_filtered:
+            rate_mult = 60 / recipe.cycle_rate
+            row = [recipe.name]
+            inputs  = [Text(f"({round(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="red") for ingr in recipe.inputs]
+            outputs = [Text(f"({round(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="green") for ingr in recipe.outputs]
+            inputs += [""] * (max_input_count - len(inputs))
+            outputs += [""] * (max_output_count - len(outputs))
+            row += inputs
+            row += outputs
+            rows += [row]
+
+        table.add_columns(*(["Recipe Name"]
+                            + [f"I #{i}" for i in range(max_input_count)]
+                            + [f"O #{i}" for i in range(max_output_count)]))
+        table.add_rows(rows)
 
 
 class SelectPurity(ModalScreen[Purity]):
@@ -76,59 +181,6 @@ class SelectPurity(ModalScreen[Purity]):
         table.add_rows([[p.name.title()] for p in self.data])
         try:
             row = self.data.index(self.app.selected_node.purity)
-        except ValueError as e:
-            row = 0
-        table.cursor_coordinate = Coordinate(row, 0)
-
-    def action_cancel(self):
-        self.dismiss(None)
-
-    def on_data_table_row_selected(self):
-        table = self.query_one(DataTable)
-        row = table.cursor_coordinate.row
-        self.dismiss(self.data[row])
-
-
-class SelectRecipe(ModalScreen[Recipe]):
-    BINDINGS = [
-        ("escape", "cancel", "Cancel"),
-    ]
-    data = []
-
-    def compose(self) -> ComposeResult:
-        yield DataTable()
-        yield Footer()
-
-    def on_mount(self) -> None:
-        def bool_to_mark(a, mark="x"):
-            return mark if a else ""
-
-        self.data = self.app.selected_producer.recipes
-        table = self.query_one(DataTable)
-        table.cursor_type = "row"
-        # table.add_columns(*(r.name for r in self.app.selected_producer.recipes))
-
-        # inputs = list(zip_longest(*[recipe.inputs for recipe in self.app.selected_producer.recipes]))
-        # outputs = list(zip_longest(*[recipe.outputs for recipe in self.app.selected_producer.recipes]))
-        max_input_count = max(len(recipe.inputs) for recipe in self.app.selected_producer.recipes)
-        max_output_count = max(len(recipe.outputs) for recipe in self.app.selected_producer.recipes)
-        rows = []
-
-        for recipe in self.app.selected_producer.recipes:
-            rate_mult = 60 / recipe.cycle_rate
-            row = [recipe.name]
-            inputs  = [Text(f"({round(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="red") for ingr in recipe.inputs]
-            outputs = [Text(f"({round(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="green") for ingr in recipe.outputs]
-            inputs += [""] * (max_input_count - len(inputs))
-            outputs += [""] * (max_output_count - len(outputs))
-            row += inputs
-            row += outputs
-            rows += [row]
-
-        table.add_columns(*(["Recipe Name"] + [f"I #{i}" for i in range(max_input_count)] + [f"O #{i}" for i in range(max_output_count)]))
-        table.add_rows(rows)
-        try:
-            row = self.data.index(self.app.selected_node.recipe)
         except ValueError as e:
             row = 0
         table.cursor_coordinate = Coordinate(row, 0)

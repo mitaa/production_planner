@@ -117,6 +117,15 @@ class Producer:
         for recipe in self.recipes:
             self.recipe_map[recipe.name] = recipe
 
+    def __str__(self):
+        buf = self.name
+        flags = [self.is_miner, self.is_pow_gen]
+        attrs = ["Miner", "Power Generator"]
+        attrs = [attr for idx, attr in enumerate(attrs) if flags[idx]]
+        if attrs:
+            buf += f" ({', '.join(attrs)})"
+        return buf
+
 
 class Producers:
     def __init__(self):

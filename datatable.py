@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 
-from core import get_path, set_path, Purity
+from core import APP, get_path, set_path, Purity
 
 from textual.widgets import DataTable
 
