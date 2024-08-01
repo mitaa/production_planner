@@ -126,6 +126,10 @@ class Producer:
             buf += f" ({', '.join(attrs)})"
         return buf
 
+    @property
+    def is_module(self):
+        return self.name in ["Module", "Blueprint"]
+
 
 class Producers:
     def __init__(self):
@@ -206,7 +210,7 @@ class Node:
         self.update()
 
     def update_module_listings(self):
-        if not self.producer.name == "Module":
+        if not self.producer.is_module:
             return
         self.producer.recipes = [Recipe.empty()]
         names = list(os.scandir(DPATH_DATA))
@@ -216,7 +220,7 @@ class Node:
         self.producer.update_recipe_map()
 
     def update_module_listing(self, fname) -> bool:
-        if not self.producer.name in ["Module", "Blueprint"]:
+        if not self.producer.is_module:
             return
         if not fname.lower().endswith(".yaml"):
             fname += ".yaml"
@@ -264,6 +268,10 @@ class Node:
             pass # TODO
         else:
             self.energy = round(self.producer.base_power * math.pow((self.clock_rate/100), 1.321928) * self.count)
+
+    @property
+    def is_module(self):
+        return self.producer.is_module
 
 
 empty_producer = Producer(
@@ -322,7 +330,7 @@ def node_constructor(loader, node):
                 clock_rate = data["clock_rate"],
                 mk         = data["mk"],
                 purity     = Purity(data["purity"]))
-    if prod.name in ["Blueprint", "Module"]:
+    if prod.is_module:
         if not data["recipe"] in SEEN_MODULES:
             SEEN_MODULES.add(data["recipe"])
             node.update_module_listing(data["recipe"])
@@ -503,7 +511,7 @@ class NodeInstance:
             child.update_parents()
 
     def set_module(self, module_name: str):
-        if not self.node_main.producer.name in ["Module", "Blueprint"]:
+        if not self.node_main.is_module:
             return
         fname = f"{module_name}.yaml"
         if not self.node_main.update_module_listing(fname):
@@ -516,7 +524,7 @@ class NodeInstance:
         if level == 0:
             self.blueprints.clear()
 
-        if self.node_main.producer.name in ["Module", "Blueprint"]:
+        if self.node_main.is_module:
             self.blueprints.add(self.node_main.recipe.name)
 
         for child in self.node_children:
@@ -560,7 +568,7 @@ class NodeTree(NodeInstance):
     def reload_modules(self, instances=None, module_stack=None):
         module_stack = module_stack or []
         def reload_module(instance) -> str | bool | None:
-            if instance.node_main.producer.name in ["Module", "Blueprint"]:
+            if instance.node_main.is_module:
                 module = instance.node_main.recipe.name
                 log(f"reloading module: {module}")
                 self.blueprints.add(module)

@@ -86,6 +86,8 @@ class PurityCell(Cell):
 class ClockRateCell(Cell):
     name = "Clockrate"
     path = "clock_rate"
+    def get(self):
+        return "" if self.data.producer.is_module else self.data.clock_rate
 
 class PowerCell(Cell):
     name = "Power"

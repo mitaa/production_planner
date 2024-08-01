@@ -303,6 +303,9 @@ class Planner(App):
         # TODO: prevent too large numbers, if too large reset number
         if col in {2, 3, 5} and not isinstance(node.node_main, SummaryNode):
             path = paths[col]
+            if col == 5 and node.node_main.is_module:
+                self.num_write_mode = False
+                return
 
             if len(event.key) == 1 and 58 > ord(event.key) > 47:
                 prev = str(get_path(node, path))
@@ -349,8 +352,7 @@ class Planner(App):
     def on_data_table_cell_highlighted(self, event):
         # Highlight ingredient columns relevant to current row
         # TODO: customize highlighting
-        # FIXME: can be moved into table class and avoid the unneccessary redraw
-        #        just for highlighting by doing it right the first time
+        # FIXME: just move it into the `update` method and avoid needlessly redrawing
         row = event.coordinate.row
         idx_data = row - 1
 
@@ -364,6 +366,7 @@ class Planner(App):
             ingredients = []
             self.table.rows_to_highlight = []
 
+        # FIXME: at this point no `update` call has been made and `self.columns` is not up-to-date !
         self.table.cols_to_highlight = [col.name in ingredients for idx, col in enumerate(self.columns)]
         self.table.refresh()
 
@@ -398,6 +401,15 @@ class Planner(App):
         for column in col_add:
             IngredientColumn = type(column, (NumberCell,), {"name": column, "path": column})
             columns_ingredients += [IngredientColumn]
+        self.columns = (columns + columns_ingredients)
+
+        # FIXME: rather than re-selection being immetiate it should be deferred to occur at the end of this method
+        #        1. Update NodeTree structure
+        #        2. Update displayed columns list
+        #        3. Get re-seleced node
+        #        4. Update highlighted rows/columns information
+        #        5. Update DataTable
+        #        6. Actually re-select node/cell
 
         self.rows = []
         sums = []
@@ -413,7 +425,6 @@ class Planner(App):
             for c in col_add:
                 row += [SummaryCell(node, c) if is_summary else NumberCell(node, c)]
             self.rows += [[cell.get_styled() for cell in row]]
-        self.columns = (columns + columns_ingredients)
 
         self.table.clear(columns=True)
         self.table.add_columns(*(c.name for c in self.columns))
