@@ -372,19 +372,17 @@ class Planner(App):
 
     def update(self):
         columns_ingredients = []
-        columns = [
-                    ProducerCell,
-                    RecipeCell,
-                    CountCell,
-                    MkCell,
-                    PurityCell,
-                    ClockRateCell,
-                    PowerCell,
-                   ]
+        columns = [ProducerCell,
+                   RecipeCell,
+                   CountCell,
+                   MkCell,
+                   PurityCell,
+                   ClockRateCell,
+                   PowerCell]
 
-        inputs_mixed  = set()
+        inputs_mixed = set()
         outputs_mixed = set()
-        inputs_only  = set()
+        inputs_only = set()
         outputs_only = set()
 
         nodes = self.data.get_nodes()
@@ -397,9 +395,10 @@ class Planner(App):
             outputs_mixed |= set(o.name for o in node.recipe.outputs)
 
         inputs_only = inputs_mixed - outputs_mixed
-        output_only = outputs_mixed - inputs_mixed
+        outputs_only = outputs_mixed - inputs_mixed
 
         col_add = list(inputs_only) + list((inputs_mixed|outputs_mixed)-(inputs_only|outputs_only)) + list(outputs_only)
+        col_add = list(outputs_only) + list((inputs_mixed|outputs_mixed)-(inputs_only|outputs_only)) + list(inputs_only)
         for column in col_add:
             IngredientColumn = type(column, (NumberCell,), {"name": column, "path": column})
             columns_ingredients += [IngredientColumn]
