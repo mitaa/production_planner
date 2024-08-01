@@ -146,13 +146,13 @@ class SelectRecipe(FilteredListSelector):
             outputs = [Text(f"({round(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="green") for ingr in recipe.outputs]
             inputs += [""] * (max_input_count - len(inputs))
             outputs += [""] * (max_output_count - len(outputs))
-            row += inputs
             row += outputs
+            row += inputs
             rows += [row]
 
         table.add_columns(*(["Recipe Name"]
-                            + [f"I #{i}" for i in range(max_input_count)]
-                            + [f"O #{i}" for i in range(max_output_count)]))
+                            + [f"Out #{i}" for i in range(max_output_count)]
+                            + [f"In  #{i}" for i in range(max_input_count)]))
         table.add_rows(rows)
 
 
