@@ -391,6 +391,8 @@ class Planner(App):
 
         for node_instance in nodes:
             node = node_instance.node_main
+            if isinstance(node, SummaryNode):
+                continue
             inputs_mixed |= set(i.name for i in node.recipe.inputs)
             outputs_mixed |= set(o.name for o in node.recipe.outputs)
 
