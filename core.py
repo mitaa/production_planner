@@ -194,6 +194,7 @@ class Node:
         self.uirow = None
         self.ui_elems = []
         self.energy = 0
+        self.energy_module = 0
         self.ingredients = {}
         self.update()
 
@@ -266,6 +267,8 @@ class Node:
 
         if self.producer.is_pow_gen:
             pass # TODO
+        elif self.is_module:
+            self.energy = self.energy_module * self.count
         else:
             self.energy = round(self.producer.base_power * math.pow((self.clock_rate/100), 1.321928) * self.count)
 
@@ -372,13 +375,15 @@ class SummaryNode(Node):
 
     def update_recipe(self, nodes: [Node]) -> Recipe:
         # TODO: also handle power consumption
+        power = 0
         sums = {}
         for node in nodes:
-            # TODO: handle and update Module nodes here before processing it's dependent recipe
+            power += node.energy
             for ingredient, quantity in node.ingredients.items():
                 sums[ingredient] = sums.get(ingredient, 0) + quantity
         # TODO: perhpas cull ingredients with zero quantity ?
         self.recipe = Recipe.from_dict(sums)
+        self.energy = power
         return self.recipe
 
 
@@ -513,12 +518,15 @@ class NodeInstance:
     def set_module(self, module_name: str):
         if not self.node_main.is_module:
             return
+
         fname = f"{module_name}.yaml"
         if not self.node_main.update_module_listing(fname):
             return
         module_tree = self.node_main.module_listings[fname][1]
         self.node_children.clear()
         self.add_children([module_tree])
+        if self.node_children:
+            self.node_main.energy_module = self.node_children[0].node_main.energy
 
     def collect_modules(self, level=0):
         if level == 0:

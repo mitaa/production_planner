@@ -235,10 +235,10 @@ class Planner(App):
         def set_recipe(recipe: Recipe) -> None:
             if recipe:
                 node.recipe = recipe
-                node.update()
                 instance.set_module(node.recipe.name)
                 curname = os.path.splitext(CONFIG["last_file"])[0]
                 self.data.reload_modules([instance], module_stack=[curname])
+                node.update()
             self.update()
             self.table.cursor_coordinate = Coordinate(row, col)
 
@@ -354,7 +354,6 @@ class Planner(App):
         # TODO: customize highlighting
         # FIXME: just move it into the `update` method and avoid needlessly redrawing
         row = event.coordinate.row
-        idx_data = row - 1
 
         instance = self.data.get_node(row)
 
@@ -397,8 +396,8 @@ class Planner(App):
         inputs_only = inputs_mixed - outputs_mixed
         outputs_only = outputs_mixed - inputs_mixed
 
-        col_add = list(inputs_only) + list((inputs_mixed|outputs_mixed)-(inputs_only|outputs_only)) + list(outputs_only)
-        col_add = list(outputs_only) + list((inputs_mixed|outputs_mixed)-(inputs_only|outputs_only)) + list(inputs_only)
+        col_add = list(inputs_only) + list((inputs_mixed | outputs_mixed) - (inputs_only | outputs_only)) + list(outputs_only)
+        col_add = list(outputs_only) + list((inputs_mixed | outputs_mixed) - (inputs_only | outputs_only)) + list(inputs_only)
         for column in col_add:
             IngredientColumn = type(column, (NumberCell,), {"name": column, "path": column})
             columns_ingredients += [IngredientColumn]
@@ -413,13 +412,13 @@ class Planner(App):
         #        6. Actually re-select node/cell
 
         self.rows = []
-        sums = []
         for node_instance in nodes:
             node = node_instance.node_main
             node.update()
             is_summary = isinstance(node, SummaryNode)
             if is_summary:
-                row = [EmptyCell()] * len(columns)
+                node.update_recipe(inst.node_main for inst in node_instance.node_children)
+                row = ([EmptyCell()] * (len(columns) - 1)) + [PowerCell(node)]
             else:
                 row = [Column(node) for Column in columns]
 
