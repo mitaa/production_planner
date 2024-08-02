@@ -33,7 +33,7 @@ def ensure_keys(store, key_def_pairings={}):
         ensure_key(store, k, v)
 
 
-DPATH_DATA = Path(appdirs.user_data_dir("satisfactory_production_planner", "mitaa"))
+DPATH_DATA = Path(appdirs.user_data_dir("production_planner", "mitaa"))
 FPATH_CONFIG = os.path.join(DPATH_DATA, ".config.json")
 CONFIG = jsonshelve.FlatShelf(FPATH_CONFIG, dump_kwargs={"indent": 4})
 
@@ -295,7 +295,7 @@ module_producer = Producer(
         recipes={"": [60, [], []], }
 )
 PRODUCERS = [module_producer]
-data_fpath = "satisfactory_production_buildings.json"
+data_fpath = os.path.join(os.path.split(os.path.abspath(__file__))[0], "production_buildings.json")
 with open(data_fpath) as fp:
     data = json.load(fp)
 

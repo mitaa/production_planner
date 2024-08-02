@@ -1,9 +1,13 @@
+A simple production planner for satisfactory.
 
+![](data/production_planner-readme.png?)
 
 ### How do I get set up? ###
-
-`py -3 -m pip install textual rich appdirs pyaml`
+```
+pip install .
+```
 
 ### How to run? ###
-
-`py -3 satisfactory_production_planner.py`
+```
+production_planner
+```
