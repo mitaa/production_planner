@@ -24,6 +24,7 @@ class FilteredListSelector(ModalScreen[Producer]):
     data = []
     data_filtered = []
     filter_str = ""
+    selected = None
 
     def on_mount(self) -> None:
         self.header.tall = True
@@ -62,9 +63,21 @@ class FilteredListSelector(ModalScreen[Producer]):
             if all(word in item_str for word in words):
                 self.data_filtered += [item]
         self.update()
+        self.select()
 
-    def update(self):
-        pass
+    def select(self):
+        it_data = iter(self.data)
+        table = self.query_one(DataTable)
+
+        row_selected = None
+        for row_number, filt_item in enumerate(self.data_filtered):
+            for item in it_data:
+                if item == self.selected:
+                    row_selected = row_number
+                    table.cursor_coordinate = Coordinate(row_selected or 0, 0)
+                    return
+                elif item == filt_item:
+                    break
 
     def on_key(self, event: events.Key) -> None:
         if len(self.app.screen_stack) > 2:
@@ -93,12 +106,7 @@ class SelectProducer(FilteredListSelector):
 
     def on_mount(self) -> None:
         self.data = PRODUCERS
-        try:
-            row = self.data.index(self.app.selected_node.producer)
-        except ValueError as e:
-            row = 0
-        table = self.query_one(DataTable)
-        table.cursor_coordinate = Coordinate(row, 0)
+        self.selected = self.app.selected_node.producer
         super().on_mount()
 
     def update(self):
@@ -118,12 +126,7 @@ class SelectRecipe(FilteredListSelector):
 
     def on_mount(self) -> None:
         self.data = self.app.selected_producer.recipes
-        table = self.query_one(DataTable)
-        try:
-            row = self.data.index(self.app.selected_node.recipe)
-        except ValueError as e:
-            row = 0
-        table.cursor_coordinate = Coordinate(row, 0)
+        self.selected = self.app.selected_node.recipe
         super().on_mount()
 
     def update(self):
