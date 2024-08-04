@@ -35,6 +35,7 @@ def ensure_keys(store, key_def_pairings={}):
 
 DPATH_DATA = Path(appdirs.user_data_dir("production_planner", "mitaa"))
 FPATH_CONFIG = os.path.join(DPATH_DATA, ".config.json")
+os.makedirs(DPATH_DATA, exist_ok=True)
 CONFIG = jsonshelve.FlatShelf(FPATH_CONFIG, dump_kwargs={"indent": 4})
 
 ensure_keys(CONFIG, {
