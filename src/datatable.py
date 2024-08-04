@@ -32,6 +32,7 @@ class Cell:
     bounds = Bounds(0, 999)
     vispath = None
     setpath = None
+    justify = "left"
 
     def __init__(self, data, read_only=None):
         self.data = data
@@ -66,7 +67,7 @@ class Cell:
             elif value > 0:
                 style += "green"
                 txt = "+" + txt
-        return Text(txt, style=style)
+        return Text(txt, style=style, justify=self.justify)
 
     def set(self, value):
         if not self.access_guard() or value is None:
@@ -181,6 +182,7 @@ class NumericEditaleCell(EditableCell):
 class CountCell(NumericEditaleCell):
     name = "QTY"
     vispath = "count"
+    justify = "right"
 
 
 class MkCell(NumericEditaleCell):
@@ -208,7 +210,6 @@ class PurityCell(NumericEditaleCell):
 
     def set_num(self, value):
         value = min(max(1, value), 3)
-        core.APP.notify(f"{value=}")
         self.set(Purity[self.purity_map[value - 1]])
 
     def access_guard(self):
@@ -228,6 +229,7 @@ class PowerCell(Cell):
     name = "Power"
     vispath = "energy"
     read_only = True
+    justify = "right"
 
 
 class IngredientCell(Cell):
@@ -235,6 +237,7 @@ class IngredientCell(Cell):
     default_na = 0
     read_only = True
     style_balance = True
+    justify = "right"
 
     def access_guard(self):
         return self.vispath in self.data.ingredients
@@ -318,7 +321,6 @@ class SelectionContext:
         if self.reselection.do and not self.reselection.done:
             row = self.row
             if self.reselection.at_node and (self.reselection.node or self.instance):
-                core.APP.notify(f"at node: {self.instance.row_idx=}")
                 row = (self.reselection.node or self.instance).row_idx
             core.APP.table.cursor_coordinate = Coordinate(row + self.reselection.offset, self.col)
             self.reselection.done = True
