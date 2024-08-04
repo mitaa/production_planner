@@ -74,6 +74,7 @@ class Ingredient:
 
 class Recipe(yaml.YAMLObject):
     yaml_tag = u"!recipe"
+
     def __init__(self, name, cycle_rate, inputs: [(int, str)], outputs: [(int, str)]):
         self.name = name
         self.cycle_rate = cycle_rate
@@ -178,6 +179,12 @@ class Purity(Enum):
     PURE   = 1
     NORMAL = 2
     IMPURE = 4
+    def __str__(self):
+        match self:
+            case Purity.NA:
+                return ""
+            case _:
+                return self.name
 
 
 empty_producer = Producer(

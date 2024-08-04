@@ -4,7 +4,7 @@
 import core
 from core import CONFIG, DPATH_DATA, Node, SummaryNode, NodeInstance, NodeTree, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
 from screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, DataFileNamer
-from datatable import PlannerTable, EmptyCell, SummaryCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
+from datatable import PlannerTable, EmptyCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
 from datatable import SelectionContext, Selection, Reselection
 
 import os
@@ -62,6 +62,16 @@ class Planner(App):
             if not p.recipes:
                 continue
             self.planner_nodes += [Node(p, p.recipes[0])]
+
+        self.edit_columns = [ProducerCell,
+                             RecipeCell,
+                             CountCell,
+                             MkCell,
+                             PurityCell,
+                             ClockRateCell,
+                             PowerCell]
+
+        self.columns = self.edit_columns[:]
 
         self.table.zebra_stripes = True
         self.data = NodeTree.from_nodes([])
@@ -187,39 +197,22 @@ class Planner(App):
 
         self.selected_producer = node.producer
         self.selected_node = node
+        cell = self.edit_columns[col] if len(self.edit_columns) > col else None
 
-        def set_producer(producer: Producer) -> None:
-            if producer:
-                node.producer = producer
-                node.producer_reset()
-                self.update()
-                sel_ctxt.reselect()
+        if cell is not None and cell.selector:
+            cell = cell(node)
+            if not cell.access_guard():
+                return
 
-        def set_purity(purity: Purity) -> None:
-            if purity:
-                node.purity = purity
-                node.update()
-                self.update()
-                sel_ctxt.reselect()
-
-        def set_recipe(recipe: Recipe) -> None:
-            if recipe:
-                node.recipe = recipe
-                instance.set_module(node.recipe.name)
-                curname = os.path.splitext(CONFIG["last_file"])[0]
-                self.data.reload_modules([instance], module_stack=[curname])
-                node.update()
-                self.update()
-                sel_ctxt.reselect()
-
-        if col == 0:   # Building
-            self.push_screen(SelectProducer(), set_producer)
-        elif col == 1:  # Recipe
-            self.selected_node.update_module_listings()
-            self.push_screen(SelectRecipe(), set_recipe)
-        elif col == 4:  # Purity
-            if node.producer.is_miner:
-                self.push_screen(SelectPurity(), set_purity)
+            def callback(value):
+                if value is not None:
+                    cell.set(value)
+                    # TODO: pass nodeinstance to initializer, replace all node references, and remove this method ...
+                    cell.edit_postproc(instance)
+                    node.update()
+                    self.update()
+                    sel_ctxt.reselect()
+            self.push_screen(cell.selector(), callback)
 
     def action_move_up(self):
         self.num_write_mode = False
@@ -252,65 +245,32 @@ class Planner(App):
     def on_key(self, event: events.Key) -> None:
         if len(self.screen_stack) > 1:
             return
-        paths = ["", "", "count", "mk", "", "clock_rate"]
-        paths = [f"node_main.{p}" if p else "" for p in paths]
-        # FIXME: verify if it works
 
         sel_ctxt = SelectionContext(reselection=Reselection(at_node=False))
-        col = sel_ctxt.col
+        col = self.edit_columns[sel_ctxt.col] if len(self.edit_columns) > sel_ctxt.col else None
         instance = sel_ctxt.instance
+        if instance is None:
+            return
 
-        if col in {2, 3, 5} and not isinstance(instance.node_main, SummaryNode):
-            path = paths[col]
-            if col == 5 and instance.node_main.is_module:
+        node = instance.node_main
+
+        if (col is None) or (not col(node).access_guard() or col.read_only):
+            self.num_write_mode = False
+            return
+
+        col = col(node)
+        match event.key:
+            case "delete":
+                self.num_write_mode = col.edit_delete()
+            case "backspace":
+                self.num_write_mode = col.edit_backspace()
+            case _ if len(event.key) == 1 and 58 > ord(event.key) > 47:
+                self.num_write_mode = col.edit_push_numeral(event.key, self.num_write_mode)
+            case _:
                 self.num_write_mode = False
                 return
-
-            if len(event.key) == 1 and 58 > ord(event.key) > 47:
-                prev = str(get_path(instance, path))
-                ccount = len(prev)
-                if not self.num_write_mode:
-                    prev = ""
-                self.num_write_mode = True
-                if (col == 2 and ccount > 2):
-                    prev = ""
-                prev += event.key
-                prev = int(prev)
-                match col:
-                    case 3 if prev < 1:
-                        prev = 1
-                        self.num_write_mode = False
-                    case 3 if prev > 3:
-                        prev = 3
-                        self.num_write_mode = False
-                    case 5 if prev > 250:
-                        prev = 250
-                        self.num_write_mode = False
-
-                set_path(instance, path, prev)
-                instance.node_main.update()
-                self.update()
-                sel_ctxt.reselect()
-            elif event.key == "delete":
-                set_path(instance, path, 0)
-                instance.node_main.update()
-                self.num_write_mode = False
-                self.update()
-                sel_ctxt.reselect()
-            elif event.key == "backspace":
-                prev = str(get_path(instance, path))
-                new = prev[:-1]
-                if len(new) == 0:
-                    new = 0
-                set_path(instance, path, int(new))
-                instance.node_main.update()
-                self.num_write_mode = False
-                self.update()
-                sel_ctxt.reselect()
-            else:
-                self.num_write_mode = False
-        else:
-            self.num_write_mode = False
+        self.update()
+        sel_ctxt.reselect()
 
     def on_data_table_cell_highlighted(self, event):
         # Highlight ingredient columns relevant to current row
@@ -339,13 +299,6 @@ class Planner(App):
             self.title = CONFIG["last_file"]
 
         columns_ingredients = []
-        columns = [ProducerCell,
-                   RecipeCell,
-                   CountCell,
-                   MkCell,
-                   PurityCell,
-                   ClockRateCell,
-                   PowerCell]
 
         inputs_mixed = set()
         outputs_mixed = set()
@@ -370,7 +323,7 @@ class Planner(App):
         for column in col_add:
             IngredientColumn = type(column, (IngredientCell,), {"name": column, "path": column})
             columns_ingredients += [IngredientColumn]
-        self.columns = (columns + columns_ingredients)
+        self.columns = (self.edit_columns + columns_ingredients)
 
         # FIXME: rather than re-selection being immetiate it should be deferred to occur at the end of this method
         #        1. Update NodeTree structure
@@ -387,12 +340,14 @@ class Planner(App):
             is_summary = isinstance(node, SummaryNode)
             if is_summary:
                 node.update_recipe(inst.node_main for inst in node_instance.node_children)
-                row = ([EmptyCell()] * (len(columns) - 1)) + [PowerCell(node)]
-            else:
-                row = [Column(node) for Column in columns]
+            row = [Column(node) for Column in self.edit_columns]
 
             for c in col_add:
-                row += [SummaryCell(node, c) if is_summary else IngredientCell(node, c)]
+                class Cell(IngredientCell):
+                    vispath = c
+                    style_summary = is_summary
+
+                row += [Cell(node, c)]
             rows += [[cell.get_styled() for cell in row]]
 
         self.table.clear(columns=True)

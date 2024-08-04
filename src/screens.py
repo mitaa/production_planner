@@ -125,8 +125,12 @@ class SelectRecipe(FilteredListSelector):
     screen_title = "Recipes"
 
     def on_mount(self) -> None:
+        if self.app.selected_node.is_module:
+            self.app.selected_node.update_module_listings()
         self.data = self.app.selected_producer.recipes
         self.selected = self.app.selected_node.recipe
+        self.app.log(repr(self.data))
+        self.app.log(repr(self.selected))
         super().on_mount()
 
     def update(self):

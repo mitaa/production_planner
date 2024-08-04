@@ -1,7 +1,10 @@
 # -*- coding:utf-8 -*-
 
 import core
-from core import get_path, set_path, Purity, NodeInstance
+from core import CONFIG, get_path, set_path, Purity, NodeInstance, SummaryNode
+from screens import SelectProducer, SelectPurity, SelectRecipe
+
+import os
 from dataclasses import dataclass
 
 from textual.widgets import DataTable
@@ -11,18 +14,29 @@ from rich.text import Text
 from rich.style import Style
 
 
+@dataclass
+class Bounds:
+    lower: int = 0
+    upper: int = 999
+
+
 class Cell:
     name = ""
-    # TODO: delete / This can't be accessed later because Cells are ephemeral
-    read_only = False
+    default = ""
+    default_na = ""
+    read_only = True
     style_balance = False
     style_summary = False
+    selector = None
+    is_numeric_editable = False
+    bounds = Bounds(0, 999)
+    vispath = None
+    setpath = None
 
-    def __init__(self, data, path=None, read_only=None):
+    def __init__(self, data, read_only=None):
         self.data = data
-        if path is not None:
-            self.path = path
-        self.read_only = read_only
+        self.setpath = self.setpath or self.vispath
+        self.read_only = read_only if read_only is not None else self.read_only
 
     @classmethod
     def from_node(cls, data):
@@ -30,7 +44,13 @@ class Cell:
         return (cell, cell.get_styled())
 
     def get(self):
-        return get_path(self.data, self.path)
+        if self.access_guard():
+            return get_path(self.data, self.vispath)
+        else:
+            return self.default_na
+
+    def get_num(self):
+        return self.get()
 
     def get_styled(self):
         value = self.get()
@@ -49,79 +69,181 @@ class Cell:
         return Text(txt, style=style)
 
     def set(self, value):
+        if not self.access_guard() or value is None:
+            return
         if self.read_only:  # FIXME: warn, rather than error
             raise TypeError("Cell is Read-Only !")
-        return set_path(self.data, self.path, value)
+
+        return set_path(self.data, self.setpath or self.vispath, value)
+
+    def set_num(self, value):
+        return self.set(value)
+
+    def edit_postproc(self, instance: NodeInstance):
+        pass
+
+    def edit_push_numeral(self, num: str, write_mode) -> bool:
+        if not self.is_numeric_editable:
+            return
+        prev = str(self.get_num())
+        ccount_min = len(str(self.bounds.lower))
+        ccount_max = len(str(self.bounds.upper))
+
+        if (ccount_min == ccount_max == 1):
+            prev = num
+            write_mode = False
+        elif not write_mode:
+            prev = num
+            write_mode = True
+        else:
+            prev += num
+            write_mode = True
+
+        prev = int(prev)
+        if not (self.bounds.lower <= prev <= self.bounds.upper):
+            prev = max(min(prev, self.bounds.upper), self.bounds.lower)
+            write_mode = False
+
+        self.set_num(prev)
+        self.data.update()
+        return write_mode
+
+    def edit_delete(self) -> bool:
+        if not self.is_numeric_editable:
+            return
+        self.set_num(self.bounds.lower)
+        self.data.update()
+        return False
+
+    def edit_backspace(self) -> bool:
+        if not self.is_numeric_editable:
+            return
+        prev = str(self.get_num())
+        new = prev[:-1]
+        if len(new) == 0:
+            new = self.bounds.lower
+        self.set_num(int(new))
+        self.data.update()
+        return True
+
+    def access_guard(self) -> bool:
+        """Checks if the node has information relevant to the cell. (e.g. A constructor has no MK value)"""
+        return True
 
 
 class EmptyCell(Cell):
     read_only = True
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(None, **kwargs)
 
     def get(self):
         return ""
 
 
-class ProducerCell(Cell):
+class EditableCell(Cell):
+    read_only = False
+    selector = None
+
+    def access_guard(self):
+        return not isinstance(self.data, SummaryNode)
+
+
+class ProducerCell(EditableCell):
     name = "Building Name"
-    path = "producer.name"
+    vispath = "producer.name"
+    setpath = "producer"
+    selector = SelectProducer
+
+    def edit_postproc(self, instance):
+        self.data.producer_reset()
 
 
-class RecipeCell(Cell):
+class RecipeCell(EditableCell):
     name = "Recipe"
-    path = "recipe.name"
+    vispath = "recipe.name"
+    setpath = "recipe"
+    selector = SelectRecipe
+
+    def edit_postproc(self, instance):
+        if self.data.is_module:
+            instance.set_module(self.data.recipe.name)
+            curname = os.path.splitext(CONFIG["last_file"])[0]
+            core.APP.data.reload_modules([instance], module_stack=[curname])
 
 
-class CountCell(Cell):
+class NumericEditaleCell(EditableCell):
+    default = 0
+    default_na = ""
+    is_numeric_editable = True
+
+
+class CountCell(NumericEditaleCell):
     name = "QTY"
-    path = "count"
+    vispath = "count"
 
 
-class MkCell(Cell):
+class MkCell(NumericEditaleCell):
     name = "Mk"
-    path = "mk"
+    vispath = "mk"
+    default = Purity.NORMAL
+    default_na = Purity.NA
+    bounds = Bounds(1, 3)
 
-    def get(self):
-        return self.data.mk if self.data.producer.is_miner else ""
+    def access_guard(self):
+        return self.data.producer.is_miner and super().access_guard()
 
 
-class PurityCell(Cell):
+class PurityCell(NumericEditaleCell):
     name = "Purity"
-    path = "purity.name"
+    vispath = "purity.name"
+    setpath = "purity"
+    bounds = Bounds(1, 3)
+    selector = SelectPurity
+    purity_map = list(reversed(Purity.__members__))
 
-    def get(self):
-        return self.data.purity.name if self.data.purity != Purity.NA else ""
+    def get_num(self):
+        value = self.purity_map.index(self.data.purity.name) + 1
+        return self.purity_map.index(self.data.purity.name) + 1
+
+    def set_num(self, value):
+        value = min(max(1, value), 3)
+        core.APP.notify(f"{value=}")
+        self.set(Purity[self.purity_map[value - 1]])
+
+    def access_guard(self):
+        return self.data.producer.is_miner and super().access_guard()
 
 
-class ClockRateCell(Cell):
+class ClockRateCell(NumericEditaleCell):
     name = "Clockrate"
-    path = "clock_rate"
+    vispath = "clock_rate"
+    bounds = Bounds(0, 250)
 
-    def get(self):
-        return "" if self.data.producer.is_module else self.data.clock_rate
+    def access_guard(self):
+        return not self.data.producer.is_module and super().access_guard()
 
 
 class PowerCell(Cell):
     name = "Power"
-    path = "energy"
+    vispath = "energy"
     read_only = True
 
 
 class IngredientCell(Cell):
     name = ""
+    default_na = 0
     read_only = True
     style_balance = True
 
+    def access_guard(self):
+        return self.vispath in self.data.ingredients
+
     def get(self):
-        return self.data.ingredients[self.path] if self.path in self.data.ingredients else 0
-
-
-class SummaryCell(IngredientCell):
-    name = ""
-    read_only = True
-    style_summary = True
+        if self.access_guard():
+            return self.data.ingredients[self.vispath]
+        else:
+            return self.default_na
 
 
 class PlannerTable(DataTable):
