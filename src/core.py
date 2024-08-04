@@ -574,6 +574,9 @@ class NodeTree(NodeInstance):
     def from_nodes(cls, app, nodes: [Node]) -> Self:
         return cls.from_nodeinstances(app, [NodeInstance(node) for node in nodes])
 
+    def __hash__(self):
+        return hash(yaml.dump(self))
+
     def reload_modules(self, instances=None, module_stack=None):
         module_stack = module_stack or []
         def reload_module(instance) -> str | bool | None:

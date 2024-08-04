@@ -71,6 +71,7 @@ class Planner(App):
     columns = []
     data = None             # total node list
     rows = []               # text-like representation of filtered node list
+    loaded_hash = None
     summary_recipe = None
     num_write_mode = False
     selected_producer = None
@@ -121,6 +122,9 @@ class Planner(App):
             CONFIG["last_file"] = fname
             self.title = fname
             self.notify(f"File loaded: `{fpath}`", timeout=10)
+        tree = core.load_data(DPATH_DATA / CONFIG["last_file"])
+        if tree is not None:
+            self.loaded_hash = hash(tree)
 
     def save_data(self, fname=".cached.yaml") -> bool:
         if not DPATH_DATA.is_dir():
@@ -128,10 +132,11 @@ class Planner(App):
         fpath = DPATH_DATA / fname
         with open(fpath, "w") as fp:
             yaml.dump(self.data, fp)
-            if not fname.startswith("."):
-                CONFIG["last_file"] = fname
-                self.title = fname
-                self.notify(f"File saved: `{fpath}`", timeout=10)
+        if not fname.startswith("."):
+            CONFIG["last_file"] = fname
+            self.title = fname
+            self.notify(f"File saved: `{fpath}`", timeout=10)
+            self.loaded_hash = hash(self.data)
 
     def action_save(self):
         def save_file(fname: str) -> None:
@@ -370,6 +375,11 @@ class Planner(App):
         self.table.refresh()
 
     def update(self):
+        if self.loaded_hash != hash(self.data):
+            self.title = f"*{CONFIG['last_file']}"
+        else:
+            self.title = CONFIG["last_file"]
+
         columns_ingredients = []
         columns = [ProducerCell,
                    RecipeCell,
