@@ -189,7 +189,7 @@ class Planner(App):
 
     def on_data_table_cell_selected(self):
         col = self.table.cursor_coordinate.column
-        sel_ctxt = SelectionContext(reselection=Reselection(at_node=False))
+        sel_ctxt = SelectionContext()
         instance = sel_ctxt.instance
         node = sel_ctxt.instance.node_main
         if isinstance(node, SummaryNode):
@@ -219,14 +219,14 @@ class Planner(App):
         with SelectionContext() as instance:
             if instance and instance.parent:
                 instance.parent.shift_child(instance, -1)
-                self.update()
+            self.update()
 
     def action_move_down(self):
         self.num_write_mode = False
         with SelectionContext() as instance:
             if instance and instance.parent:
                 instance.parent.shift_child(instance, 1)
-                self.update()
+            self.update()
 
     def action_row_add(self):
         with SelectionContext(reselection=Reselection(offset=1)) as current_node:
@@ -236,7 +236,7 @@ class Planner(App):
 
     def action_row_remove(self):
         row = SelectionContext().row
-        with SelectionContext(Selection(offset=-1), Reselection(at_node=False)) as node_above:
+        with SelectionContext(Selection(offset=-1)) as node_above:
             if not node_above:
                 return
             del self.data[row]
@@ -246,7 +246,7 @@ class Planner(App):
         if len(self.screen_stack) > 1:
             return
 
-        sel_ctxt = SelectionContext(reselection=Reselection(at_node=False))
+        sel_ctxt = SelectionContext()
         col = self.edit_columns[sel_ctxt.col] if len(self.edit_columns) > sel_ctxt.col else None
         instance = sel_ctxt.instance
         if instance is None:

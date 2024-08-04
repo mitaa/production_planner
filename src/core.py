@@ -518,12 +518,12 @@ class NodeInstance:
             NodeInstance.row_to_node_index = []
 
         if not self.shown:
+            self.row_idx = NodeInstance.row_to_node_index[-1].row_idx if NodeInstance.row_to_node_index else 0
             return []
-
-        self.level = level
-        nodes = [self]
-
-        self.row_idx = len(NodeInstance.row_to_node_index)
+        else:
+            self.level = level
+            nodes = [self]
+            self.row_idx = len(NodeInstance.row_to_node_index)
 
         if level < 1:
             NodeInstance.row_to_node_index += [self]

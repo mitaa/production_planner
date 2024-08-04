@@ -298,11 +298,11 @@ class Reselection:
 
 class SelectionContext:
     def __init__(self,
-                 selection: Selection = Selection(),
-                 reselection:  Reselection = Reselection()):
-        self.selection = selection
-        self.reselection = reselection
-        self.row = core.APP.table.cursor_coordinate.row + selection.offset
+                 selection: Selection = None,
+                 reselection:  Reselection = None):
+        self.selection = selection or Selection()
+        self.reselection = reselection or Reselection()
+        self.row = core.APP.table.cursor_coordinate.row + self.selection.offset
         self.col = core.APP.table.cursor_coordinate.column
         self.instance = core.APP.data.get_node(self.row) if core.APP.data else None
 
@@ -315,9 +315,10 @@ class SelectionContext:
             self.reselect()
 
     def reselect(self):
-        if self.instance and self.reselection.do and not self.reselection.done:
+        if self.reselection.do and not self.reselection.done:
             row = self.row
-            if self.reselection.at_node:
+            if self.reselection.at_node and (self.reselection.node or self.instance):
+                core.APP.notify(f"at node: {self.instance.row_idx=}")
                 row = (self.reselection.node or self.instance).row_idx
             core.APP.table.cursor_coordinate = Coordinate(row + self.reselection.offset, self.col)
             self.reselection.done = True
