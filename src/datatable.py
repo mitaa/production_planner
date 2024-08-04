@@ -1,8 +1,11 @@
 # -*- coding:utf-8 -*-
 
-from core import APP, get_path, set_path, Purity
+import core
+from core import get_path, set_path, Purity, NodeInstance
+from dataclasses import dataclass
 
 from textual.widgets import DataTable
+from textual.coordinate import Coordinate
 
 from rich.text import Text
 from rich.style import Style
@@ -155,3 +158,44 @@ class PlannerTable(DataTable):
                                     base_style,
                                     width, cursor,
                                     hover)
+
+
+@dataclass
+class Selection:
+    offset: int = 0
+
+
+@dataclass
+class Reselection:
+    do:      bool = True
+    offset:  int  = 0
+    node: NodeInstance = None
+    at_node: bool = True
+    done:    bool = False
+
+
+class SelectionContext:
+    def __init__(self,
+                 selection: Selection = Selection(),
+                 reselection:  Reselection = Reselection()):
+        self.selection = selection
+        self.reselection = reselection
+        self.row = core.APP.table.cursor_coordinate.row + selection.offset
+        self.col = core.APP.table.cursor_coordinate.column
+        self.instance = core.APP.data.get_node(self.row) if core.APP.data else None
+
+    def __enter__(self):
+        return self.instance
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        no_exc = (exc_type, exc_value, traceback) == (None, None, None)
+        if no_exc:
+            self.reselect()
+
+    def reselect(self):
+        if self.instance and self.reselection.do and not self.reselection.done:
+            row = self.row
+            if self.reselection.at_node:
+                row = (self.reselection.node or self.instance).row_idx
+            core.APP.table.cursor_coordinate = Coordinate(row + self.reselection.offset, self.col)
+            self.reselection.done = True

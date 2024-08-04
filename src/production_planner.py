@@ -5,6 +5,7 @@ import core
 from core import CONFIG, DPATH_DATA, Node, SummaryNode, NodeInstance, NodeTree, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
 from screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, DataFileNamer
 from datatable import PlannerTable, EmptyCell, SummaryCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
+from datatable import SelectionContext, Selection, Reselection
 
 import os
 from copy import copy
@@ -20,47 +21,6 @@ import yaml
 
 # The Fuel Generator, like all power generation buildings, behaves differently to power consumer buildings when overclocked. A generator overclocked to 250% only operates 202.4% faster[EA] (operates 250% faster[EX]).
 # As the fuel consumption rate is directly proportional to generator power production, verify that demand matches the production capacity to ensure that Power Shards are used to their full potential. Fuel efficiency is unchanged, but consumption and power generation rates may be unexpectedly uneven[EA].
-
-@dataclass
-class Selection:
-    offset: int = 0
-
-
-@dataclass
-class Reselection:
-    do:      bool = True
-    offset:  int  = 0
-    node: NodeInstance = None
-    at_node: bool = True
-    done:    bool = False
-
-
-class SelectionContext:
-    def __init__(self,
-                 selection: Selection = Selection(),
-                 reselection:  Reselection = Reselection()):
-        self.selection = selection
-        self.reselection = reselection
-        self.row = core.APP.table.cursor_coordinate.row + selection.offset
-        self.col = core.APP.table.cursor_coordinate.column
-        self.instance = core.APP.data.get_node(self.row) if core.APP.data else None
-
-    def __enter__(self):
-        return self.instance
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        no_exc = (exc_type, exc_value, traceback) == (None, None, None)
-        if no_exc:
-            self.reselect()
-
-    def reselect(self):
-        if self.instance and self.reselection.do and not self.reselection.done:
-            row = self.row
-            if self.reselection.at_node:
-                row = (self.reselection.node or self.instance).row_idx
-            core.APP.table.cursor_coordinate = Coordinate(row + self.reselection.offset, self.col)
-            self.reselection.done = True
-
 
 class Planner(App):
     BINDINGS = [
@@ -298,48 +258,52 @@ class Planner(App):
 
         sel_ctxt = SelectionContext(reselection=Reselection(at_node=False))
         col = sel_ctxt.col
-        node = sel_ctxt.instance
+        instance = sel_ctxt.instance
 
-        if col in {2, 3, 5} and not isinstance(node.node_main, SummaryNode):
+        if col in {2, 3, 5} and not isinstance(instance.node_main, SummaryNode):
             path = paths[col]
-            if col == 5 and node.node_main.is_module:
+            if col == 5 and instance.node_main.is_module:
                 self.num_write_mode = False
                 return
 
             if len(event.key) == 1 and 58 > ord(event.key) > 47:
-                prev = str(get_path(node, path))
+                prev = str(get_path(instance, path))
                 ccount = len(prev)
                 if not self.num_write_mode:
                     prev = ""
                 self.num_write_mode = True
-                if ((col == 2 and ccount > 2) or (col == 3 and ccount > 0) or (col == 5 and ccount > 2)):
+                if (col == 2 and ccount > 2):
                     prev = ""
                 prev += event.key
                 prev = int(prev)
-                if col == 3 and prev > 3:
-                    prev = 3
-                    self.num_write_mode = False
-                elif col == 5 and prev > 250:
-                    prev = 250
-                    self.num_write_mode = False
+                match col:
+                    case 3 if prev < 1:
+                        prev = 1
+                        self.num_write_mode = False
+                    case 3 if prev > 3:
+                        prev = 3
+                        self.num_write_mode = False
+                    case 5 if prev > 250:
+                        prev = 250
+                        self.num_write_mode = False
 
-                set_path(node, path, prev)
-                node.node_main.update()
+                set_path(instance, path, prev)
+                instance.node_main.update()
                 self.update()
                 sel_ctxt.reselect()
             elif event.key == "delete":
-                set_path(node, path, 0)
-                node.node_main.update()
+                set_path(instance, path, 0)
+                instance.node_main.update()
                 self.num_write_mode = False
                 self.update()
                 sel_ctxt.reselect()
             elif event.key == "backspace":
-                prev = str(get_path(node, path))
+                prev = str(get_path(instance, path))
                 new = prev[:-1]
                 if len(new) == 0:
                     new = 0
-                set_path(node, path, int(new))
-                node.node_main.update()
+                set_path(instance, path, int(new))
+                instance.node_main.update()
                 self.num_write_mode = False
                 self.update()
                 sel_ctxt.reselect()
