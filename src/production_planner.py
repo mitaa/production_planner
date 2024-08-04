@@ -21,26 +21,45 @@ import yaml
 # The Fuel Generator, like all power generation buildings, behaves differently to power consumer buildings when overclocked. A generator overclocked to 250% only operates 202.4% faster[EA] (operates 250% faster[EX]).
 # As the fuel consumption rate is directly proportional to generator power production, verify that demand matches the production capacity to ensure that Power Shards are used to their full potential. Fuel efficiency is unchanged, but consumption and power generation rates may be unexpectedly uneven[EA].
 
+@dataclass
+class Selection:
+    offset: int = 0
+
 
 @dataclass
+class Reselection:
+    do:      bool = True
+    offset:  int  = 0
+    node: NodeInstance = None
+    at_node: bool = True
+    done:    bool = False
+
+
 class SelectionContext:
-    reselect_node = True
-    reselect_offset = 0
-    reselect = True
-    reselected = False
+    def __init__(self,
+                 selection: Selection = Selection(),
+                 reselection:  Reselection = Reselection()):
+        self.selection = selection
+        self.reselection = reselection
+        self.row = core.APP.table.cursor_coordinate.row + selection.offset
+        self.col = core.APP.table.cursor_coordinate.column
+        self.instance = core.APP.data.get_node(self.row) if core.APP.data else None
 
     def __enter__(self):
-        self.row = core.APP.table.cursor_coordinate.row
-        self.col = core.APP.table.cursor_coordinate.column
-        self.instance = core.APP.data.get_node(self.row)
         return self.instance
 
     def __exit__(self, exc_type, exc_value, traceback):
         no_exc = (exc_type, exc_value, traceback) == (None, None, None)
-        if no_exc and self.instance and self.reselect and not self.reselected:
-            if self.reselect_node:
-                self.row = self.instance.row_idx
-            core.APP.table.cursor_coordinate = Coordinate(self.row + self.reselect_offset, self.col)
+        if no_exc:
+            self.reselect()
+
+    def reselect(self):
+        if self.instance and self.reselection.do and not self.reselection.done:
+            row = self.row
+            if self.reselection.at_node:
+                row = (self.reselection.node or self.instance).row_idx
+            core.APP.table.cursor_coordinate = Coordinate(row + self.reselection.offset, self.col)
+            self.reselection.done = True
 
 
 class Planner(App):
@@ -199,12 +218,10 @@ class Planner(App):
         self.push_screen(SelectDataFile(), delete_file)
 
     def on_data_table_cell_selected(self):
-        row = self.table.cursor_coordinate.row
-
         col = self.table.cursor_coordinate.column
-        paths = ["producer", "recipe", "", "", "purity"]
-        instance = self.data.get_node(row)
-        node = instance.node_main
+        sel_ctxt = SelectionContext(reselection=Reselection(at_node=False))
+        instance = sel_ctxt.instance
+        node = sel_ctxt.instance.node_main
         if isinstance(node, SummaryNode):
             return
 
@@ -215,15 +232,15 @@ class Planner(App):
             if producer:
                 node.producer = producer
                 node.producer_reset()
-            self.update()
-            self.table.cursor_coordinate = Coordinate(row, col)
+                self.update()
+                sel_ctxt.reselect()
 
         def set_purity(purity: Purity) -> None:
             if purity:
                 node.purity = purity
                 node.update()
                 self.update()
-            self.table.cursor_coordinate = Coordinate(row, col)
+                sel_ctxt.reselect()
 
         def set_recipe(recipe: Recipe) -> None:
             if recipe:
@@ -232,8 +249,8 @@ class Planner(App):
                 curname = os.path.splitext(CONFIG["last_file"])[0]
                 self.data.reload_modules([instance], module_stack=[curname])
                 node.update()
-            self.update()
-            self.table.cursor_coordinate = Coordinate(row, col)
+                self.update()
+                sel_ctxt.reselect()
 
         if col == 0:   # Building
             self.push_screen(SelectProducer(), set_producer)
@@ -259,25 +276,18 @@ class Planner(App):
                 self.update()
 
     def action_row_add(self):
-        row = self.table.cursor_coordinate.row
-        col = self.table.cursor_coordinate.column
-
-        current_node = self.data.get_node(row)
-
-        self.data.add_children([NodeInstance(copy(self.planner_nodes[0]))],
-                               at_idx=current_node)
-        self.update()
-        self.table.cursor_coordinate = Coordinate(row + 1, col)
+        with SelectionContext(reselection=Reselection(offset=1)) as current_node:
+            self.data.add_children([NodeInstance(copy(self.planner_nodes[0]))],
+                                   at_idx=current_node)
+            self.update()
 
     def action_row_remove(self):
-        row = self.table.cursor_coordinate.row
-        col = self.table.cursor_coordinate.column
-
-        if not self.data or row < 1:
-            return
-        del self.data[row]
-        self.update()
-        self.table.cursor_coordinate = Coordinate(row, col)
+        row = SelectionContext().row
+        with SelectionContext(Selection(offset=-1), Reselection(at_node=False)) as node_above:
+            if not node_above:
+                return
+            del self.data[row]
+            self.update()
 
     def on_key(self, event: events.Key) -> None:
         if len(self.screen_stack) > 1:
@@ -286,13 +296,10 @@ class Planner(App):
         paths = [f"node_main.{p}" if p else "" for p in paths]
         # FIXME: verify if it works
 
-        row = self.table.cursor_coordinate.row
-        col = self.table.cursor_coordinate.column
-        coord = self.table.cursor_coordinate
+        sel_ctxt = SelectionContext(reselection=Reselection(at_node=False))
+        col = sel_ctxt.col
+        node = sel_ctxt.instance
 
-        node = self.data.get_node(row)
-
-        # TODO: prevent too large numbers, if too large reset number
         if col in {2, 3, 5} and not isinstance(node.node_main, SummaryNode):
             path = paths[col]
             if col == 5 and node.node_main.is_module:
@@ -319,13 +326,13 @@ class Planner(App):
                 set_path(node, path, prev)
                 node.node_main.update()
                 self.update()
-                self.table.cursor_coordinate = coord
+                sel_ctxt.reselect()
             elif event.key == "delete":
                 set_path(node, path, 0)
                 node.node_main.update()
                 self.num_write_mode = False
                 self.update()
-                self.table.cursor_coordinate = coord
+                sel_ctxt.reselect()
             elif event.key == "backspace":
                 prev = str(get_path(node, path))
                 new = prev[:-1]
@@ -335,7 +342,7 @@ class Planner(App):
                 node.node_main.update()
                 self.num_write_mode = False
                 self.update()
-                self.table.cursor_coordinate = coord
+                sel_ctxt.reselect()
             else:
                 self.num_write_mode = False
         else:
@@ -381,6 +388,7 @@ class Planner(App):
         inputs_only = set()
         outputs_only = set()
 
+        # implicitly adds/updates row_idx to the `NodeInstance`s
         nodes = self.data.get_nodes()
 
         for node_instance in nodes:
