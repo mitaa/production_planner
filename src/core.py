@@ -381,7 +381,8 @@ class SummaryNode(Node):
             power += node.energy
             for ingredient, quantity in node.ingredients.items():
                 sums[ingredient] = sums.get(ingredient, 0) + quantity
-        # TODO: perhpas cull ingredients with zero quantity ?
+        # Cull ingredients with quantity == 0
+        sums = {k: v for k, v in sums.items() if v}
         self.recipe = Recipe.from_dict(sums)
         self.energy = power
         return self.recipe
