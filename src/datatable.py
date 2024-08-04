@@ -19,8 +19,7 @@ class Cell:
         self.data = data
         if path is not None:
             self.path = path
-        if read_only is not None:
-            self.read_only = read_only
+        self.read_only = read_only
 
     @classmethod
     def from_node(cls, data):
@@ -47,54 +46,67 @@ class Cell:
         return Text(txt, style=style)
 
     def set(self, value):
-        if self.read_only: # FIXME: warn, rather than error
+        if self.read_only:  # FIXME: warn, rather than error
             raise TypeError("Cell is Read-Only !")
         return set_path(self.data, self.path, value)
 
+
 class EmptyCell(Cell):
     read_only = True
+
     def __init__(self, **kwargs):
         super().__init__(None, **kwargs)
 
     def get(self):
         return ""
 
+
 class ProducerCell(Cell):
     name = "Building Name"
     path = "producer.name"
+
 
 class RecipeCell(Cell):
     name = "Recipe"
     path = "recipe.name"
 
+
 class CountCell(Cell):
     name = "QTY"
     path = "count"
 
+
 class MkCell(Cell):
     name = "Mk"
     path = "mk"
+
     def get(self):
         return self.data.mk if self.data.producer.is_miner else ""
+
 
 class PurityCell(Cell):
     name = "Purity"
     path = "purity.name"
+
     def get(self):
         return self.data.purity.name if self.data.purity != Purity.NA else ""
+
 
 class ClockRateCell(Cell):
     name = "Clockrate"
     path = "clock_rate"
+
     def get(self):
         return "" if self.data.producer.is_module else self.data.clock_rate
+
 
 class PowerCell(Cell):
     name = "Power"
     path = "energy"
     read_only = True
 
-class NumberCell(Cell):
+
+class IngredientCell(Cell):
     name = ""
     read_only = True
     style_balance = True
@@ -103,8 +115,9 @@ class NumberCell(Cell):
         return self.data.ingredients[self.path] if self.path in self.data.ingredients else 0
 
 
-class SummaryCell(NumberCell):
+class SummaryCell(IngredientCell):
     name = ""
+    read_only = True
     style_summary = True
 
 

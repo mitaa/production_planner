@@ -558,22 +558,17 @@ class NodeInstance:
 
 
 class NodeTree(NodeInstance):
-    def __init__(self, planner: App, *args, **kwargs):
-        self._planner = planner
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    @property
-    def table(self) -> DataTable:
-        return self._planner.query_one(DataTable)
-
     @classmethod
-    def from_nodeinstances(cls, app, instances: [NodeInstance]) -> Self:
+    def from_nodeinstances(cls, instances: [NodeInstance]) -> Self:
         nodes = [instance.node_main for instance in instances]
-        return cls(app, SummaryNode(nodes), instances)
+        return cls(SummaryNode(nodes), instances)
 
     @classmethod
-    def from_nodes(cls, app, nodes: [Node]) -> Self:
-        return cls.from_nodeinstances(app, [NodeInstance(node) for node in nodes])
+    def from_nodes(cls, nodes: [Node]) -> Self:
+        return cls.from_nodeinstances([NodeInstance(node) for node in nodes])
 
     def __hash__(self):
         return hash(yaml.dump(self))
@@ -638,8 +633,7 @@ def tree_representer(dumper, data):
 
 def tree_constructor(loader, data):
     data = loader.construct_sequence(data)
-    tree = NodeTree.from_nodeinstances(None,  # _planner attribute needs to be fixed after loading...
-                                       data)
+    tree = NodeTree.from_nodeinstances(data)
     return tree
 
 
@@ -657,12 +651,12 @@ def load_data(fpath) -> None | NodeTree:
             case NodeTree():
                 tree = data
             case[Node(), *_]:
-                tree = NodeTree.from_nodes(None, data)
+                tree = NodeTree.from_nodes(data)
             case[Recipe(), NodeTree()]:
                 _, tree = data
             case[Recipe(), *_]:
                 _, data = data
-                tree = NodeTree.from_nodes(None, data)
+                tree = NodeTree.from_nodes(data)
             case _:
                 log(f"Could not parse file: `{fpath}`", timeout=10)
                 return

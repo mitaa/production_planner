@@ -3,27 +3,19 @@
 
 import core
 from core import CONFIG, DPATH_DATA, Node, SummaryNode, NodeInstance, NodeTree, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
-from screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, DataFileNamer, OverwriteScreen
-from datatable import PlannerTable, EmptyCell, SummaryCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, NumberCell
+from screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, DataFileNamer
+from datatable import PlannerTable, EmptyCell, SummaryCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
+
+import os
+from copy import copy
+from dataclasses import dataclass
 
 from textual import events
 from textual.app import App, ComposeResult
-from textual.widgets import Label, Button, Header, Footer, Input, Pretty, DataTable
+from textual.widgets import Header, Footer
 from textual.coordinate import Coordinate
 
-from rich.text import Text
-
 import yaml
-
-import tkinter as tk
-import os
-from copy import copy
-
-from collections import OrderedDict
-from itertools import zip_longest
-from dataclasses import dataclass
-
-from pprint import pprint
 
 
 # The Fuel Generator, like all power generation buildings, behaves differently to power consumer buildings when overclocked. A generator overclocked to 250% only operates 202.4% faster[EA] (operates 250% faster[EX]).
@@ -32,24 +24,23 @@ from pprint import pprint
 
 @dataclass
 class SelectionContext:
-    app: App
     reselect_node = True
     reselect_offset = 0
     reselect = True
     reselected = False
 
     def __enter__(self):
-        self.row = self.app.table.cursor_coordinate.row
-        self.col = self.app.table.cursor_coordinate.column
-        self.instance = self.app.data.get_node(self.row)
+        self.row = core.APP.table.cursor_coordinate.row
+        self.col = core.APP.table.cursor_coordinate.column
+        self.instance = core.APP.data.get_node(self.row)
         return self.instance
 
     def __exit__(self, exc_type, exc_value, traceback):
         no_exc = (exc_type, exc_value, traceback) == (None, None, None)
-        if no_exc and self.reselect and not self.reselected:
+        if no_exc and self.instance and self.reselect and not self.reselected:
             if self.reselect_node:
                 self.row = self.instance.row_idx
-            self.app.table.cursor_coordinate = Coordinate(self.row + self.reselect_offset, self.col)
+            core.APP.table.cursor_coordinate = Coordinate(self.row + self.reselect_offset, self.col)
 
 
 class Planner(App):
@@ -70,9 +61,7 @@ class Planner(App):
     # 1-Building Name, 2-Recipe Name, 3-QTY, 4-Mk, 5-Purity, 6-Clockrate        //, 7-Energy, 8*-Inputs, 9*-Outputs
     columns = []
     data = None             # total node list
-    rows = []               # text-like representation of filtered node list
     loaded_hash = None
-    summary_recipe = None
     num_write_mode = False
     selected_producer = None
     selected_node = None
@@ -92,12 +81,11 @@ class Planner(App):
         self.planner_nodes = []
         for p in PRODUCERS:
             if not p.recipes:
-                print("WHAT")
                 continue
             self.planner_nodes += [Node(p, p.recipes[0])]
 
         self.table.zebra_stripes = True
-        self.data = NodeTree.from_nodes(self, [])
+        self.data = NodeTree.from_nodes([])
         # TODO: add modified marked if cached/in-memory != saved file
         self.load_data(skip_on_nonexist=True)
         self.update()
@@ -172,7 +160,7 @@ class Planner(App):
 
     def action_show_hide(self):
         self.num_write_mode = False
-        with SelectionContext(self) as instance:
+        with SelectionContext() as instance:
             if instance is None:
                 return
             instance.show_hide()
@@ -185,14 +173,14 @@ class Planner(App):
         # FIXME: which line should be reselected?
 
     def action_collapse(self):
-        with SelectionContext(self) as instance:
+        with SelectionContext() as instance:
             if instance is None:
                 return
             instance.expanded = False
             self.update()
 
     def action_expand(self):
-        with SelectionContext(self) as instance:
+        with SelectionContext() as instance:
             if instance is None:
                 return
             instance.expanded = True
@@ -249,23 +237,23 @@ class Planner(App):
 
         if col == 0:   # Building
             self.push_screen(SelectProducer(), set_producer)
-        elif col == 1: # Recipe
+        elif col == 1:  # Recipe
             self.selected_node.update_module_listings()
             self.push_screen(SelectRecipe(), set_recipe)
-        elif col == 4: # Purity
+        elif col == 4:  # Purity
             if node.producer.is_miner:
                 self.push_screen(SelectPurity(), set_purity)
 
     def action_move_up(self):
         self.num_write_mode = False
-        with SelectionContext(self) as instance:
+        with SelectionContext() as instance:
             if instance and instance.parent:
                 instance.parent.shift_child(instance, -1)
                 self.update()
 
     def action_move_down(self):
         self.num_write_mode = False
-        with SelectionContext(self) as instance:
+        with SelectionContext() as instance:
             if instance and instance.parent:
                 instance.parent.shift_child(instance, 1)
                 self.update()
@@ -300,8 +288,7 @@ class Planner(App):
 
         row = self.table.cursor_coordinate.row
         col = self.table.cursor_coordinate.column
-        coord = Coordinate(row, col)
-        idx_data = row - 1
+        coord = self.table.cursor_coordinate
 
         node = self.data.get_node(row)
 
@@ -318,14 +305,14 @@ class Planner(App):
                 if not self.num_write_mode:
                     prev = ""
                 self.num_write_mode = True
-                if ((col==2 and ccount>2) or (col==3 and ccount>0) or (col==5 and ccount>2)):
+                if ((col == 2 and ccount > 2) or (col == 3 and ccount > 0) or (col == 5 and ccount > 2)):
                     prev = ""
                 prev += event.key
                 prev = int(prev)
-                if col==3 and prev > 3:
+                if col == 3 and prev > 3:
                     prev = 3
                     self.num_write_mode = False
-                elif col==5 and prev > 250:
+                elif col == 5 and prev > 250:
                     prev = 250
                     self.num_write_mode = False
 
@@ -409,19 +396,19 @@ class Planner(App):
         col_add = list(inputs_only) + list((inputs_mixed | outputs_mixed) - (inputs_only | outputs_only)) + list(outputs_only)
         col_add = list(outputs_only) + list((inputs_mixed | outputs_mixed) - (inputs_only | outputs_only)) + list(inputs_only)
         for column in col_add:
-            IngredientColumn = type(column, (NumberCell,), {"name": column, "path": column})
+            IngredientColumn = type(column, (IngredientCell,), {"name": column, "path": column})
             columns_ingredients += [IngredientColumn]
         self.columns = (columns + columns_ingredients)
 
         # FIXME: rather than re-selection being immetiate it should be deferred to occur at the end of this method
         #        1. Update NodeTree structure
-        #        2. Update displayed columns list
-        #        3. Get re-seleced node
+        #        2. Get re-seleced node
+        #        3. Update displayed columns list
         #        4. Update highlighted rows/columns information
         #        5. Update DataTable
         #        6. Actually re-select node/cell
 
-        self.rows = []
+        rows = []
         for node_instance in nodes:
             node = node_instance.node_main
             node.update()
@@ -433,12 +420,12 @@ class Planner(App):
                 row = [Column(node) for Column in columns]
 
             for c in col_add:
-                row += [SummaryCell(node, c) if is_summary else NumberCell(node, c)]
-            self.rows += [[cell.get_styled() for cell in row]]
+                row += [SummaryCell(node, c) if is_summary else IngredientCell(node, c)]
+            rows += [[cell.get_styled() for cell in row]]
 
         self.table.clear(columns=True)
         self.table.add_columns(*(c.name for c in self.columns))
-        self.table.add_rows(self.rows)
+        self.table.add_rows(rows)
         self.table.fixed_columns = 3
 
 

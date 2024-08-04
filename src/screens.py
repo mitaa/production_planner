@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 
-from core import CONFIG, DPATH_DATA, get_path, set_path, Producer, Purity, Recipe, PRODUCERS
+from core import APP, CONFIG, DPATH_DATA, get_path, set_path, Producer, Purity, Recipe, PRODUCERS
 
 import os
 import re
@@ -202,6 +202,7 @@ class SelectDataFile(ModalScreen[str]):
         ("escape", "cancel", "Cancel"),
     ]
     data = []
+
     def compose(self) -> ComposeResult:
         yield DataTable()
         yield Footer()
@@ -235,9 +236,10 @@ class DataFileNamer(ModalScreen[str]):
         ("escape", "cancel", "Cancel"),
     ]
     data = []
+
     def compose(self) -> ComposeResult:
         def has_dot(value: str) -> bool:
-            return not "." in value
+            return "." not in value
         # def is_unique(value: str) -> bool:
         #     return not os.path.isfile(DPATH_DATA / (value + ".yaml"))
 
