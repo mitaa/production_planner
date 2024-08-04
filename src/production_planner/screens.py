@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 
-from core import APP, CONFIG, DPATH_DATA, get_path, set_path, Producer, Purity, Recipe, PRODUCERS
+from .core import APP, CONFIG, DPATH_DATA, get_path, set_path, Producer, Purity, Recipe, PRODUCERS
 
 import os
 import re

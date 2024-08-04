@@ -13,7 +13,7 @@ from textual import log
 import yaml
 import appdirs
 
-import jsonshelve
+from . import jsonshelve
 from textual.widgets import DataTable
 
 APP = None

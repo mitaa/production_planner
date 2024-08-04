@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
 
-import core
-from core import CONFIG, get_path, set_path, Purity, NodeInstance, SummaryNode
-from screens import SelectProducer, SelectPurity, SelectRecipe
+from . import core
+from .core import CONFIG, get_path, set_path, Purity, NodeInstance, SummaryNode
+from .screens import SelectProducer, SelectPurity, SelectRecipe
 
 import os
 from dataclasses import dataclass
