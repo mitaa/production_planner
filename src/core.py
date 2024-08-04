@@ -177,14 +177,52 @@ class Purity(Enum):
     IMPURE = 4
 
 
+empty_producer = Producer(
+        "",
+        is_miner=False,
+        is_pow_gen=False,
+        max_mk=0,
+        base_power=0,
+        recipes={"":     [60, [], []],}
+)
+
+module_producer = Producer(
+        "Module",
+        is_miner=False,
+        is_pow_gen=False,
+        max_mk=0,
+        base_power=0,
+        recipes={"": [60, [], []], }
+)
+PRODUCERS = [module_producer]
+data_fpath = os.path.join(os.path.split(os.path.abspath(__file__))[0], "production_buildings.json")
+with open(data_fpath) as fp:
+    data = json.load(fp)
+
+for k, v in data.items():
+    producer = Producer(k, **v)
+    PRODUCERS += [producer]
+
+PRODUCERS += [empty_producer]
+
+PRODUCER_MAP = {p.name: p for p in PRODUCERS}
+PRODUCER_MAP["Blueprint"] = PRODUCER_MAP["Module"]
+
+
 class Node:
     yaml_tag = "!Node"
     module_listings = {}
+
+    # defaults to be shadowed (avoiding AttributeError's)
+    producer = empty_producer
 
     def __init__(self, producer, recipe, count=1, clock_rate=100, mk=1, purity=Purity.NORMAL, is_dummy=False):
         # a dummy is a read-only, non-interactable, row - for example expanded from a module
         # (can't shift it, can't delete it)
         self.is_dummy = is_dummy
+        # remembers the last selected recipe for each producer
+        self.recipe_cache = {}
+        self.purity_cache = {}
         self.module_children = []
         self.producer = producer
         self.recipe = recipe
@@ -199,13 +237,37 @@ class Node:
         self.ingredients = {}
         self.update()
 
+    @property
+    def recipe(self):
+        return self._recipe
+
+    @recipe.setter
+    def recipe(self, value):
+        if not hasattr(self, "recipe_cache"):
+            # remembers the last selected recipe for each producer
+            self.recipe_cache = {}
+        self._recipe = value
+        self.recipe_cache[self.producer.name] = value
+
+    @property
+    def purity(self):
+        return self._purity
+
+    @purity.setter
+    def purity(self, value):
+        if not hasattr(self, "purity_cache"):
+            # remembers the last selected purity for each producer
+            self.purity_cache = {}
+        self._purity = value
+        self.purity_cache[self.producer.name] = value
+
     def producer_reset(self):
         if not self.recipe or self.recipe.name not in self.producer.recipe_map:
-            self.recipe = self.producer.recipes[0] if self.producer.recipes else Recipe.empty()
+            default = self.producer.recipes[0] if self.producer.recipes else Recipe.empty()
+            self.recipe = self.recipe_cache.get(self.producer.name, default)
 
         if self.producer.is_miner:
-            if self.purity == Purity.NA:
-                self.purity = Purity.NORMAL
+            self.purity = self.purity_cache.get(self.producer.name, Purity.NORMAL)
         else:
             self.purity = Purity.NA
         self.energy = 0
@@ -276,38 +338,6 @@ class Node:
     @property
     def is_module(self):
         return self.producer.is_module
-
-
-empty_producer = Producer(
-        "",
-        is_miner=False,
-        is_pow_gen=False,
-        max_mk=0,
-        base_power=0,
-        recipes={"":     [60, [], []],}
-)
-
-module_producer = Producer(
-        "Module",
-        is_miner=False,
-        is_pow_gen=False,
-        max_mk=0,
-        base_power=0,
-        recipes={"": [60, [], []], }
-)
-PRODUCERS = [module_producer]
-data_fpath = os.path.join(os.path.split(os.path.abspath(__file__))[0], "production_buildings.json")
-with open(data_fpath) as fp:
-    data = json.load(fp)
-
-for k, v in data.items():
-    producer = Producer(k, **v)
-    PRODUCERS += [producer]
-
-PRODUCERS += [empty_producer]
-
-PRODUCER_MAP = {p.name: p for p in PRODUCERS}
-PRODUCER_MAP["Blueprint"] = PRODUCER_MAP["Module"]
 
 
 def node_representer(dumper, data):
