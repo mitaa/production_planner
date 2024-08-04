@@ -86,6 +86,9 @@ class Recipe(yaml.YAMLObject):
     def __repr__(self):
         return str(self)
 
+    def __eq__(self, other):
+        return type(self) is type(other) and self.name == other.name and self.cycle_rate == other.cycle_rate and self.inputs == other.inputs and self.outputs == other.outputs
+
     @classmethod
     def empty(cls, name=""):
         return cls(name, 60, [], [])
