@@ -3,7 +3,7 @@
 
 from . import core
 from .core import CONFIG, DPATH_DATA, Node, SummaryNode, NodeInstance, NodeTree, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
-from .screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, DataFileNamer
+from .screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, DataFileNamer, SetCellValue
 from .datatable import PlannerTable, EmptyCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
 from .datatable import SelectionContext, Selection, Reselection
 
@@ -18,11 +18,12 @@ from textual.coordinate import Coordinate
 
 import yaml
 
-
 # The Fuel Generator, like all power generation buildings, behaves differently to power consumer buildings when overclocked. A generator overclocked to 250% only operates 202.4% faster[EA] (operates 250% faster[EX]).
 # As the fuel consumption rate is directly proportional to generator power production, verify that demand matches the production capacity to ensure that Power Shards are used to their full potential. Fuel efficiency is unchanged, but consumption and power generation rates may be unexpectedly uneven[EA].
 
+
 class Planner(App):
+    CSS_PATH = "Planner.tcss"
     BINDINGS = [
         ("+", "row_add", "Add"),
         ("-", "row_remove", "Remove"),
@@ -39,9 +40,9 @@ class Planner(App):
 
     # 1-Building Name, 2-Recipe Name, 3-QTY, 4-Mk, 5-Purity, 6-Clockrate        //, 7-Energy, 8*-Inputs, 9*-Outputs
     columns = []
-    data = None             # total node list
-    loaded_hash = None
-    num_write_mode = False
+    data = None               # NodeTree encompassing all rows
+    loaded_hash = None        # To check if the file has changed
+    num_write_mode = False    # Whether to concatenate to the number under the cursor or replace it
     selected_producer = None
     selected_node = None
 
@@ -75,7 +76,6 @@ class Planner(App):
 
         self.table.zebra_stripes = True
         self.data = NodeTree.from_nodes([])
-        # TODO: add modified marked if cached/in-memory != saved file
         self.load_data(skip_on_nonexist=True)
         self.update()
 
@@ -197,18 +197,19 @@ class Planner(App):
 
         self.selected_producer = node.producer
         self.selected_node = node
-        cell = self.edit_columns[col] if len(self.edit_columns) > col else None
+        cell = self.edit_columns[col](node) if len(self.edit_columns) > col else None
 
         if cell is not None and cell.selector:
-            cell = cell(node)
             if not cell.access_guard():
                 return
 
-            def callback(value):
-                if value is not None:
-                    cell.set(value)
-                    # TODO: pass nodeinstance to initializer, replace all node references, and remove this method ...
-                    cell.edit_postproc(instance)
+            def callback(assignments: [SetCellValue]):
+                if assignments:
+                    for ass in assignments:
+                        cell = ass.column(node)
+                        cell.set(ass.value)
+                        # TODO: pass nodeinstance to initializer, replace all node references, and remove this method ...
+                        cell.edit_postproc(instance)
                     node.update()
                     self.update()
                     sel_ctxt.reselect()

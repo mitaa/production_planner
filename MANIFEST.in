@@ -1,1 +1,2 @@
 include src/production_planner/*.json
+include src/production_planner/*.tcss

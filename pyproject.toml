@@ -3,7 +3,7 @@ name = "production_planner"
 version = "0.1.0"
 authors = [
     {name = "mitaa", email = "mitaa.ceb@gmail.com"}
-]
+    ]
 description = "A production planner for Satisfactory"
 readme = "README.md"
 license= {file = "LICENSE"}
@@ -13,13 +13,13 @@ classifiers = [
         "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: MPL 2 License",
         "Operating System :: OS Independent",
-]
+    ]
 dependencies = [
     "textual",
     "rich",
     "appdirs",
     "pyaml",
-]
+    ]
 
 [tool.setuptools]
 include-package-data = true

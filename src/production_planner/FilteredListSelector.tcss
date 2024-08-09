@@ -1,0 +1,33 @@
+Horizontal {
+    align: left middle;
+    background: $boost;
+    height: 5;
+    margin: 0;
+    min-width: 5;
+    width: 1fr;
+    padding: 0;
+}
+
+Select {
+    align: center middle;
+    height: 5;
+    width: 34;
+    margin: 0 1;
+    padding: 0;
+}
+
+Label {
+    align: center middle;
+    margin: 1 2;
+}
+
+Input {
+    align: center middle;
+    width: 1fr;
+    height: 5;
+    margin: 0 1;
+}
+
+DataTable {
+    height: 10fr;
+}

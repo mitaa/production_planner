@@ -1,15 +1,18 @@
 # -*- coding:utf-8 -*-
 
-from .core import APP, CONFIG, DPATH_DATA, get_path, set_path, Producer, Purity, Recipe, PRODUCERS
+from .core import APP, CONFIG, DPATH_DATA, get_path, set_path, Producer, Purity, Recipe, PRODUCERS, PRODUCER_MAP
+from . import datatable
 
 import os
 import re
+from dataclasses import dataclass
 
 from textual import on
 from textual.containers import Grid
-from textual.screen import ModalScreen
+from textual.screen import Screen, ModalScreen
 from textual.app import App, ComposeResult
-from textual.widgets import Label, Button, Header, Footer, Input, Pretty, DataTable
+from textual.containers import Horizontal
+from textual.widgets import Label, Button, Header, Footer, Input, Pretty, Select, DataTable
 from textual.validation import Function
 from textual.coordinate import Coordinate
 from textual import events
@@ -17,22 +20,32 @@ from textual import events
 from rich.text import Text
 
 
-class FilteredListSelector(ModalScreen[Producer]):
+@dataclass
+class SetCellValue:
+    column: None
+    value: None
+
+
+class FilteredListSelector(Screen[Producer]):
+    CSS_PATH = "FilteredListSelector.tcss"
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
     ]
+    cell = None
     data = []
     data_filtered = []
     filter_str = ""
     selected = None
 
     def on_mount(self) -> None:
-        self.header.tall = True
         self.query_one(DataTable).cursor_type = "row"
-        self.set_filt()
+        self.filt_input = self.query_one(Input)
+        self.table = self.query_one(DataTable)
+        self.set_filt(None)
 
     def compose(self) -> ComposeResult:
         yield Header()
+        yield Horizontal(Input(placeholder="<text filter>"))
         yield DataTable()
         yield Footer()
 
@@ -42,19 +55,29 @@ class FilteredListSelector(ModalScreen[Producer]):
 
     def action_cancel(self):
         self.app.sub_title = ""
-        self.header.tall = False
-        self.dismiss(None)
+        self.dismiss([])
 
-    def on_data_table_row_selected(self):
-        self.app.sub_title = ""
-        self.header.tall = False
+    @on(Input.Submitted)
+    def input_submitted(self, event: Input.Submitted):
+        self.on_data_table_row_selected()
+
+    def package(self) -> [SetCellValue]:
         table = self.query_one(DataTable)
         row = table.cursor_coordinate.row
-        self.dismiss(self.data_filtered[row])
+        return [SetCellValue(self.cell, self.data_filtered[row])]
 
-    def set_filt(self):
-        to_filt = self.filter_str if self.filter_str else "<type anywhere>"
-        self.app.sub_title = f"Filter: `{to_filt}`"
+    def on_data_table_row_selected(self):
+        if self.data_filtered:
+            self.dismiss(self.package())
+        else:
+            self.dismiss([])
+
+    @on(Input.Changed)
+    def set_filt(self, event: Input.Changed) -> None:
+        if event is None:
+            self.filter_str = self.query_one(Input).value
+        else:
+            self.filter_str = event.value
 
         self.data_filtered = []
         words = re.split(r"\s+", self.filter_str)
@@ -83,28 +106,19 @@ class FilteredListSelector(ModalScreen[Producer]):
         if len(self.app.screen_stack) > 2:
             return
 
-        prev_filter_str = self.filter_str
         match event.key:
-            case "delete":
-                self.filter_str = ""
-            case "backspace":
-                self.filter_str = self.filter_str[:-1]
-            case "space":
-                event.key = " "
-
-        if len(event.key) == 1 and event.key.isprintable():
-            self.filter_str += event.key
-
-        if prev_filter_str != self.filter_str:
-            self.set_filt()
-
-
+            case "ctrl+up":
+                self.filt_input.focus()
+            case "up" | "down" if self.filt_input.has_focus:
+                self.table.focus()
+                event.stop()
 
 
 class SelectProducer(FilteredListSelector):
     screen_title = "Producers"
 
     def on_mount(self) -> None:
+        self.cell = datatable.ProducerCell
         self.data = PRODUCERS
         self.selected = self.app.selected_node.producer
         super().on_mount()
@@ -125,13 +139,45 @@ class SelectRecipe(FilteredListSelector):
     screen_title = "Recipes"
 
     def on_mount(self) -> None:
+        self.cell = datatable.RecipeCell
         if self.app.selected_node.is_module:
             self.app.selected_node.update_module_listings()
+
         self.data = self.app.selected_producer.recipes
         self.selected = self.app.selected_node.recipe
-        self.app.log(repr(self.data))
-        self.app.log(repr(self.selected))
         super().on_mount()
+
+    def package(self) -> [SetCellValue]:
+        producer = PRODUCER_MAP[self.query_one(Select).value]
+        # Note: keep the producer assignment in front - otherwise the `Node.recipe_cache` will be inconsistent
+        return [SetCellValue(datatable.ProducerCell, producer)] + super().package()
+
+    def _producer_listing(self, producer_name):
+        producer_list = [p.name for p in PRODUCERS]
+        del producer_list[producer_list.index(producer_name)]
+        producer_list.insert(0, producer_name)
+        return producer_list
+
+    def compose(self) -> ComposeResult:
+        # TODO: use the parent class's `compose` method and add the Select widget
+        producer_listing = self._producer_listing(self.app.selected_producer.name)
+        yield Header()
+        yield Horizontal(
+            Input(placeholder="<text filter>"),
+            Select([(producer, producer) for producer in producer_listing], allow_blank=False)
+        )
+        yield DataTable()
+        yield Footer()
+
+    @on(Select.Changed)
+    def relist_recipes(self, event: Select.Changed):
+        # put the selected producer at the top
+        producer_list = self._producer_listing(event.value)
+        sel = self.query_one(Select)
+        with sel.prevent(Select.Changed):
+            sel.set_options((p, p) for p in producer_list)
+        self.data = PRODUCER_MAP[event.value].recipes
+        self.set_filt(None)
 
     def update(self):
         def ingredient_count(attr):
@@ -163,7 +209,7 @@ class SelectRecipe(FilteredListSelector):
         table.add_rows(rows)
 
 
-class SelectPurity(ModalScreen[Purity]):
+class SelectPurity(Screen[Purity]):
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
     ]
@@ -193,15 +239,15 @@ class SelectPurity(ModalScreen[Purity]):
         table.cursor_coordinate = Coordinate(row, 0)
 
     def action_cancel(self):
-        self.dismiss(None)
+        self.dismiss([])
 
     def on_data_table_row_selected(self):
         table = self.query_one(DataTable)
         row = table.cursor_coordinate.row
-        self.dismiss(self.data[row])
+        self.dismiss([SetCellValue(PurityCell, self.data[row])])
 
 
-class SelectDataFile(ModalScreen[str]):
+class SelectDataFile(Screen[str]):
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
     ]
@@ -235,7 +281,7 @@ class SelectDataFile(ModalScreen[str]):
         self.dismiss(self.data[row][0])
 
 
-class DataFileNamer(ModalScreen[str]):
+class DataFileNamer(Screen[str]):
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
     ]

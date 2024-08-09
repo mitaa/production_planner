@@ -2,7 +2,7 @@
 
 from . import core
 from .core import CONFIG, get_path, set_path, Purity, NodeInstance, SummaryNode
-from .screens import SelectProducer, SelectPurity, SelectRecipe
+from . import screens
 
 import os
 from dataclasses import dataclass
@@ -154,7 +154,11 @@ class ProducerCell(EditableCell):
     name = "Building Name"
     vispath = "producer.name"
     setpath = "producer"
-    selector = SelectProducer
+
+    def __init__(self, *args, **kwargs):
+        # FIXME: avoiding circular import ..
+        self.selector = screens.SelectProducer
+        super().__init__(*args, **kwargs)
 
     def edit_postproc(self, instance):
         self.data.producer_reset()
@@ -164,7 +168,11 @@ class RecipeCell(EditableCell):
     name = "Recipe"
     vispath = "recipe.name"
     setpath = "recipe"
-    selector = SelectRecipe
+
+    def __init__(self, *args, **kwargs):
+        # FIXME: avoiding circular import ..
+        self.selector = screens.SelectRecipe
+        super().__init__(*args, **kwargs)
 
     def edit_postproc(self, instance):
         if self.data.is_module:
@@ -188,8 +196,6 @@ class CountCell(NumericEditaleCell):
 class MkCell(NumericEditaleCell):
     name = "Mk"
     vispath = "mk"
-    default = Purity.NORMAL
-    default_na = Purity.NA
     bounds = Bounds(1, 3)
 
     def access_guard(self):
@@ -201,8 +207,12 @@ class PurityCell(NumericEditaleCell):
     vispath = "purity.name"
     setpath = "purity"
     bounds = Bounds(1, 3)
-    selector = SelectPurity
     purity_map = list(reversed(Purity.__members__))
+
+    def __init__(self, *args, **kwargs):
+        # FIXME: avoiding circular import ..
+        self.selector = screens.SelectPurity
+        super().__init__(*args, **kwargs)
 
     def get_num(self):
         value = self.purity_map.index(self.data.purity.name) + 1
