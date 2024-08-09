@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 
-from .core import APP, CONFIG, DPATH_DATA, get_path, set_path, Producer, Purity, Recipe, PRODUCERS, PRODUCER_MAP
+from .core import APP, CONFIG, DPATH_DATA, get_path, set_path, Producer, Purity, Recipe, PRODUCERS, PRODUCER_NAMES, PRODUCER_MAP, all_recipes_producer
 from . import datatable
 
 import os
@@ -33,6 +33,7 @@ class FilteredListSelector(Screen[Producer]):
     ]
     cell = None
     data = []
+    data_sorted = []
     data_filtered = []
     filter_str = ""
     selected = None
@@ -41,13 +42,18 @@ class FilteredListSelector(Screen[Producer]):
         self.query_one(DataTable).cursor_type = "row"
         self.filt_input = self.query_one(Input)
         self.table = self.query_one(DataTable)
+        self.sort()
         self.set_filt(None)
+        self.query_one(DataTable).focus()
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Horizontal(Input(placeholder="<text filter>"))
         yield DataTable()
         yield Footer()
+
+    def sort(self):
+        self.data_sorted = self.data
 
     @property
     def header(self):
@@ -81,7 +87,7 @@ class FilteredListSelector(Screen[Producer]):
 
         self.data_filtered = []
         words = re.split(r"\s+", self.filter_str)
-        for item in self.data:
+        for item in self.data_sorted:
             item_str = str(item).lower()
             if all(word in item_str for word in words):
                 self.data_filtered += [item]
@@ -111,7 +117,10 @@ class FilteredListSelector(Screen[Producer]):
                 self.filt_input.focus()
             case "up" | "down" if self.filt_input.has_focus:
                 self.table.focus()
-                event.stop()
+            case _ if len(event.key) == 1 and not self.filt_input.has_focus and event.key.isprintable():
+                inp = self.query_one(Input)
+                inp.focus()
+                inp.value += event.key
 
 
 class SelectProducer(FilteredListSelector):
@@ -135,10 +144,14 @@ class SelectProducer(FilteredListSelector):
         table.add_rows(rows)
 
 
+SELECT_PRODUCERS = [all_recipes_producer] + PRODUCERS
+
+
 class SelectRecipe(FilteredListSelector):
     screen_title = "Recipes"
 
     def on_mount(self) -> None:
+        self.add_producer_column = False
         self.cell = datatable.RecipeCell
         if self.app.selected_node.is_module:
             self.app.selected_node.update_module_listings()
@@ -147,37 +160,48 @@ class SelectRecipe(FilteredListSelector):
         self.selected = self.app.selected_node.recipe
         super().on_mount()
 
-    def package(self) -> [SetCellValue]:
-        producer = PRODUCER_MAP[self.query_one(Select).value]
-        # Note: keep the producer assignment in front - otherwise the `Node.recipe_cache` will be inconsistent
-        return [SetCellValue(datatable.ProducerCell, producer)] + super().package()
-
-    def _producer_listing(self, producer_name):
-        producer_list = [p.name for p in PRODUCERS]
-        del producer_list[producer_list.index(producer_name)]
-        producer_list.insert(0, producer_name)
-        return producer_list
-
     def compose(self) -> ComposeResult:
         # TODO: use the parent class's `compose` method and add the Select widget
-        producer_listing = self._producer_listing(self.app.selected_producer.name)
+        self.producer_listing = self._producer_listing(self.app.selected_producer.name)
         yield Header()
         yield Horizontal(
             Input(placeholder="<text filter>"),
-            Select([(producer, producer) for producer in producer_listing], allow_blank=False)
+            Select([(producer, producer) for producer in self.producer_listing], allow_blank=False)
         )
         yield DataTable()
         yield Footer()
 
+    def package(self) -> [SetCellValue]:
+        producer = PRODUCER_MAP[self.query_one(Select).value]
+        set_recipe: [SetCellValue] = super().package()
+        # Note: keep the producer in front of the recipe - otherwise the `Node.recipe_cache` will be inconsistent
+        return [SetCellValue(datatable.ProducerCell, set_recipe[0].value.producer)] + set_recipe
+
+    def _producer_listing(self, producer_name):
+        producer_list = [p.name for p in SELECT_PRODUCERS]
+        del producer_list[producer_list.index(producer_name)]
+        producer_list.insert(0, producer_name)
+        return producer_list
+
     @on(Select.Changed)
     def relist_recipes(self, event: Select.Changed):
         # put the selected producer at the top
-        producer_list = self._producer_listing(event.value)
+        self.producer_list = self._producer_listing(event.value)
         sel = self.query_one(Select)
         with sel.prevent(Select.Changed):
-            sel.set_options((p, p) for p in producer_list)
+            sel.set_options((p, p) for p in self.producer_list)
         self.data = PRODUCER_MAP[event.value].recipes
+
+        self.add_producer_column = sel.value == all_recipes_producer.name
+        self.sort()
+
         self.set_filt(None)
+
+    def sort(self):
+        if self.add_producer_column:
+            self.data_sorted = list(sorted(self.data, key=lambda r: PRODUCER_NAMES.index(r.producer.name)))
+        else:
+            self.data_sorted = self.data
 
     def update(self):
         def ingredient_count(attr):
@@ -192,9 +216,21 @@ class SelectRecipe(FilteredListSelector):
         max_output_count = ingredient_count("outputs")
         rows = []
 
+        sel = self.query_one(Select)
+
+        columns = ["Producer"] if self.add_producer_column else []
+        columns += (["Recipe Name"]
+            + [f"Out #{i}" for i in range(max_output_count)]
+            + [f"In  #{i}" for i in range(max_input_count)]
+        )
+
         for recipe in self.data_filtered:
             rate_mult = 60 / recipe.cycle_rate
-            row = [recipe.name]
+            row = []
+            if self.add_producer_column:
+                producer = recipe.producer
+                row += [producer.name if producer else ""]
+            row += [recipe.name]
             inputs  = [Text(f"({round(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="red") for ingr in recipe.inputs]
             outputs = [Text(f"({round(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="green") for ingr in recipe.outputs]
             inputs += [""] * (max_input_count - len(inputs))
@@ -203,9 +239,7 @@ class SelectRecipe(FilteredListSelector):
             row += inputs
             rows += [row]
 
-        table.add_columns(*(["Recipe Name"]
-                            + [f"Out #{i}" for i in range(max_output_count)]
-                            + [f"In  #{i}" for i in range(max_input_count)]))
+        table.add_columns(*columns)
         table.add_rows(rows)
 
 

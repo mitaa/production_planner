@@ -19,6 +19,10 @@ from textual.widgets import DataTable
 APP = None
 
 
+def static(fn):
+    return fn()
+
+
 def ensure_key(store, key, default):
     if key in store:
         actual = store[key]
@@ -75,6 +79,8 @@ class Ingredient:
 class Recipe(yaml.YAMLObject):
     yaml_tag = u"!recipe"
 
+    recipe_to_producer_map = {}
+
     def __init__(self, name, cycle_rate, inputs: [(int, str)], outputs: [(int, str)]):
         self.name = name
         self.cycle_rate = cycle_rate
@@ -89,6 +95,13 @@ class Recipe(yaml.YAMLObject):
 
     def __eq__(self, other):
         return type(self) is type(other) and self.name == other.name and self.cycle_rate == other.cycle_rate and self.inputs == other.inputs and self.outputs == other.outputs
+
+    @property
+    def producer(self):
+        if self.name in self.recipe_to_producer_map:
+            return self.recipe_to_producer_map[self.name]
+        else:
+            return None
 
     @classmethod
     def empty(cls, name=""):
@@ -107,20 +120,30 @@ class Recipe(yaml.YAMLObject):
 
 
 class Producer:
-    def __init__(self, name, *, is_miner, is_pow_gen, max_mk, base_power, recipes):
+    def __init__(self, name, *, is_miner, is_pow_gen, max_mk, base_power, recipes, abstract=False):
+        self.abstract = abstract
         self.name = name
         self.is_miner = is_miner
         self.is_pow_gen = is_pow_gen
         self.max_mk = max_mk
         self.base_power = base_power
         self.recipes = [Recipe(k, v[0], v[1], v[2]) for k, v in recipes.items()]
-        self.recipe_map = dict()
+
+    @property
+    def recipes(self):
+        return self._recipes
+
+    @recipes.setter
+    def recipes(self, value):
+        self._recipes = value
         self.update_recipe_map()
 
     def update_recipe_map(self):
         self.recipe_map = {}
         for recipe in self.recipes:
             self.recipe_map[recipe.name] = recipe
+            if not self.abstract:
+                recipe.recipe_to_producer_map[recipe.name] = self
 
     def __str__(self):
         buf = self.name
@@ -189,6 +212,7 @@ class Purity(Enum):
 
 empty_producer = Producer(
         "",
+        abstract=True,
         is_miner=False,
         is_pow_gen=False,
         max_mk=0,
@@ -198,6 +222,7 @@ empty_producer = Producer(
 
 module_producer = Producer(
         "Module",
+        abstract=True,
         is_miner=False,
         is_pow_gen=False,
         max_mk=0,
@@ -214,8 +239,36 @@ for k, v in data.items():
     PRODUCERS += [producer]
 
 PRODUCERS += [empty_producer]
+PRODUCER_NAMES = [producer.name for producer in PRODUCERS]
 
-PRODUCER_MAP = {p.name: p for p in PRODUCERS}
+
+@static
+def all_recipes_producer():
+    recip_names = set()
+    recipes = {}
+    for producer in PRODUCERS:
+        producer_recipe_map = dict({r.name: r for r in producer.recipes if r.name})
+        if producer.is_module:
+            continue
+        duplicates = recip_names & set(producer_recipe_map.keys())
+        if duplicates:
+            self.app.notify(str(duplicates))
+        recipes.update(producer_recipe_map)
+
+    prod = Producer(
+        "<ALL RECIPES>",
+        abstract=True,
+        is_miner=False,
+        is_pow_gen=False,
+        max_mk=0,
+        base_power=0,
+        recipes={},
+    )
+    prod.recipes = list(sorted(recipes.values(), key=lambda r: r.name))
+    return prod
+
+
+PRODUCER_MAP = {p.name: p for p in ([all_recipes_producer] + PRODUCERS)}
 PRODUCER_MAP["Blueprint"] = PRODUCER_MAP["Module"]
 
 
@@ -646,7 +699,6 @@ class NodeTree(NodeInstance):
                     log("Error reloading module")
                 case _:
                     self.reload_modules(instance.node_children, module_stack)
-        log(f"blueprints: {self.blueprints}")
 
 
 def instance_representer(dumper, data):
