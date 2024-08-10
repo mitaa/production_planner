@@ -284,9 +284,13 @@ class PlannerTable(DataTable):
         Returns:
             A list of segments per line.
         """
-        # FIXME: make highlighting based on cell texts already present in DataTable
-        if len(self.cols_to_highlight) > column_index and self.cols_to_highlight[column_index] or row_index in self.rows_to_highlight:
-            base_style += self.get_component_rich_style("datatable--hover" if row_index>0 else "datatable--header-hover")
+        cursor_row = self.cursor_row
+        if row_index == cursor_row:
+            base_style += self.get_component_rich_style("datatable--hover" if row_index > 0 else "datatable--header-hover")
+        else:
+            col_info = self.highlight_cols[cursor_row]
+            if len(col_info) > column_index:
+                base_style += col_info[column_index]
 
         return super()._render_cell(row_index,
                                     column_index,
@@ -310,6 +314,8 @@ class Reselection:
 
 
 class SelectionContext:
+    instance = None
+
     def __init__(self,
                  selection: Selection = None,
                  reselection:  Reselection = None):
@@ -317,7 +323,7 @@ class SelectionContext:
         self.reselection = reselection or Reselection()
         self.row = core.APP.table.cursor_coordinate.row + self.selection.offset
         self.col = core.APP.table.cursor_coordinate.column
-        self.instance = core.APP.data.get_node(self.row) if core.APP.data else None
+        self.__class__.instance = core.APP.data.get_node(self.row) if core.APP.data else None
 
     def __enter__(self):
         return self.instance

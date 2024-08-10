@@ -79,6 +79,8 @@ class Ingredient:
 class Recipe(yaml.YAMLObject):
     yaml_tag = u"!recipe"
 
+    # FIXME: there are collisions: e.g. `Coal`: Miner and Coal Generator
+    #        use `Recipe` objects as keys and adapt screens.RecipeSelector ...
     recipe_to_producer_map = {}
 
     def __init__(self, name, cycle_rate, inputs: [(int, str)], outputs: [(int, str)]):
@@ -462,6 +464,7 @@ yaml.add_constructor(u'!ingredient', ingredient_constructor)
 
 class SummaryNode(Node):
     def __init__(self, nodes):
+        self.row_idx = 0
         super().__init__(empty_producer, self.update_recipe(nodes), is_dummy=True)
 
     def producer_reset(self):

@@ -15,6 +15,7 @@ from textual import events
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer
 from textual.coordinate import Coordinate
+from rich.style import Style
 
 import yaml
 
@@ -73,6 +74,9 @@ class Planner(App):
                              PowerCell]
 
         self.columns = self.edit_columns[:]
+
+        # last row at which the ingredient columns / highlights have been updated
+        self.last_update_row = None
 
         self.table.zebra_stripes = True
         self.data = NodeTree.from_nodes([])
@@ -149,11 +153,12 @@ class Planner(App):
 
     def action_show_hide(self):
         self.num_write_mode = False
-        with SelectionContext() as instance:
-            if instance is None:
-                return
-            instance.show_hide()
-            self.update()
+        selected = SelectionContext()
+        if selected is None:
+            return
+        instance = selected.instance
+        instance.show_hide()
+        self.update(selected)
 
     def action_swap_vis_space(self):
         self.num_write_mode = False
@@ -162,18 +167,20 @@ class Planner(App):
         # FIXME: which line should be reselected?
 
     def action_collapse(self):
-        with SelectionContext() as instance:
-            if instance is None:
-                return
-            instance.expanded = False
-            self.update()
+        selected = SelectionContext()
+        if selected is None:
+            return
+        instance = selected.instance
+        instance.expanded = False
+        self.update(selected)
 
     def action_expand(self):
-        with SelectionContext() as instance:
-            if instance is None:
-                return
-            instance.expanded = True
-            self.update()
+        selected = SelectionContext()
+        if selected is None:
+            return
+        instance = selected.instance
+        instance.expanded = True
+        self.update(selected)
 
     def action_delete(self):
         def delete_file(fname: str) -> None:
@@ -211,37 +218,37 @@ class Planner(App):
                         # TODO: pass nodeinstance to initializer, replace all node references, and remove this method ...
                         cell.edit_postproc(instance)
                     node.update()
-                    self.update()
-                    sel_ctxt.reselect()
+                    self.update(sel_ctxt)
             self.push_screen(cell.selector(), callback)
 
     def action_move_up(self):
         self.num_write_mode = False
-        with SelectionContext() as instance:
-            if instance and instance.parent:
-                instance.parent.shift_child(instance, -1)
-            self.update()
+        selected = SelectionContext()
+        if selected and selected.instance.parent:
+            selected.instance.parent.shift_child(selected.instance, -1)
+            self.update(selected)
 
     def action_move_down(self):
         self.num_write_mode = False
-        with SelectionContext() as instance:
-            if instance and instance.parent:
-                instance.parent.shift_child(instance, 1)
-            self.update()
+        selected = SelectionContext()
+        if selected.instance and selected.instance.parent:
+            selected.instance.parent.shift_child(selected.instance, 1)
+        self.update(selected)
 
     def action_row_add(self):
-        with SelectionContext(reselection=Reselection(offset=1)) as current_node:
-            self.data.add_children([NodeInstance(copy(self.planner_nodes[0]))],
-                                   at_idx=current_node)
-            self.update()
+        selected = SelectionContext(reselection=Reselection(offset=1))
+        current_node = selected.instance if selected else None
+        self.data.add_children([NodeInstance(copy(self.planner_nodes[0]))],
+                               at_idx=current_node)
+        self.update(selected)
 
     def action_row_remove(self):
         row = SelectionContext().row
-        with SelectionContext(Selection(offset=-1)) as node_above:
-            if not node_above:
-                return
-            del self.data[row]
-            self.update()
+        selected = SelectionContext(Selection(offset=-1))
+        if not selected:
+            return
+        del self.data[row]
+        self.update(selected)
 
     def on_key(self, event: events.Key) -> None:
         if len(self.screen_stack) > 1:
@@ -270,35 +277,12 @@ class Planner(App):
             case _:
                 self.num_write_mode = False
                 return
-        self.update()
-        sel_ctxt.reselect()
+        self.update(sel_ctxt)
 
     def on_data_table_cell_highlighted(self, event):
-        # Highlight ingredient columns relevant to current row
-        # TODO: customize highlighting
-        # FIXME: just move it into the `update` method and avoid needlessly redrawing
-        row = event.coordinate.row
-
-        instance = self.data.get_node(row)
-
-        if instance:
-            node = instance.node_main
-            ingredients = [ingr.name for ingr in (node.recipe.inputs + node.recipe.outputs)]
-            self.table.rows_to_highlight = [row]
-        else:
-            ingredients = []
-            self.table.rows_to_highlight = []
-
-        # FIXME: at this point no `update` call has been made and `self.columns` is not up-to-date !
-        self.table.cols_to_highlight = [col.name in ingredients for idx, col in enumerate(self.columns)]
         self.table.refresh()
 
-    def update(self):
-        if self.loaded_hash != hash(self.data):
-            self.title = f"*{CONFIG['last_file']}"
-        else:
-            self.title = CONFIG["last_file"]
-
+    def update_columns(self, selected: NodeInstance = None) -> ([NodeInstance], [str]):
         columns_ingredients = []
 
         inputs_mixed = set()
@@ -319,20 +303,41 @@ class Planner(App):
         inputs_only = inputs_mixed - outputs_mixed
         outputs_only = outputs_mixed - inputs_mixed
 
-        col_add = list(inputs_only) + list((inputs_mixed | outputs_mixed) - (inputs_only | outputs_only)) + list(outputs_only)
-        col_add = list(outputs_only) + list((inputs_mixed | outputs_mixed) - (inputs_only | outputs_only)) + list(inputs_only)
-        for column in col_add:
-            IngredientColumn = type(column, (IngredientCell,), {"name": column, "path": column})
+        ingredients = list(outputs_only) + list((inputs_mixed | outputs_mixed) - (inputs_only | outputs_only)) + list(inputs_only)
+        for ingredient in ingredients:
+            IngredientColumn = type(ingredient, (IngredientCell,), {"name": ingredient, "path": ingredient})
             columns_ingredients += [IngredientColumn]
         self.columns = (self.edit_columns + columns_ingredients)
+        return (nodes, ingredients)
 
-        # FIXME: rather than re-selection being immetiate it should be deferred to occur at the end of this method
-        #        1. Update NodeTree structure
-        #        2. Get re-seleced node
-        #        3. Update displayed columns list
-        #        4. Update highlighted rows/columns information
-        #        5. Update DataTable
-        #        6. Actually re-select node/cell
+    def _update_highlight_info(self, nodes: [NodeInstance]):
+        self.table.highlight_cols = []
+        style_header_hover = self.table.get_component_rich_style("datatable--header-hover")
+        style_hover = self.table.get_component_rich_style("datatable--hover")
+        style_empty = Style()
+
+        prev_row_idx = None
+        for instance in nodes:
+            if instance.row_idx == prev_row_idx:
+                continue
+            node = instance.node_main
+            ingredients = [ingr.name for ingr in (node.recipe.inputs + node.recipe.outputs)]
+            hov = (style_hover if instance.row_idx > 0 else style_header_hover)
+            row = []
+            for idx, col in enumerate(self.columns):
+                row += [hov if col.name in ingredients else style_empty]
+            self.table.highlight_cols += [row]
+
+    def update(self, selected: SelectionContext = None):
+        if self.loaded_hash != hash(self.data):
+            self.title = f"*{CONFIG['last_file']}"
+        else:
+            self.title = CONFIG["last_file"]
+
+        instance = selected.instance if selected else None
+
+        nodes, ingredients = self.update_columns(instance)
+        self._update_highlight_info(nodes)
 
         rows = []
         for node_instance in nodes:
@@ -343,18 +348,20 @@ class Planner(App):
                 node.update_recipe(inst.node_main for inst in node_instance.node_children)
             row = [Column(node) for Column in self.edit_columns]
 
-            for c in col_add:
+            for ingredient in ingredients:
                 class Cell(IngredientCell):
-                    vispath = c
+                    vispath = ingredient
                     style_summary = is_summary
 
-                row += [Cell(node, c)]
+                row += [Cell(node, ingredient)]
             rows += [[cell.get_styled() for cell in row]]
 
         self.table.clear(columns=True)
-        self.table.add_columns(*(c.name for c in self.columns))
+        self.table.add_columns(*(ingredients.name for ingredients in self.columns))
         self.table.add_rows(rows)
         self.table.fixed_columns = 3
+        if selected:
+            selected.reselect()
 
 
 def main():
