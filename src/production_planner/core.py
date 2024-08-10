@@ -1,4 +1,7 @@
 # -*- coding:utf-8 -*-
+#  This Source Code Form is subject to the terms of the Mozilla Public
+#  License, v. 2.0. If a copy of the MPL was not distributed with this
+#  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import os
 import math
@@ -31,6 +34,7 @@ def ensure_key(store, key, default):
             store[key] = actual
     else:
         store[key] = default
+
 
 def ensure_keys(store, key_def_pairings={}):
     for k, v in key_def_pairings.items():
