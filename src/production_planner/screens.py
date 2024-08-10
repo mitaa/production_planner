@@ -297,7 +297,10 @@ class SelectDataFile(Screen[str]):
     def on_mount(self) -> None:
         fnames = list(os.scandir(DPATH_DATA))
 
-        self.data = [[entry.name] for entry in fnames if entry.is_file() if not entry.name.startswith(".")]
+        def is_planner_file(entry):
+            return entry.is_file() and not entry.name.startswith(".") and os.path.splitext(entry.name)[1] == ".yaml"
+
+        self.data = [[entry.name] for entry in fnames if is_planner_file(entry)]
 
         table = self.query_one(DataTable)
         table.cursor_type = "row"
