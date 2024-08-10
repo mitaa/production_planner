@@ -250,6 +250,12 @@ class Planner(App):
         del self.data[row]
         self.update(selected)
 
+    def check_action(self, action: str, parameters: tuple[object, ...]):
+        is_main_screen = len(self.screen_stack) == 1
+        # this is always keep inherited (?) bindings like tab switching between widgets
+        is_my_binding = action in [binding for (_, binding, _) in self.__class__.BINDINGS]
+        return is_main_screen or (not is_my_binding)
+
     def on_key(self, event: events.Key) -> None:
         if len(self.screen_stack) > 1:
             return
