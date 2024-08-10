@@ -14,7 +14,7 @@ from typing import Self
 from textual.app import App
 from textual import log
 import yaml
-import appdirs
+import platformdirs
 
 from . import jsonshelve
 from textual.widgets import DataTable
@@ -41,7 +41,7 @@ def ensure_keys(store, key_def_pairings={}):
         ensure_key(store, k, v)
 
 
-DPATH_DATA = Path(appdirs.user_data_dir("production_planner", "mitaa"))
+DPATH_DATA = Path(platformdirs.user_data_dir("production_planner", "mitaa"))
 FPATH_CONFIG = os.path.join(DPATH_DATA, ".config.json")
 os.makedirs(DPATH_DATA, exist_ok=True)
 CONFIG = jsonshelve.FlatShelf(FPATH_CONFIG, dump_kwargs={"indent": 4})
