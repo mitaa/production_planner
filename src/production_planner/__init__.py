@@ -379,7 +379,7 @@ def main():
         planner.run()
     finally:
         planner.save_data()
-        CONFIG.save()
+        CONFIG.sync()
 
 
 if __name__ == "__main__":
