@@ -6,13 +6,14 @@
 
 from . import core
 from .core import CONFIG, DPATH_DATA, Node, SummaryNode, NodeInstance, NodeTree, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
-from .screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, DataFileNamer, SetCellValue
+from .screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, SaveDataFile, SetCellValue
 from .datatable import PlannerTable, EmptyCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
 from .datatable import SelectionContext, Selection, Reselection
 
 import os
 from copy import copy
 from dataclasses import dataclass
+from pathlib import Path
 
 from textual import events
 from textual.app import App, ComposeResult
@@ -86,8 +87,20 @@ class Planner(App):
         self.load_data(skip_on_nonexist=True)
         self.update()
 
-    def load_data(self, fname=".cached.yaml", skip_on_nonexist=False) -> bool:
-        fpath = DPATH_DATA / fname
+    def _normalize_data_path(self, subpath: Path) -> (Path, Path):
+        root = DPATH_DATA
+        if subpath.is_absolute():
+            try:
+                subpath = subpath.relative_to(DPATH_DATA)
+            except ValueError:
+                root = subpath.parent
+                subpath = subpath.name
+        return (root, subpath)
+
+    def load_data(self, subpath=Path(".cached.yaml"), skip_on_nonexist=False) -> bool:
+        root, subpath = self._normalize_data_path(subpath)
+        fpath = root / subpath
+
         if not fpath.is_file():
             if not skip_on_nonexist:
                 self.notify(f"File does not exist: `{fpath}`", severity="error", timeout=10)
@@ -102,53 +115,70 @@ class Planner(App):
         curname = os.path.splitext(CONFIG["last_file"])[0]
         self.data.reload_modules(module_stack=[curname])
 
+        fname = fpath.name
         if not fname.startswith("."):
-            CONFIG["last_file"] = fname
-            self.title = fname
-            self.notify(f"File loaded: `{fpath}`", timeout=10)
-        tree = core.load_data(DPATH_DATA / CONFIG["last_file"])
+            CONFIG["last_file"] = str(subpath)
+            self.title = subpath
+            self.notify(f"File loaded: `{subpath}`\n{root}", timeout=10)
+        last_fpath = DPATH_DATA / CONFIG["last_file"]
+        tree = core.load_data(last_fpath) if last_fpath.is_file() else None
         if tree is not None:
             self.loaded_hash = hash(tree)
 
-    def save_data(self, fname=".cached.yaml") -> bool:
-        if not DPATH_DATA.is_dir():
-            os.makedirs(DPATH_DATA)
-        fpath = DPATH_DATA / fname
+    def save_data(self, subpath=Path(".cached.yaml")) -> bool:
+        root, subpath = self._normalize_data_path(subpath)
+        fpath = root / subpath
+        if not fpath.parent.is_dir():
+            os.makedirs(fpath.parent)
+
         with open(fpath, "w") as fp:
             yaml.dump(self.data, fp)
-        if not fname.startswith("."):
-            CONFIG["last_file"] = fname
-            self.title = fname
-            self.notify(f"File saved: `{fpath}`", timeout=10)
+        if not fpath.name.startswith("."):
+            CONFIG["last_file"] = str(subpath)
+            self.title = subpath
+            self.notify(f"File saved: `{subpath}\n{root}`", timeout=10)
             self.loaded_hash = hash(self.data)
 
     def action_save(self):
-        def save_file(fname: str) -> None:
-            if not fname:
+        def save_file(subpath: Path) -> None:
+            if not subpath:
                 self.notify("Saving File Canceled")
                 return
             self.data.collect_modules()
-            if os.path.splitext(fname)[0] in self.data.blueprints:
-                self.notify(f"Saving to `{fname}` would create recursive modules",
+            if subpath.stem in self.data.blueprints:
+                self.notify(f"Saving to `{subpath}` would create recursive modules",
                             severity="error",
                             timeout=10)
                 self.notify(f"Modules included: {repr(self.data.blueprints)}",
                             severity="warning",
                             timeout=10)
                 return
-            fpath = DPATH_DATA / fname
-            self.save_data(fname)
-        self.push_screen(DataFileNamer() , save_file)
+            self.save_data(subpath)
+        self.push_screen(SaveDataFile(), save_file)
 
     def action_load(self):
-        def load_file(fname: str) -> None:
-            if not fname:
+        def load_file(subpath: Path) -> None:
+            if not subpath:
                 self.notify("Loading File Canceled")
                 return
-            fpath = DPATH_DATA / fname
-            self.load_data(fname)
+            self.load_data(subpath)
             self.update()
-        self.push_screen(SelectDataFile() , load_file)
+        self.push_screen(SelectDataFile(), load_file)
+
+    def action_delete(self):
+        def delete_file(subpath: Path) -> None:
+            if not subpath:
+                self.notify("File Deletion Canceled")
+                return
+            root, subpath = self._normalize_data_path(subpath)
+            fpath = root / subpath
+
+            if not fpath.is_file():
+                self.notify(f"File does not exist: `{fpath}`", severity="error", timeout=10)
+                return
+            os.remove(fpath)
+        # FIXME: if the currently open file is deleted then the modified indicator should be shown in the header
+        self.push_screen(SelectDataFile(), delete_file)
 
     @property
     def table(self):
@@ -184,18 +214,6 @@ class Planner(App):
         instance = selected.instance
         instance.expanded = True
         self.update(selected)
-
-    def action_delete(self):
-        def delete_file(fname: str) -> None:
-            if not fname:
-                self.notify("File Deletion Canceled")
-                return
-            fpath = DPATH_DATA / fname
-            if not fpath.is_file():
-                self.notify(f"File does not exist: `{fpath}`", severity="error", timeout=10)
-                return
-            os.remove(fpath)
-        self.push_screen(SelectDataFile(), delete_file)
 
     def on_data_table_cell_selected(self):
         col = self.table.cursor_coordinate.column

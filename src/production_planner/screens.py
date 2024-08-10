@@ -9,13 +9,16 @@ from . import datatable
 import os
 import re
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Iterable
 
 from textual import on
 from textual.containers import Grid
 from textual.screen import Screen, ModalScreen
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
-from textual.widgets import Label, Button, Header, Footer, Input, Pretty, Select, DataTable
+from textual.widgets import DataTable, DirectoryTree, Label, Button, Header, Footer, Input, Pretty, Select
+from textual.widgets._directory_tree import DirEntry
 from textual.validation import Function
 from textual.coordinate import Coordinate
 from textual import events
@@ -284,77 +287,80 @@ class SelectPurity(Screen[Purity]):
         self.dismiss([SetCellValue(PurityCell, self.data[row])])
 
 
-class SelectDataFile(Screen[str]):
+def filtered_directory_tree(show_files=True, show_directories=True, **init_kwargs):
+    class FilteredDirectoryTree(DirectoryTree):
+        def __init__(*args, **inner_kwargs):
+            return DirectoryTree.__init__(*args, **(inner_kwargs | init_kwargs))
+
+        def filter_paths(self, paths: Iterable[Path]) -> Iterable[Path]:
+            def filt(entry):
+                if not show_files and entry.is_file():
+                    return False
+                elif not show_directories and entry.is_dir():
+                    return False
+
+                is_hidden = entry.name.startswith(".")
+                is_datafile = entry.suffix == ".yaml"
+                return (not is_hidden) and (is_datafile or entry.is_dir())
+            return [path for path in paths if filt(path)]
+
+    return FilteredDirectoryTree
+
+
+class DataFileAction(Screen[str]):
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
     ]
     data = []
+    expand_all = False
+    FirstDTree = None
+    entry = False
+    SecondDTree = None
 
     def compose(self) -> ComposeResult:
-        yield DataTable()
+        self.first_dtree = self.FirstDTree(DPATH_DATA)
+        if self.SecondDTree:
+            self.second_dtree = self.SecondDTree(DPATH_DATA)
+
+        if self.entry:
+            def has_dot(value: str) -> bool:
+                return "." not in value
+            yield Pretty([])
+            yield Input(placeholder="file name", validators=[Function(has_dot, "Don't add file extension manually"), ])
+
+        yield self.first_dtree
+        if self.SecondDTree:
+            self.second_dtree = self.SecondDTree(DPATH_DATA)
+            yield self.second_dtree
         yield Footer()
 
-    def on_mount(self) -> None:
-        fnames = list(os.scandir(DPATH_DATA))
-
-        def is_planner_file(entry):
-            return entry.is_file() and not entry.name.startswith(".") and os.path.splitext(entry.name)[1] == ".yaml"
-
-        self.data = [[entry.name] for entry in fnames if is_planner_file(entry)]
-
-        table = self.query_one(DataTable)
-        table.cursor_type = "row"
-        table.add_columns("File Name")
-        table.add_rows(self.data)
-        try:
-            row = self.data.index([CONFIG["last_file"]])
-        except ValueError as e:
-            row = 0
-        table.cursor_coordinate = Coordinate(row, 0)
-
-    def action_cancel(self):
-        self.dismiss("")
-
-    def on_data_table_row_selected(self):
-        table = self.query_one(DataTable)
-        row = table.cursor_coordinate.row
-        self.dismiss(self.data[row][0])
-
-
-class DataFileNamer(Screen[str]):
-    BINDINGS = [
-        ("escape", "cancel", "Cancel"),
-    ]
-    data = []
-
-    def compose(self) -> ComposeResult:
-        def has_dot(value: str) -> bool:
-            return "." not in value
-        # def is_unique(value: str) -> bool:
-        #     return not os.path.isfile(DPATH_DATA / (value + ".yaml"))
-
-        yield Pretty([])
-        yield Input(placeholder="file name", validators=[
-                                                         Function(has_dot, "Don't add file extensions"),
-                                                         ])
-        yield DataTable()
-        yield Footer()
+    @property
+    def highlighted_path(self) -> Path:
+        current = self.first_dtree.cursor_node
+        return None if current is None else current.data.path
 
     def on_mount(self) -> None:
-        fnames = list(os.scandir(DPATH_DATA))
+        # All these lines to simply move the cursor to the currently open file/folder
+        prev_path = Path(CONFIG["last_file"])
+        tree = self.first_dtree
+        node_current = tree.root
+        with tree.prevent(tree.FileSelected):
+            if self.expand_all:
+                tree.expand_all()
 
-        self.data = [[entry.name] for entry in fnames if entry.is_file()]
-        if [".cached.yaml"] in self.data:
-            self.data.remove([".cached.yaml"])
-
-        entry = self.query_one(Input)
-        if not CONFIG["last_file"].startswith("."):
-            entry.value = os.path.splitext(CONFIG["last_file"])[0]
-
-        table = self.query_one(DataTable)
-        table.cursor_type = "row"
-        table.add_columns("File Name")
-        table.add_rows(self.data)
+            for name in prev_path.parts:
+                for node in node_current.children:
+                    if name == node.label.plain:
+                        node_current = node
+                        node_current.expand()
+                        # FIXME: Expanding a node will asynchronously load the contained files and folders.
+                        #        That leads to not being able to move the cursor to those nodes since `children` is not populated yet.
+                        #        I'm not quite sure how to block until all that lazy loading is finished and integrated into the tree.
+                        #
+                        #        Perhaps one quick fix would be to manually build the substructure without relying on `node.expand`...
+                else:
+                    break
+            tree.move_cursor(node_current)
 
     @on(Input.Changed)
     def show_invalid_reasons(self, event: Input.Changed) -> None:
@@ -364,21 +370,46 @@ class DataFileNamer(Screen[str]):
         else:
             self.query_one(Pretty).update([])
 
-    def action_cancel(self):
-        self.dismiss("")
-
     def on_input_submitted(self, event: Input.Submitted):
         if event.validation_result.is_valid:
-            fname = event.value + ".yaml"
-            fpath = DPATH_DATA / fname
+            fname = Path(event.value + ".yaml")
+            subdir = self.highlighted_path
+
+            fpath = DPATH_DATA.parent / subdir / fname
             if fpath.is_file():
                 def handle_overwrite(overwrite: bool):
                     if overwrite:
-                        self.dismiss(fname)
+                        self.dismiss(fpath)
 
                 self.app.push_screen(OverwriteScreen(), handle_overwrite)
             else:
-                self.dismiss(fname)
+                self.dismiss(fpath)
+
+    def on_tree_node_highlighted(self, node):
+        path = self.highlighted_path
+        if self.SecondDTree and path.is_dir():
+            entry = DirEntry(path=path, loaded=False)
+            self.second_dtree.reset_node(self.second_dtree.root, path.name, entry)
+            self.second_dtree.root.expand_all()
+
+    def on_directory_tree_file_selected(self, selected: DirectoryTree.FileSelected):
+        self.dismiss(selected.path)
+
+    def action_cancel(self):
+        self.dismiss("")
+
+
+# TODO: add some way to delete directories
+class SelectDataFile(DataFileAction):
+    entry = False
+    FirstDTree = filtered_directory_tree(show_files=True)
+
+
+# TODO: add some way to create directories
+class SaveDataFile(DataFileAction):
+    entry = True
+    FirstDTree = filtered_directory_tree(show_files=False)
+    SecondDTree = filtered_directory_tree(show_files=True, show_directories=False, disabled=True)
 
 
 class OverwriteScreen(ModalScreen[bool]):  # (1)!
