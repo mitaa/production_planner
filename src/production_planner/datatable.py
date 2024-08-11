@@ -170,6 +170,8 @@ class ProducerCell(EditableCell):
     def set(self, value):
         if super().set(value):
             self.data.node_main.producer_reset()
+            if not self.data.node_main.is_module and self.data.node_children:
+                self.data.node_children.clear()
 
 
 class RecipeCell(EditableCell):
