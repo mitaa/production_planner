@@ -372,7 +372,7 @@ class SelectPurity(Screen[Purity]):
     def on_data_table_row_selected(self):
         table = self.query_one(DataTable)
         row = table.cursor_coordinate.row
-        self.dismiss([SetCellValue(PurityCell, self.data[row])])
+        self.dismiss([SetCellValue(datatable.PurityCell, self.data[row])])
 
 
 def filtered_directory_tree(show_files=True, show_directories=True, **init_kwargs):
