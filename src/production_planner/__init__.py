@@ -225,7 +225,7 @@ class Planner(App):
 
         self.selected_producer = node.producer
         self.selected_node = node
-        cell = self.edit_columns[col](node) if len(self.edit_columns) > col else None
+        cell = self.edit_columns[col](instance) if len(self.edit_columns) > col else None
 
         if cell is not None and cell.selector:
             if not cell.access_guard():
@@ -234,10 +234,8 @@ class Planner(App):
             def callback(assignments: [SetCellValue]):
                 if assignments:
                     for ass in assignments:
-                        cell = ass.column(node)
+                        cell = ass.column(instance)
                         cell.set(ass.value)
-                        # TODO: pass nodeinstance to initializer, replace all node references, and remove this method ...
-                        cell.edit_postproc(instance)
                     node.update()
                     self.update(sel_ctxt)
             self.push_screen(cell.selector(), callback)
@@ -289,11 +287,11 @@ class Planner(App):
 
         node = instance.node_main
 
-        if (col is None) or (not col(node).access_guard() or col.read_only):
+        if (col is None) or (not col(instance).access_guard() or col.read_only):
             self.num_write_mode = False
             return
 
-        col = col(node)
+        col = col(instance)
         match event.key:
             case "delete":
                 self.num_write_mode = col.edit_delete()
@@ -373,20 +371,20 @@ class Planner(App):
             is_summary = isinstance(node, SummaryNode)
             if is_summary:
                 node.update_recipe(inst.node_main for inst in node_instance.node_children)
-            row = [Column(node) for Column in self.edit_columns]
+            row = [Column(node_instance) for Column in self.edit_columns]
 
             for ingredient in ingredients:
                 class Cell(IngredientCell):
                     vispath = ingredient
                     style_summary = is_summary
 
-                row += [Cell(node, ingredient)]
+                row += [Cell(node_instance, ingredient)]
             rows += [[cell.get_styled() for cell in row]]
 
         self.table.clear(columns=True)
         self.table.add_columns(*(ingredients.name for ingredients in self.columns))
-        self.table.add_rows(rows)
         self.table.fixed_columns = 3
+        self.table.add_rows(rows)
         if selected:
             selected.reselect()
 

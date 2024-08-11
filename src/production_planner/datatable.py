@@ -35,6 +35,9 @@ class Cell:
     bounds = Bounds(0, 999)
     vispath = None
     setpath = None
+    indent = False
+    # TODO: implement
+    leaves = False
     justify = "left"
 
     def __init__(self, data, read_only=None):
@@ -70,21 +73,21 @@ class Cell:
             elif value > 0:
                 style += "green"
                 txt = "+" + txt
+        if self.indent:
+            txt = self.data.indent_str + txt
         return Text(txt, style=style, justify=self.justify)
 
-    def set(self, value):
+    def set(self, value) -> bool:
         if not self.access_guard() or value is None:
-            return
+            return False
         if self.read_only:  # FIXME: warn, rather than error
             raise TypeError("Cell is Read-Only !")
 
-        return set_path(self.data, self.setpath or self.vispath, value)
+        set_path(self.data, self.setpath or self.vispath, value)
+        return True
 
     def set_num(self, value):
         return self.set(value)
-
-    def edit_postproc(self, instance: NodeInstance):
-        pass
 
     def edit_push_numeral(self, num: str, write_mode) -> bool:
         if not self.is_numeric_editable:
@@ -109,14 +112,14 @@ class Cell:
             write_mode = False
 
         self.set_num(prev)
-        self.data.update()
+        self.data.node_main.update()
         return write_mode
 
     def edit_delete(self) -> bool:
         if not self.is_numeric_editable:
             return
         self.set_num(self.bounds.lower)
-        self.data.update()
+        self.data.node_main.update()
         return False
 
     def edit_backspace(self) -> bool:
@@ -127,7 +130,7 @@ class Cell:
         if len(new) == 0:
             new = self.bounds.lower
         self.set_num(int(new))
-        self.data.update()
+        self.data.node_main.update()
         return True
 
     def access_guard(self) -> bool:
@@ -150,38 +153,41 @@ class EditableCell(Cell):
     selector = None
 
     def access_guard(self):
-        return not isinstance(self.data, SummaryNode)
+        return not isinstance(self.data.node_main, SummaryNode)
 
 
 class ProducerCell(EditableCell):
     name = "Building Name"
-    vispath = "producer.name"
-    setpath = "producer"
+    vispath = "node_main.producer.name"
+    setpath = "node_main.producer"
+    indent = True
 
     def __init__(self, *args, **kwargs):
         # FIXME: avoiding circular import ..
         self.selector = screens.SelectProducer
         super().__init__(*args, **kwargs)
 
-    def edit_postproc(self, instance):
-        self.data.producer_reset()
+    def set(self, value):
+        if super().set(value):
+            self.data.node_main.producer_reset()
 
 
 class RecipeCell(EditableCell):
     name = "Recipe"
-    vispath = "recipe.name"
-    setpath = "recipe"
+    vispath = "node_main.recipe.name"
+    setpath = "node_main.recipe"
+    indent = True
 
     def __init__(self, *args, **kwargs):
         # FIXME: avoiding circular import ..
         self.selector = screens.SelectRecipe
         super().__init__(*args, **kwargs)
 
-    def edit_postproc(self, instance):
-        if self.data.is_module:
-            instance.set_module(self.data.recipe.name)
+    def set(self, value):
+        if super().set(value) and self.data.node_main.is_module:
+            self.data.set_module(self.data.node_main.recipe.name)
             curname = os.path.splitext(CONFIG["last_file"])[0]
-            core.APP.data.reload_modules([instance], module_stack=[curname])
+            core.APP.data.reload_modules([self.data], module_stack=[curname])
 
 
 class NumericEditaleCell(EditableCell):
@@ -192,23 +198,23 @@ class NumericEditaleCell(EditableCell):
 
 class CountCell(NumericEditaleCell):
     name = "QTY"
-    vispath = "count"
+    vispath = "node_main.count"
     justify = "right"
 
 
 class MkCell(NumericEditaleCell):
     name = "Mk"
-    vispath = "mk"
+    vispath = "node_main.mk"
     bounds = Bounds(1, 3)
 
     def access_guard(self):
-        return self.data.producer.is_miner and super().access_guard()
+        return self.data.node_main.producer.is_miner and super().access_guard()
 
 
 class PurityCell(NumericEditaleCell):
     name = "Purity"
-    vispath = "purity.name"
-    setpath = "purity"
+    vispath = "node_main.purity.name"
+    setpath = "node_main.purity"
     bounds = Bounds(1, 3)
     purity_map = list(reversed(Purity.__members__))
 
@@ -218,29 +224,29 @@ class PurityCell(NumericEditaleCell):
         super().__init__(*args, **kwargs)
 
     def get_num(self):
-        value = self.purity_map.index(self.data.purity.name) + 1
-        return self.purity_map.index(self.data.purity.name) + 1
+        value = self.purity_map.index(self.data.node_main.purity.name) + 1
+        return self.purity_map.index(self.data.node_main.purity.name) + 1
 
     def set_num(self, value):
         value = min(max(1, value), 3)
         self.set(Purity[self.purity_map[value - 1]])
 
     def access_guard(self):
-        return self.data.producer.is_miner and super().access_guard()
+        return self.data.node_main.producer.is_miner and super().access_guard()
 
 
 class ClockRateCell(NumericEditaleCell):
     name = "Clockrate"
-    vispath = "clock_rate"
+    vispath = "node_main.clock_rate"
     bounds = Bounds(0, 250)
 
     def access_guard(self):
-        return not self.data.producer.is_module and super().access_guard()
+        return not self.data.node_main.producer.is_module and super().access_guard()
 
 
 class PowerCell(Cell):
     name = "Power"
-    vispath = "energy"
+    vispath = "node_main.energy"
     read_only = True
     justify = "right"
 
@@ -253,11 +259,11 @@ class IngredientCell(Cell):
     justify = "right"
 
     def access_guard(self):
-        return self.vispath in self.data.ingredients
+        return self.vispath in self.data.node_main.ingredients
 
     def get(self):
         if self.access_guard():
-            return self.data.ingredients[self.vispath]
+            return self.data.node_main.ingredients[self.vispath]
         else:
             return self.default_na
 
@@ -290,7 +296,7 @@ class PlannerTable(DataTable):
         cursor_row = self.cursor_row
         if row_index == cursor_row:
             base_style += self.get_component_rich_style("datatable--hover" if row_index > 0 else "datatable--header-hover")
-        else:
+        elif cursor_row < len(self.highlight_cols):
             col_info = self.highlight_cols[cursor_row]
             if len(col_info) > column_index:
                 base_style += col_info[column_index]

@@ -578,6 +578,7 @@ class NodeInstance:
         self.node_children.remove(node)
 
     def get_nodes(self, level=0) -> [Self]:
+        self.indent_str = " " * max(0, level - 2)
         if level == 0:
             NodeInstance.row_to_node_index = []
 

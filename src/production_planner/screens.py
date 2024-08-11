@@ -150,6 +150,7 @@ class SelectProducer(FilteredListSelector):
         self.cell = datatable.ProducerCell
         self.data = PRODUCERS
         self.selected = self.app.selected_node.producer
+        self.query_one(DataTable).zebra_stripes = True
         super().on_mount()
 
     def update(self):
@@ -248,6 +249,7 @@ class SelectRecipe(FilteredListSelector):
 
         self.data = self.app.selected_producer.recipes
         self.selected = self.app.selected_node.recipe
+        self.query_one(DataTable).zebra_stripes = True
         super().on_mount()
 
     def compose(self) -> ComposeResult:
