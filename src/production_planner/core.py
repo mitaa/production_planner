@@ -79,12 +79,13 @@ class Ingredient:
     def __str__(self):
         return f"({self.count}x {self.name})"
 
+    def __hash__(self):
+        return hash((self.name, self.count))
+
 
 class Recipe(yaml.YAMLObject):
     yaml_tag = u"!recipe"
 
-    # FIXME: there are collisions: e.g. `Coal`: Miner and Coal Generator
-    #        use `Recipe` objects as keys and adapt screens.RecipeSelector ...
     recipe_to_producer_map = {}
 
     def __init__(self, name, cycle_rate, inputs: [(int, str)], outputs: [(int, str)]):
@@ -104,10 +105,13 @@ class Recipe(yaml.YAMLObject):
 
     @property
     def producer(self):
-        if self.name in self.recipe_to_producer_map:
-            return self.recipe_to_producer_map[self.name]
+        if self in self.recipe_to_producer_map:
+            return self.recipe_to_producer_map[self]
         else:
             return None
+
+    def __hash__(self):
+        return hash((self.name, self.cycle_rate, tuple(self.inputs), tuple(self.outputs)))
 
     @classmethod
     def empty(cls, name=""):
@@ -149,7 +153,7 @@ class Producer:
         for recipe in self.recipes:
             self.recipe_map[recipe.name] = recipe
             if not self.abstract:
-                recipe.recipe_to_producer_map[recipe.name] = self
+                recipe.recipe_to_producer_map[recipe] = self
 
     def __str__(self):
         buf = self.name
@@ -331,7 +335,7 @@ class Node:
         self.purity_cache[self.producer.name] = value
 
     def producer_reset(self):
-        if not self.recipe or self.recipe.name not in self.producer.recipe_map:
+        if not self.recipe or self.recipe not in self.producer.recipe_map.values():
             default = self.producer.recipes[0] if self.producer.recipes else Recipe.empty()
             self.recipe = self.recipe_cache.get(self.producer.name, default)
 

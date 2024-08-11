@@ -154,13 +154,16 @@ class SelectProducer(FilteredListSelector):
 
     def update(self):
         def bool_to_mark(a, mark="x"):
-            return mark if a else ""
+            return Text(mark if a else "", justify="center")
         table = self.query_one(DataTable)
         table.clear(columns=True)
         table.add_columns("Building", "Power", "Miner", "Power Gen")
         rows = []
         for p in self.data_filtered:
-            rows += [[p.name, p.base_power, bool_to_mark(p.is_miner), bool_to_mark(p.is_pow_gen)]]
+            rows += [[Text(p.name),
+                      Text(str(p.base_power), justify="right"),
+                      bool_to_mark(p.is_miner),
+                      bool_to_mark(p.is_pow_gen)]]
         table.add_rows(rows)
 
 
