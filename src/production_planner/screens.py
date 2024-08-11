@@ -3,13 +3,15 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from .core import APP, CONFIG, DPATH_DATA, get_path, set_path, Producer, Purity, Recipe, PRODUCERS, PRODUCER_NAMES, PRODUCER_MAP, all_recipes_producer
+from .core import CONFIG, DPATH_DATA, get_path, set_path, Ingredient, Producer, Purity, Recipe, PRODUCERS, PRODUCER_NAMES, PRODUCER_MAP, all_recipes_producer
+from . import core
 from . import datatable
 
 import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from enum import Enum
 from typing import Iterable
 
 from textual import on
@@ -17,8 +19,8 @@ from textual.containers import Grid
 from textual.screen import Screen, ModalScreen
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal
-from textual.widgets import DataTable, DirectoryTree, Label, Button, Header, Footer, Input, Pretty, Select
-from textual.widgets._directory_tree import DirEntry
+from textual.widgets import DataTable, DirectoryTree, Label, Button, Header, Footer, Input, Pretty, Select, SelectionList
+from textual.widgets.selection_list import Selection
 from textual.validation import Function
 from textual.coordinate import Coordinate
 from textual import events
@@ -32,6 +34,23 @@ class SetCellValue:
     value: None
 
 
+class StringifyFilter:
+    def __init__(self, search: str = ""):
+        self._search = search
+
+    @property
+    def search(self):
+        return self._search
+
+    @search.setter
+    def search(self, value: str):
+        self._search = value
+        self.words = value.split()
+
+    def filter_item(self, item) -> bool:
+        return all(word in str(item).lower() for word in self.words)
+
+
 class FilteredListSelector(Screen[Producer]):
     CSS_PATH = "FilteredListSelector.tcss"
     BINDINGS = [
@@ -41,7 +60,7 @@ class FilteredListSelector(Screen[Producer]):
     data = []
     data_sorted = []
     data_filtered = []
-    filter_str = ""
+    data_filter = StringifyFilter()
     selected = None
 
     def on_mount(self) -> None:
@@ -87,16 +106,11 @@ class FilteredListSelector(Screen[Producer]):
     @on(Input.Changed)
     def set_filt(self, event: Input.Changed) -> None:
         if event is None:
-            self.filter_str = self.query_one(Input).value
+            self.data_filter.search = self.query_one(Input).value
         else:
-            self.filter_str = event.value
+            self.data_filter.search = event.value
 
-        self.data_filtered = []
-        words = re.split(r"\s+", self.filter_str)
-        for item in self.data_sorted:
-            item_str = str(item).lower()
-            if all(word in item_str for word in words):
-                self.data_filtered += [item]
+        self.data_filtered = list(filter(self.data_filter.filter_item, self.data_sorted))
         self.update()
         self.select()
 
@@ -153,10 +167,77 @@ class SelectProducer(FilteredListSelector):
 SELECT_PRODUCERS = [all_recipes_producer] + PRODUCERS
 
 
+class RecipeFilterSetting(Enum):
+    # Note: prompt == value in the SelectionList
+    in_recipe_names = Selection(*["Recipe Names"] * 2, True)
+    in_outputs = Selection(*["Outputs"] * 2, True)
+    in_inputs  = Selection(*["Inputs"] * 2, False)
+    # use_regex = Selection(*["Regex"] * 2, False)
+
+
+class RecipeFilter(StringifyFilter):
+    def __init__(self, search: str = "", *args, **kwargs):
+        super().__init__(search, *args, **kwargs)
+        self.use_regex = False
+        self.search = search
+        self.update_settings([m.value.prompt.plain for m in RecipeFilterSetting if m.value.initial_state])
+
+    def update_settings(self, active_options: [str]):
+        for member in RecipeFilterSetting:
+            setattr(self, member.name, member.value.prompt.plain in active_options)
+
+    @property
+    def use_regex(self):
+        return self._use_regex
+
+    @use_regex.setter
+    def use_regex(self, value):
+        self._use_regex = value
+        self.search = self.search
+
+    @StringifyFilter.search.setter
+    def search(self, value):
+        self._search = value
+        words = value.split()
+        self.words = words
+        try:
+            re_search = re.compile(self.search, flags=re.IGNORECASE)
+        except re.error:
+            re_search = re.compile("")
+            # Happens when for example value == "\\"
+
+        def filt_regex(content: str):
+            return re_search.search(content) is not None
+
+        def filt_words(content: str):
+            return all(word in content for word in words)
+
+        self.filt = filt_regex if self.use_regex else filt_words
+
+    def filter_item(self, item: Recipe) -> bool:
+        def search_ingredients(ingredients: [Ingredient]) -> bool:
+            for ingredient in ingredients:
+                if self.filt(str(ingredient).lower()):
+                    return True
+
+        if self.in_recipe_names:
+            if self.filt(item.name.lower()):
+                return True
+
+        if self.in_inputs:
+            if search_ingredients(item.inputs):
+                return True
+        if self.in_outputs:
+            if search_ingredients(item.outputs):
+                return True
+
+
 class SelectRecipe(FilteredListSelector):
     screen_title = "Recipes"
+    data_filter = RecipeFilter()
 
     def on_mount(self) -> None:
+        self.query_one(SelectionList).border_title = "[white]Look in:[/]"
         self.add_producer_column = False
         self.cell = datatable.RecipeCell
         if self.app.selected_node.is_module:
@@ -171,11 +252,17 @@ class SelectRecipe(FilteredListSelector):
         self.producer_listing = self._producer_listing(self.app.selected_producer.name)
         yield Header()
         yield Horizontal(
+            Select([(producer, producer) for producer in self.producer_listing], allow_blank=False),
             Input(placeholder="<text filter>"),
-            Select([(producer, producer) for producer in self.producer_listing], allow_blank=False)
+            SelectionList(*[member.value for member in RecipeFilterSetting]),
         )
         yield DataTable()
         yield Footer()
+
+    @on(SelectionList.SelectedChanged)
+    def update_filter_settings(self, event: SelectionList.SelectedChanged):
+        self.data_filter.update_settings(event.selection_list.selected)
+        self.set_filt(None)
 
     def package(self) -> [SetCellValue]:
         producer = PRODUCER_MAP[self.query_one(Select).value]
@@ -237,6 +324,7 @@ class SelectRecipe(FilteredListSelector):
                 producer = recipe.producer
                 row += [producer.name if producer else ""]
             row += [recipe.name]
+            # FIXME: production per minute should somehow be included in `str(Ingredient)`, otherwise we can't filter for that
             inputs  = [Text(f"({round(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="red") for ingr in recipe.inputs]
             outputs = [Text(f"({round(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="green") for ingr in recipe.outputs]
             inputs += [""] * (max_input_count - len(inputs))
@@ -388,9 +476,8 @@ class DataFileAction(Screen[str]):
     def on_tree_node_highlighted(self, node):
         path = self.highlighted_path
         if self.SecondDTree and path.is_dir():
-            entry = DirEntry(path=path, loaded=False)
-            self.second_dtree.reset_node(self.second_dtree.root, path.name, entry)
-            self.second_dtree.root.expand_all()
+            self.second_dtree.path = path
+            self.second_dtree.reload()
 
     def on_directory_tree_file_selected(self, selected: DirectoryTree.FileSelected):
         self.dismiss(selected.path)
@@ -405,7 +492,7 @@ class SelectDataFile(DataFileAction):
     FirstDTree = filtered_directory_tree(show_files=True)
 
 
-# TODO: add some way to create directories
+# TODO: add some way to create directories (though implicitly possible by typing the relative path in the entry widget)
 class SaveDataFile(DataFileAction):
     entry = True
     FirstDTree = filtered_directory_tree(show_files=False)

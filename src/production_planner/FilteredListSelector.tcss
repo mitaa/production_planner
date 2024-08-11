@@ -16,6 +16,11 @@ Select {
     padding: 0;
 }
 
+SelectionList {
+    width: 21;
+    height: 5;
+}
+
 Label {
     align: center middle;
     margin: 1 2;
