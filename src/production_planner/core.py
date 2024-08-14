@@ -370,6 +370,7 @@ class Node:
             raise ValueError("Unexpected Data Format")
 
         tree.update_summaries()
+        tree.mark_from_module()
         module_recipe = tree.node_main.recipe
         module_nodes = []
 
@@ -527,6 +528,7 @@ class NodeInstance:
         # TODO: self.activated = activated
         self.row_idx = row_idx
         self.level = level
+        self.from_module = False
 
     def show_hide(self, shown=None):
         self.shown = shown or (not self.shown)
@@ -644,6 +646,11 @@ class NodeInstance:
 
         for child in self.node_children:
             child.collect_modules(level + 1)
+
+    def mark_from_module(self):
+        self.from_module = True
+        for child in self.node_children:
+            child.mark_from_module()
 
     def __getitem__(self, row_idx):
         self.get_node(row_idx)

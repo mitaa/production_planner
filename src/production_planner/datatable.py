@@ -15,6 +15,7 @@ from textual.coordinate import Coordinate
 
 from rich.text import Text
 from rich.style import Style
+from rich.color import Color
 
 
 @dataclass
@@ -39,6 +40,10 @@ class Cell:
     # TODO: implement
     leaves = False
     justify = "left"
+    fmt_summary = Style(bold=True)
+    fmt_module_children = Style(color=Color.from_rgb(150, 150, 150))
+    fmt_balance_minus = Style(color="red")
+    fmt_balance_plus = Style(color="green")
 
     def __init__(self, data, read_only=None):
         self.data = data
@@ -62,19 +67,21 @@ class Cell:
     def get_styled(self):
         value = self.get()
         txt = str(value)
-        style = ""
+        style = Style()
         if self.style_summary:
-            style += "bold "
+            style += self.fmt_summary
 
         if self.style_balance:
-            style += ""
             if value < 0:
-                style += "red"
+                style += self.fmt_balance_minus
             elif value > 0:
-                style += "green"
+                style += self.fmt_balance_plus
                 txt = "+" + txt
         if self.indent:
             txt = self.data.indent_str + txt
+        if self.data.from_module and not self.data.node_main.is_module:
+            style += self.fmt_module_children
+
         return Text(txt, style=style, justify=self.justify)
 
     def set(self, value) -> bool:
