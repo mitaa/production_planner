@@ -16,8 +16,8 @@ from textual import log
 import yaml
 import platformdirs
 
-from . import jsonshelve
 from textual.widgets import DataTable
+import json_store
 
 APP = None
 
@@ -44,7 +44,7 @@ def ensure_keys(store, key_def_pairings={}):
 DPATH_DATA = Path(platformdirs.user_data_dir("production_planner", "mitaa"))
 FPATH_CONFIG = os.path.join(DPATH_DATA, ".config.json")
 os.makedirs(DPATH_DATA, exist_ok=True)
-CONFIG = jsonshelve.FlatShelf(FPATH_CONFIG, dump_kwargs={"indent": 4})
+CONFIG = json_store.open(FPATH_CONFIG, json_kw={ "indent": 4 })
 
 ensure_keys(CONFIG, {
     "last_file": ".cached.yaml"
