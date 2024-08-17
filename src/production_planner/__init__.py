@@ -14,6 +14,7 @@ import os
 from copy import copy
 from dataclasses import dataclass
 from pathlib import Path
+import importlib.metadata
 
 from textual import events
 from textual.app import App, ComposeResult
@@ -22,6 +23,10 @@ from textual.coordinate import Coordinate
 from rich.style import Style
 
 import yaml
+
+
+__version__ = importlib.metadata.version("production_planner")
+
 
 # The Fuel Generator, like all power generation buildings, behaves differently to power consumer buildings when overclocked. A generator overclocked to 250% only operates 202.4% faster[EA] (operates 250% faster[EX]).
 # As the fuel consumption rate is directly proportional to generator power production, verify that demand matches the production capacity to ensure that Power Shards are used to their full potential. Fuel efficiency is unchanged, but consumption and power generation rates may be unexpectedly uneven[EA].
