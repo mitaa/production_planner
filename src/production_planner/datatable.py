@@ -305,7 +305,7 @@ class PlannerTable(DataTable):
         cursor_row = self.cursor_row
         if row_index == cursor_row:
             base_style += self.get_component_rich_style("datatable--hover" if row_index > 0 else "datatable--header-hover")
-        elif cursor_row < len(self.highlight_cols):
+        elif cursor_row < len(self.highlight_cols) and row_index >= 0:
             col_info = self.highlight_cols[cursor_row]
             if len(col_info) > column_index:
                 base_style += col_info[column_index]

@@ -7,7 +7,7 @@
 from . import core
 from .core import CONFIG, DPATH_DATA, Node, SummaryNode, NodeInstance, NodeTree, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
 from .screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, SaveDataFile, SetCellValue
-from .datatable import PlannerTable, EmptyCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
+from .datatable import PlannerTable, Cell, EmptyCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
 from .datatable import SelectionContext, Selection, Reselection
 
 import os
@@ -21,6 +21,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer
 from textual.coordinate import Coordinate
 from rich.style import Style
+from rich.color import Color
 
 import yaml
 
@@ -340,23 +341,52 @@ class Planner(App):
         self.columns = (self.edit_columns + columns_ingredients)
         return (nodes, ingredients)
 
-    def _update_highlight_info(self, nodes: [NodeInstance]):
+    def _update_highlight_info(self, rows: [[Cell]]):
+        # This method takes the `Cell` instances
+        # so that we would be able to further control formatting with font colors and so on
         self.table.highlight_cols = []
+        if not rows:
+            return
+
         style_header_hover = self.table.get_component_rich_style("datatable--header-hover")
         style_hover = self.table.get_component_rich_style("datatable--hover")
         style_empty = Style()
+        style_sum_pos = Style(bgcolor=Color.from_rgb(25, 50, 25))
+        style_sum_neg = Style(bgcolor=Color.from_rgb(51, 13, 13))
+        style_sum_zero = Style(bgcolor=Color.from_rgb(40, 40, 100))
+
+        summary = rows[0][0].data.node_main if isinstance(rows[0][0].data.node_main, SummaryNode) else SummaryNode([])
+        col_colours = []
+        for idx, col in enumerate(self.columns):
+            style = style_empty
+            if col.name in summary.ingredients:
+                ingredient_count = summary.ingredients[col.name]
+                if ingredient_count > 0:
+                    style = style_sum_pos
+                elif ingredient_count < 0:
+                    style = style_sum_neg
+                else:
+                    style = style_sum_zero
+            else:
+                style = style_sum_zero
+            col_colours += [style]
 
         prev_row_idx = None
-        for instance in nodes:
+
+        for row in rows:
+            instance = row[0].data
             if instance.row_idx == prev_row_idx:
                 continue
             node = instance.node_main
             ingredients = [ingr.name for ingr in (node.recipe.inputs + node.recipe.outputs)]
             hov = (style_hover if instance.row_idx > 0 else style_header_hover)
-            row = []
+            row_highlight = []
             for idx, col in enumerate(self.columns):
-                row += [hov if col.name in ingredients else style_empty]
-            self.table.highlight_cols += [row]
+                if col.name in ingredients:
+                    row_highlight += [col_colours[idx]]
+                else:
+                    row_highlight += [style_empty]
+            self.table.highlight_cols += [row_highlight]
 
     def update(self, selected: SelectionContext = None):
         if self.loaded_hash != hash(self.data):
@@ -367,7 +397,6 @@ class Planner(App):
         instance = selected.instance if selected else None
 
         nodes, ingredients = self.update_columns(instance)
-        self._update_highlight_info(nodes)
 
         rows = []
         for node_instance in nodes:
@@ -384,7 +413,11 @@ class Planner(App):
                     style_summary = is_summary
 
                 row += [Cell(node_instance, ingredient)]
-            rows += [[cell.get_styled() for cell in row]]
+            rows += [row]
+
+        self._update_highlight_info(rows)
+
+        rows = [[cell.get_styled() for cell in row] for row in rows]
 
         self.table.clear(columns=True)
         self.table.add_columns(*(ingredients.name for ingredients in self.columns))
