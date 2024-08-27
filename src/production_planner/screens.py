@@ -435,6 +435,9 @@ class DataFileAction(Screen[str]):
     def on_mount(self) -> None:
         # All these lines to simply move the cursor to the currently open file/folder
         prev_path = Path(CONFIG["last_file"])
+        if self.entry:
+            self.query_one(Input).value = os.path.splitext(str(prev_path))[0]
+
         tree = self.first_dtree
         node_current = tree.root
         with tree.prevent(tree.FileSelected):
