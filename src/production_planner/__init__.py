@@ -350,7 +350,7 @@ class Planner(App):
         inputs_only = inputs_mixed - outputs_mixed
         outputs_only = outputs_mixed - inputs_mixed
 
-        ingredients = list(outputs_only) + list((inputs_mixed | outputs_mixed) - (inputs_only | outputs_only)) + list(inputs_only)
+        ingredients = sorted(outputs_only) + sorted((inputs_mixed | outputs_mixed) - (inputs_only | outputs_only)) + sorted(inputs_only)
         for ingredient in ingredients:
             IngredientColumn = type(ingredient, (IngredientCell,), {"name": ingredient, "path": ingredient})
             columns_ingredients += [IngredientColumn]
