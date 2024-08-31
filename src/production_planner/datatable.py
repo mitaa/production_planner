@@ -195,7 +195,7 @@ class RecipeCell(EditableCell):
     def set(self, value):
         if super().set(value) and self.data.node_main.is_module:
             self.data.set_module(self.data.node_main.recipe.name)
-            curname = os.path.splitext(CONFIG["last_file"])[0]
+            curname = os.path.splitext(CONFIG.store["last_file"])[0]
             core.APP.data.reload_modules([self.data], module_stack=[curname])
 
 

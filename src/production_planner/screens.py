@@ -3,7 +3,7 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from .core import CONFIG, DPATH_DATA, get_path, set_path, Ingredient, Producer, Purity, Recipe, PRODUCERS, PRODUCER_NAMES, PRODUCER_MAP, all_recipes_producer
+from .core import CONFIG, get_path, set_path, Ingredient, Producer, Purity, Recipe, PRODUCERS, PRODUCER_NAMES, PRODUCER_MAP, all_recipes_producer
 from . import core
 from . import datatable
 
@@ -411,9 +411,9 @@ class DataFileAction(Screen[str]):
     SecondDTree = None
 
     def compose(self) -> ComposeResult:
-        self.first_dtree = self.FirstDTree(DPATH_DATA)
+        self.first_dtree = self.FirstDTree(CONFIG.dpath_data)
         if self.SecondDTree:
-            self.second_dtree = self.SecondDTree(DPATH_DATA)
+            self.second_dtree = self.SecondDTree(CONFIG.dpath_data)
 
         if self.entry:
             def has_dot(value: str) -> bool:
@@ -423,7 +423,7 @@ class DataFileAction(Screen[str]):
 
         yield self.first_dtree
         if self.SecondDTree:
-            self.second_dtree = self.SecondDTree(DPATH_DATA)
+            self.second_dtree = self.SecondDTree(CONFIG.dpath_data)
             yield self.second_dtree
         yield Footer()
 
@@ -434,7 +434,7 @@ class DataFileAction(Screen[str]):
 
     def on_mount(self) -> None:
         # All these lines to simply move the cursor to the currently open file/folder
-        prev_path = Path(CONFIG["last_file"])
+        prev_path = Path(CONFIG.store["last_file"])
         if self.entry:
             self.query_one(Input).value = os.path.splitext(str(prev_path))[0]
 
@@ -471,7 +471,7 @@ class DataFileAction(Screen[str]):
             fname = Path(event.value + ".yaml")
             subdir = self.highlighted_path
 
-            fpath = DPATH_DATA.parent / subdir / fname
+            fpath = CONFIG.dpath_data.parent / subdir / fname
             if fpath.is_file():
                 def handle_overwrite(overwrite: bool):
                     if overwrite:

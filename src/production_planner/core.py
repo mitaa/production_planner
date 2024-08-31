@@ -41,14 +41,34 @@ def ensure_keys(store, key_def_pairings={}):
         ensure_key(store, k, v)
 
 
-DPATH_DATA = Path(platformdirs.user_data_dir("production_planner", "mitaa"))
-FPATH_CONFIG = os.path.join(DPATH_DATA, ".config.json")
-os.makedirs(DPATH_DATA, exist_ok=True)
-CONFIG = json_store.open(FPATH_CONFIG, json_kw={ "indent": 4 })
+@static
+def CONFIG():
+    class ConfigStore:
+        def __init__(self):
+            self.dpath_data = Path(platformdirs.user_data_dir("production_planner", "mitaa"))
 
-ensure_keys(CONFIG, {
-    "last_file": ".cached.yaml"
-})
+        @property
+        def dpath_data(self):
+            return self._dpath_data
+
+        @dpath_data.setter
+        def dpath_data(self, value):
+            self._dpath_data = Path(value)
+            os.makedirs(self.dpath_data, exist_ok=True)
+            self.fpath_config = self.dpath_data / ".config.json"
+
+        @property
+        def fpath_config(self):
+            return self._fpath_config
+
+        @fpath_config.setter
+        def fpath_config(self, value):
+            self._fpath_config = Path(value)
+            self.store = json_store.open(self.fpath_config, json_kw={ "indent": 4 })
+            ensure_keys(self.store, {
+                "last_file": ".cached.yaml"
+            })
+    return ConfigStore()
 
 
 def get_path(obj, path):
@@ -350,7 +370,7 @@ class Node:
         if not self.producer.is_module:
             return
         self.producer.recipes = [Recipe.empty()]
-        names = list(os.scandir(DPATH_DATA))
+        names = list(os.scandir(CONFIG.dpath_data))
         fnames = [entry.name for entry in names if entry.is_file() if not entry.name.startswith(".")]
         for fname in fnames:
             self.update_module_listing(fname)
@@ -362,10 +382,10 @@ class Node:
         if not fname.lower().endswith(".yaml"):
             fname += ".yaml"
 
-        if not (DPATH_DATA / fname).is_file():
+        if not (CONFIG.dpath_data / fname).is_file():
             return False
 
-        tree = load_data(DPATH_DATA / fname)
+        tree = load_data(CONFIG.dpath_data / fname)
         if tree is None:
             raise ValueError("Unexpected Data Format")
 

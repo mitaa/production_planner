@@ -4,8 +4,23 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+"""Production Planner
+
+Usage:
+  production_planner
+  production_planner --data-folder=<dpath>
+  production_planner (-h | --help)
+  production_planner --version
+
+Options:
+  -h --help             Show this screen.
+  --version             Show version.
+  --data-folder=<dpath> Use the specified folder-path as data-folder for this session
+
+"""
+
 from . import core
-from .core import CONFIG, DPATH_DATA, Node, SummaryNode, NodeInstance, NodeTree, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
+from .core import CONFIG, Node, SummaryNode, NodeInstance, NodeTree, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
 from .screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, SaveDataFile, SetCellValue
 from .datatable import PlannerTable, Cell, EmptyCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
 from .datatable import SelectionContext, Selection, Reselection
@@ -16,10 +31,13 @@ from dataclasses import dataclass
 from pathlib import Path
 import importlib.metadata
 
+from docopt import docopt
+
 from textual import events
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer
 from textual.coordinate import Coordinate
+
 from rich.style import Style
 from rich.color import Color
 
@@ -64,9 +82,7 @@ class Planner(App):
 
     def on_mount(self) -> None:
         core.APP = self
-        if not DPATH_DATA.is_dir():
-            os.makedirs(DPATH_DATA)
-        self.title = CONFIG["last_file"]
+        self.title = CONFIG.store["last_file"]
 
         p = PRODUCERS[0]
         self.planner_nodes = []
@@ -94,10 +110,10 @@ class Planner(App):
         self.update()
 
     def _normalize_data_path(self, subpath: Path) -> (Path, Path):
-        root = DPATH_DATA
+        root = CONFIG.dpath_data
         if subpath.is_absolute():
             try:
-                subpath = subpath.relative_to(DPATH_DATA)
+                subpath = subpath.relative_to(CONFIG.dpath_data)
             except ValueError:
                 root = subpath.parent
                 subpath = subpath.name
@@ -118,15 +134,15 @@ class Planner(App):
         else:
             self.data = tree
 
-        curname = os.path.splitext(CONFIG["last_file"])[0]
+        curname = os.path.splitext(CONFIG.store["last_file"])[0]
         self.data.reload_modules(module_stack=[curname])
 
         fname = fpath.name
         if not fname.startswith("."):
-            CONFIG["last_file"] = str(subpath)
+            CONFIG.store["last_file"] = str(subpath)
             self.title = subpath
             self.notify(f"File loaded: `{subpath}`\n{root}", timeout=10)
-        last_fpath = DPATH_DATA / CONFIG["last_file"]
+        last_fpath = CONFIG.dpath_data / CONFIG.store["last_file"]
         tree = core.load_data(last_fpath) if last_fpath.is_file() else None
         if tree is not None:
             self.loaded_hash = hash(tree)
@@ -140,7 +156,7 @@ class Planner(App):
         with open(fpath, "w") as fp:
             yaml.dump(self.data, fp)
         if not fpath.name.startswith("."):
-            CONFIG["last_file"] = str(subpath)
+            CONFIG.store["last_file"] = str(subpath)
             self.title = subpath
             self.notify(f"File saved: `{subpath}\n{root}`", timeout=10)
             self.loaded_hash = hash(self.data)
@@ -390,9 +406,9 @@ class Planner(App):
 
     def update(self, selected: SelectionContext = None):
         if self.loaded_hash != hash(self.data):
-            self.title = f"*{CONFIG['last_file']}"
+            self.title = f"*{CONFIG.store['last_file']}"
         else:
-            self.title = CONFIG["last_file"]
+            self.title = CONFIG.store["last_file"]
 
         instance = selected.instance if selected else None
 
@@ -428,12 +444,16 @@ class Planner(App):
 
 
 def main():
+    arguments = docopt(__doc__, version=__version__)
+    if arguments["--data-folder"]:
+        CONFIG.dpath_data = Path(arguments["--data-folder"]).absolute()
+
     planner = Planner()
     try:
         planner.run()
     finally:
         planner.save_data()
-        CONFIG.sync()
+        CONFIG.store.sync()
 
 
 if __name__ == "__main__":
