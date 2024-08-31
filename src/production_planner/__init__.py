@@ -208,7 +208,7 @@ class Planner(App):
 
     def action_show_hide(self):
         self.num_write_mode = False
-        selected = SelectionContext()
+        selected = SelectionContext(None, Reselection(offset=1))
         if selected is None:
             return
         instance = selected.instance
@@ -285,7 +285,7 @@ class Planner(App):
 
     def action_row_remove(self):
         row = SelectionContext().row
-        selected = SelectionContext(Selection(offset=0))
+        selected = SelectionContext(None, Reselection(offset=0))
         if not selected:
             return
         del self.data[row]
