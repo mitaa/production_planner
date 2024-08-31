@@ -555,14 +555,18 @@ class NodeInstance:
         self.from_module = False
 
     def show_hide(self, shown=None):
-        self.shown = shown or (not self.shown)
-        if self.shown and self.parent:
-            self.parent.show_hide(shown=True)
+        # Note: always show the top row (summary balance)
+        if self.parent:
+            self.shown = shown or (not self.shown)
+            if self.shown:
+                self.parent.show_hide(shown=True)
 
-    def swap_vis_space(self):
-        self.show_hide()
-        for child in self.node_children:
-            child.swap_vis_space()
+    def swap_vis_space(self, shown=None):
+        shown = self.show_hide(shown=None)
+
+        if not self.parent and self.shown:
+            for child in self.node_children:
+                child.swap_vis_space(shown=True)
 
     def add_children(self, instances: [Self], at_idx=None):
         root = self

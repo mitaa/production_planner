@@ -212,8 +212,9 @@ class Planner(App):
         if selected is None:
             return
         instance = selected.instance
-        instance.show_hide()
-        self.update(selected)
+        if instance:
+            instance.show_hide()
+            self.update(selected)
 
     def action_swap_vis_space(self):
         self.num_write_mode = False
@@ -226,16 +227,18 @@ class Planner(App):
         if selected is None:
             return
         instance = selected.instance
-        instance.expanded = False
-        self.update(selected)
+        if instance:
+            instance.expanded = False
+            self.update(selected)
 
     def action_expand(self):
         selected = SelectionContext()
         if selected is None:
             return
         instance = selected.instance
-        instance.expanded = True
-        self.update(selected)
+        if instance:
+            instance.expanded = True
+            self.update(selected)
 
     def on_data_table_cell_selected(self):
         col = self.table.cursor_coordinate.column
@@ -265,7 +268,7 @@ class Planner(App):
     def action_move_up(self):
         self.num_write_mode = False
         selected = SelectionContext()
-        if selected and selected.instance.parent:
+        if selected.instance and selected.instance.parent:
             selected.instance.parent.shift_child(selected.instance, -1)
             self.update(selected)
 
