@@ -82,7 +82,12 @@ class Cell:
         if self.data.from_module and not self.data.node_main.is_module:
             style += self.fmt_module_children
 
+        style = self.style_postprocess(style)
+
         return Text(txt, style=style, justify=self.justify)
+
+    def style_postprocess(self, style: Style) -> Style:
+        return style
 
     def set(self, value) -> bool:
         if not self.access_guard() or value is None:
@@ -165,7 +170,7 @@ class EditableCell(Cell):
 
 class ProducerCell(EditableCell):
     name = "Building Name"
-    vispath = "node_main.producer.name"
+    vispath = "node_main.producer"
     setpath = "node_main.producer"
     indent = True
 
@@ -173,6 +178,12 @@ class ProducerCell(EditableCell):
         # FIXME: avoiding circular import ..
         self.selector = screens.SelectProducer
         super().__init__(*args, **kwargs)
+
+    def style_postprocess(self, style: Style) -> Style:
+        if self.data.node_main.is_module:
+            return style + Style(color="blue")
+        else:
+            return style
 
     def set(self, value):
         if super().set(value):
@@ -191,6 +202,18 @@ class RecipeCell(EditableCell):
         # FIXME: avoiding circular import ..
         self.selector = screens.SelectRecipe
         super().__init__(*args, **kwargs)
+
+    def get(self):
+        if self.data.node_main.is_module:
+            return f"<{super().get()}>"
+        else:
+            return super().get()
+
+    def style_postprocess(self, style: Style) -> Style:
+        if self.data.node_main.is_module:
+            return style + Style(color="blue")
+        else:
+            return style
 
     def set(self, value):
         if super().set(value) and self.data.node_main.is_module:

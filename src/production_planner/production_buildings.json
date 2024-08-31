@@ -1,5 +1,6 @@
 {
     "Miner": {
+        "description": "Extracts solid resources from the resource node it is built on. \r\nThe normal extraction rate is 120 resources per minute. \r\nThe extraction rate is modified depending on resource node purity. Outputs all extracted resources onto connected conveyor belts.",
         "is_miner": true,
         "is_pow_gen": false,
         "max_mk": 3,
@@ -18,6 +19,7 @@
         }
     },
     "Water Extractor": {
+        "description": "Default extraction rate: 120m³ water per minute.\r\nHead Lift: 10 meters.\r\n(Allows fluids to be transported 10 meters upwards.)\r\n\r\nExtracts water from the body of water it is built on.\r\nNote that the water needs to be deep enough and that rivers do not commonly suffice.",
         "is_miner": false,
         "is_pow_gen": false,
         "max_mk": 1,
@@ -27,6 +29,7 @@
         }
     },
     "Oil Extractor": {
+        "description": "Normal extraction rate: 120m³ oil per minute.\r\nHead Lift: 10 meters.\r\n(Allows fluids to be transported 10 meters upwards.)\r\n\r\nCan be built on an Oil Node to extract Crude Oil. Extraction rates depend on node purity.",
         "is_miner": true,
         "is_pow_gen": false,
         "max_mk": 1,
@@ -36,6 +39,7 @@
         }
     },
     "Resource Well Pressurizer": {
+        "description": "Can be placed on a Resource Well to activate it by pressurizing the underground resource.\r\nOnce activated, Resource Well Extractors can be placed on the surrounding sub-nodes to extract the resource.\r\nRequires Power. Overclocking increases the output potential of the entire Resource Well.",
         "is_miner": false,
         "is_pow_gen": false,
         "max_mk": 1,
@@ -43,6 +47,7 @@
         "recipes": {}
     },
     "Resource Well Extractor": {
+        "description": "Normal extraction rate: 60m³ fluid per minute.\r\nHead Lift: 10 meters.\r\n(Allows fluids to be transported 10 meters upwards.)\r\n\r\nCan be placed on the activated sub-nodes of a Resource Well to collect the pressurized resources. Does not require Power.",
         "is_miner": true,
         "is_pow_gen": false,
         "max_mk": 1,
@@ -54,6 +59,7 @@
         }
     },
     "Smelter": {
+        "description": "Smelts ore into ingots.\r\n\r\nCan be automated by feeding ore into it with a conveyor belt connected to the input. The produced ingots can be automatically extracted by connecting a conveyor belt to the output.",
         "is_miner": false,
         "is_pow_gen": false,
         "max_mk": 1,
@@ -68,6 +74,7 @@
         }
     },
     "Foundry": {
+        "description": "Smelts two resources into alloy ingots.\r\n\r\nCan be automated by feeding ore into it with a conveyor belt connected to the inputs. The produced ingots can be automatically extracted by connecting a conveyor belt to the output.",
         "is_miner": false,
         "is_pow_gen": false,
         "max_mk": 1,
@@ -85,6 +92,7 @@
         }
     },
     "Constructor": {
+        "description": "Crafts one part into another part.\r\n\r\nCan be automated by feeding parts into it with a conveyor belt connected to the input. The produced parts can be automatically extracted by connecting a conveyor belt to the output.",
         "is_miner": false,
         "is_pow_gen": false,
         "max_mk": 1,
@@ -137,6 +145,7 @@
         }
     },
     "Assembler": {
+        "description": "Crafts two parts into another part.\r\n\r\nCan be automated by feeding parts into it with a conveyor belt connected to the input. The produced parts can be automatically extracted by connecting a conveyor belt to the output.",
         "is_miner": false,
         "is_pow_gen": false,
         "max_mk": 1,
@@ -209,6 +218,7 @@
         }
     },
     "Manufacturer": {
+        "description": "Crafts three or four parts into another part.\r\n\r\nCan be automated by feeding parts into it with a conveyor belt connected to the input. The produced parts can be automatically extracted by connecting a conveyor belt to the output.",
         "is_miner": false,
         "is_pow_gen": false,
         "max_mk": 1,
@@ -256,6 +266,7 @@
         }
     },
     "Packager": {
+        "description": "Used for the packaging and unpacking of fluids.\r\nHead Lift: 10 meters.\r\n(Allows fluids to be transported 10 meters upwards.)\r\n\r\nContains both a Conveyor Belt and Pipe input and output, to allow for the automation of various recipes.",
         "is_miner": false,
         "is_pow_gen": false,
         "max_mk": 1,
@@ -284,6 +295,7 @@
         }
     },
     "Blender": {
+        "description": "The Blender is capable of blending fluids and combining them with solid parts in various processes.\r\nHead Lift: 10 meters.\r\n(Allows fluids to be transported 10 meters upwards).\r\n\r\nContains both Conveyor Belt and Pipe inputs and outputs.",
         "is_miner": false,
         "is_pow_gen": false,
         "max_mk": 1,
@@ -305,6 +317,7 @@
         }
     },
     "Particle Accelerator": {
+        "description": "The FICSIT Particle Accelerator uses electromagnetic fields to propel particles to very high speeds and energies. The specific design allows for a variety of processes, such as matter generation and conversion.\r\n\r\nWarning: Power usage is extremely high, unstable, and varies per recipe.",
         "is_miner": false,
         "is_pow_gen": false,
         "max_mk": 1,
@@ -316,6 +329,7 @@
         }
     },
     "Refinery": {
+        "description": "Refines fluid and/or solid parts into other parts.\r\nHead Lift: 10 meters.\r\n(Allows fluids to be transported 10 meters upwards.)\r\n\r\nContains both a Conveyor Belt and Pipe input and output, to allow for the automation of various recipes.",
         "is_miner": false,
         "is_pow_gen": false,
         "max_mk": 1,
@@ -353,6 +367,7 @@
         }
     },
     "Coal Generator": {
+        "description": "Burns Coal to boil Water, the produced steam rotates turbines to generate electricity for the power grid.\r\nHas a Conveyor Belt and Pipe input, so both the Coal and Water supply can be automated.\r\n\r\nCaution: Always generates at the set clock speed. Shuts down if fuel requirements are not met.",
         "is_miner": false,
         "is_pow_gen": true,
         "max_mk": 1,
@@ -364,6 +379,7 @@
         }
     },
     "Fuel Generator": {
+        "description": "Consumes Fuel to generate electricity for the power grid.\r\nHas a Pipe input so the Fuel supply can be automated.\r\n\r\nCaution: Always generates at the set clock speed. Shuts down if fuel requirements are not met.",
         "is_miner": false,
         "is_pow_gen": true,
         "max_mk": 1,
@@ -375,6 +391,7 @@
         }
     },
     "Geothermal Generator": {
+        "description": "Has to be built on a Geyser. Generates power.\r\n\r\nCaution: Power production fluctuates.\r\n\r\nPower Production:\r\nImpure 50-150 MW (100 MW average)\r\nNormal 100-300 MW (200 MW average)\r\nPure 200-600 MW (400 MW average)",
         "is_miner": true,
         "is_pow_gen": true,
         "max_mk": 1,
@@ -384,6 +401,7 @@
         }
     },
     "Nuclear Power Plant": {
+        "description": "Consumes Nuclear Fuel Rods and Water to produce electricity for the power grid.\r\n\r\nProduces Nuclear Waste, which is extracted from the conveyor belt output.\r\n\r\nCaution: Always generates at the set clock speed. Shuts down if fuel requirements are not met.",
         "is_miner": false,
         "is_pow_gen": true,
         "max_mk": 1,

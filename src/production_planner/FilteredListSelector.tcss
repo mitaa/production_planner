@@ -36,3 +36,50 @@ Input {
 DataTable {
     height: 10fr;
 }
+
+Screen {
+    layers: base overlay notes notifications;
+    overflow: hidden;
+    &:inline {
+        height: 50vh;
+    }
+    &.-maximized-view {
+        overflow: auto;
+    }
+}
+
+Sidebar {
+    dock: right;
+    width: 82;
+    height: 1fr;
+    margin: -1 0;
+    background: $panel;
+    transition: offset 500ms in_out_cubic;
+    layer: overlay;
+}
+
+Sidebar:focus-within {
+    offset: 0 0 !important;
+}
+
+Sidebar.-hidden {
+    offset-x: 100%;
+}
+
+Sidebar Title {
+    background: $boost;
+    color: $secondary;
+    padding: 2 4;
+    border-right: vkey $background;
+    dock: top;
+    text-align: center;
+    text-style: bold;
+}
+
+Description {
+    background: $boost;
+    color: $text;
+    height: 1fr;
+    border-right: vkey $background;
+    padding: 0 1;
+}

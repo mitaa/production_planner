@@ -150,13 +150,14 @@ class Recipe(yaml.YAMLObject):
 
 
 class Producer:
-    def __init__(self, name, *, is_miner, is_pow_gen, max_mk, base_power, recipes, abstract=False):
+    def __init__(self, name, *, is_miner, is_pow_gen, max_mk, base_power, recipes, description, abstract=False):
         self.abstract = abstract
         self.name = name
         self.is_miner = is_miner
         self.is_pow_gen = is_pow_gen
         self.max_mk = max_mk
         self.base_power = base_power
+        self.description = description
         self.recipes = [Recipe(k, v[0], v[1], v[2]) for k, v in recipes.items()]
 
     @property
@@ -176,13 +177,10 @@ class Producer:
                 recipe.recipe_to_producer_map[recipe] = self
 
     def __str__(self):
-        buf = self.name
-        flags = [self.is_miner, self.is_pow_gen]
-        attrs = ["Miner", "Power Generator"]
-        attrs = [attr for idx, attr in enumerate(attrs) if flags[idx]]
-        if attrs:
-            buf += f" ({', '.join(attrs)})"
-        return buf
+        if self.abstract:
+            return f"<{self.name}>"
+        else:
+            return self.name
 
     @property
     def is_module(self):
@@ -242,12 +240,13 @@ class Purity(Enum):
 
 empty_producer = Producer(
         "",
-        abstract=True,
+        abstract=False,
         is_miner=False,
         is_pow_gen=False,
         max_mk=0,
         base_power=0,
-        recipes={"":     [60, [], []],}
+        recipes={"":     [60, [], []], },
+        description="",
 )
 
 module_producer = Producer(
@@ -257,7 +256,8 @@ module_producer = Producer(
         is_pow_gen=False,
         max_mk=0,
         base_power=0,
-        recipes={"": [60, [], []], }
+        recipes={"": [60, [], []], },
+        description="A pseudo producer which allows to embed other files into this one."
 )
 PRODUCERS = [module_producer]
 data_fpath = os.path.join(os.path.split(os.path.abspath(__file__))[0], "production_buildings.json")
@@ -268,7 +268,7 @@ for k, v in data.items():
     producer = Producer(k, **v)
     PRODUCERS += [producer]
 
-PRODUCERS += [empty_producer]
+# PRODUCERS += [empty_producer]
 PRODUCER_NAMES = [producer.name for producer in PRODUCERS]
 
 
@@ -293,6 +293,7 @@ def all_recipes_producer():
         max_mk=0,
         base_power=0,
         recipes={},
+        description="",
     )
     prod.recipes = list(sorted(recipes.values(), key=lambda r: r.name))
     return prod
@@ -340,7 +341,8 @@ class Node:
             # remembers the last selected recipe for each producer
             self.recipe_cache = {}
         self._recipe = value
-        self.recipe_cache[self.producer.name] = value
+        if value:
+            self.recipe_cache[self.producer.name] = value
 
     @property
     def purity(self):
@@ -547,6 +549,7 @@ class NodeInstance:
         self.shown = shown
         self.expanded = expanded
         # TODO: self.activated = activated
+        self.indent_str = " " * max(0, level - 2)
         self.row_idx = row_idx
         self.level = level
         self.from_module = False

@@ -4,7 +4,7 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from .core import CONFIG, get_path, set_path, Ingredient, Producer, Purity, Recipe, PRODUCERS, PRODUCER_NAMES, PRODUCER_MAP, all_recipes_producer
-from . import core
+from .core import Node, NodeInstance
 from . import datatable
 
 import os
@@ -17,9 +17,9 @@ from typing import Iterable
 from textual import on
 from textual.containers import Grid
 from textual.screen import Screen, ModalScreen
-from textual.app import App, ComposeResult
-from textual.containers import Horizontal
-from textual.widgets import DataTable, DirectoryTree, Label, Button, Header, Footer, Input, Pretty, Select, SelectionList
+from textual.app import ComposeResult
+from textual.containers import Container, Horizontal
+from textual.widgets import DataTable, DirectoryTree, Label, Button, Header, Footer, Input, Pretty, Select, SelectionList, Static
 from textual.widgets.selection_list import Selection
 from textual.validation import Function
 from textual.coordinate import Coordinate
@@ -55,6 +55,7 @@ class FilteredListSelector(Screen[Producer]):
     CSS_PATH = "FilteredListSelector.tcss"
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
+        ("ctrl+b", "toggle_sidebar", "Sidebar"),
     ]
     cell = None
     data = []
@@ -62,6 +63,7 @@ class FilteredListSelector(Screen[Producer]):
     data_filtered = []
     data_filter = StringifyFilter()
     selected = None
+    sidebar_enabled = False
 
     def on_mount(self) -> None:
         self.query_one(DataTable).cursor_type = "row"
@@ -76,6 +78,24 @@ class FilteredListSelector(Screen[Producer]):
         yield Horizontal(Input(placeholder="<text filter>"))
         yield DataTable()
         yield Footer()
+        yield Sidebar(classes=("" if self.sidebar_enabled else "-hidden"))
+
+    def action_toggle_sidebar(self) -> None:
+        if not self.sidebar_enabled:
+            return
+
+        sidebar = self.query_one(Sidebar)
+        if sidebar.has_class("-hidden"):
+            sidebar.remove_class("-hidden")
+            self.update_sidebar()
+        else:
+            sidebar.add_class("-hidden")
+
+    def update_sidebar(self):
+        pass
+
+    def on_data_table_row_highlighted(self):
+        self.update_sidebar()
 
     def sort(self):
         self.data_sorted = self.data
@@ -143,8 +163,34 @@ class FilteredListSelector(Screen[Producer]):
                 inp.value += event.key
 
 
+class Title(Static):
+    pass
+
+
+class Description(Static):
+    pass
+
+
+class Sidebar(Container):
+    def compose(self) -> ComposeResult:
+        yield Title("")
+        yield Description("")
+
+    def set_producer(self, producer: Producer):
+        if self.has_class("-hidden"):
+            return
+
+        title = self.query_one(Title)
+        description = self.query_one(Description)
+
+        title.update(producer.name)
+        # FIXME: superscript 3 (e.g. cubic metres) aren't rendered correctly
+        description.update(producer.description)
+
+
 class SelectProducer(FilteredListSelector):
     screen_title = "Producers"
+    sidebar_enabled = True
 
     def on_mount(self) -> None:
         self.cell = datatable.ProducerCell
@@ -152,6 +198,9 @@ class SelectProducer(FilteredListSelector):
         self.selected = self.app.selected_node.producer
         self.query_one(DataTable).zebra_stripes = True
         super().on_mount()
+
+    def update_sidebar(self):
+        self.query_one(Sidebar).set_producer(self.package()[0].value)
 
     def update(self):
         def bool_to_mark(a, mark="x"):
@@ -161,7 +210,7 @@ class SelectProducer(FilteredListSelector):
         table.add_columns("Building", "Power", "Miner", "Power Gen")
         rows = []
         for p in self.data_filtered:
-            rows += [[Text(p.name),
+            rows += [[datatable.ProducerCell(NodeInstance(Node(p, Recipe.empty()))).get_styled(),
                       Text(str(p.base_power), justify="right"),
                       bool_to_mark(p.is_miner),
                       bool_to_mark(p.is_pow_gen)]]
@@ -257,12 +306,14 @@ class SelectRecipe(FilteredListSelector):
         self.producer_listing = self._producer_listing(self.app.selected_producer.name)
         yield Header()
         yield Horizontal(
+            # FIXME: use actual Cell formatting for Select widget
             Select([(producer, producer) for producer in self.producer_listing], allow_blank=False),
             Input(placeholder="<text filter>"),
             SelectionList(*[member.value for member in RecipeFilterSetting]),
         )
         yield DataTable()
         yield Footer()
+        yield Sidebar(classes="-hidden")
 
     @on(SelectionList.SelectedChanged)
     def update_filter_settings(self, event: SelectionList.SelectedChanged):
@@ -327,7 +378,7 @@ class SelectRecipe(FilteredListSelector):
             row = []
             if self.add_producer_column:
                 producer = recipe.producer
-                row += [producer.name if producer else ""]
+                row += [datatable.ProducerCell(NodeInstance(Node(producer, Recipe.empty()))).get_styled() if producer else ""]
             row += [recipe.name]
             # FIXME: production per minute should somehow be included in `str(Ingredient)`, otherwise we can't filter for that
             inputs  = [Text(f"({round(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="red") for ingr in recipe.inputs]
