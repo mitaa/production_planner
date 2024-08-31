@@ -598,7 +598,10 @@ class NodeInstance:
         node = self.get_node(row_idx)
         if node is None:
             return
-        self.node_children.remove(node)
+        if node is self:
+            self.node_children = []
+        else:
+            self.node_children.remove(node)
 
     def get_nodes(self, level=0) -> [Self]:
         self.indent_str = " " * max(0, level - 2)
@@ -626,7 +629,7 @@ class NodeInstance:
             #       because of the `get_nodes` calls above
             self.node_main.update_recipe([cinstance.node_main for cinstance in self.node_children])
 
-        if level == 1:
+        if level < 2:
             NodeInstance.row_to_node_index += [self] * len(nodes)
 
         return nodes

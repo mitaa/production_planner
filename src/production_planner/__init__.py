@@ -285,7 +285,7 @@ class Planner(App):
 
     def action_row_remove(self):
         row = SelectionContext().row
-        selected = SelectionContext(Selection(offset=-1))
+        selected = SelectionContext(Selection(offset=0))
         if not selected:
             return
         del self.data[row]
