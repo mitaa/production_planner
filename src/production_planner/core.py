@@ -11,12 +11,13 @@ import json
 from pathlib import Path
 from typing import Self
 
-from textual.app import App
 from textual import log
+
+from rich.text import Text
+from rich.style import Style
+
 import yaml
 import platformdirs
-
-from textual.widgets import DataTable
 import json_store
 
 APP = None
@@ -249,6 +250,17 @@ empty_producer = Producer(
         description="",
 )
 
+summary_producer = Producer(
+        "Summary",
+        abstract=False,
+        is_miner=False,
+        is_pow_gen=False,
+        max_mk=0,
+        base_power=0,
+        recipes={"":     [60, [], []], },
+        description="",
+)
+
 module_producer = Producer(
         "Module",
         abstract=True,
@@ -268,7 +280,6 @@ for k, v in data.items():
     producer = Producer(k, **v)
     PRODUCERS += [producer]
 
-# PRODUCERS += [empty_producer]
 PRODUCER_NAMES = [producer.name for producer in PRODUCERS]
 
 
@@ -497,7 +508,7 @@ yaml.add_constructor(u'!ingredient', ingredient_constructor)
 class SummaryNode(Node):
     def __init__(self, nodes):
         self.row_idx = 0
-        super().__init__(empty_producer, self.update_recipe(nodes), is_dummy=True)
+        super().__init__(summary_producer, self.update_recipe(nodes), is_dummy=True)
 
     def producer_reset(self):
         ...

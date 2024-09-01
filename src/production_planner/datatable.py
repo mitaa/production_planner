@@ -77,17 +77,18 @@ class Cell:
             elif value > 0:
                 style += self.fmt_balance_plus
                 txt = "+" + txt
+
         if self.indent:
             txt = self.data.indent_str + txt
         if self.data.from_module and not self.data.node_main.is_module:
             style += self.fmt_module_children
 
-        style = self.style_postprocess(style)
+        txt, style = self.text_postprocess(txt, style)
 
         return Text(txt, style=style, justify=self.justify)
 
-    def style_postprocess(self, style: Style) -> Style:
-        return style
+    def text_postprocess(self, text: str, style: Style) -> (str, Style):
+        return (text, style)
 
     def set(self, value) -> bool:
         if not self.access_guard() or value is None:
@@ -179,11 +180,17 @@ class ProducerCell(EditableCell):
         self.selector = screens.SelectProducer
         super().__init__(*args, **kwargs)
 
-    def style_postprocess(self, style: Style) -> Style:
+    def text_postprocess(self, text: str, style: Style) -> (str, Style):
         if self.data.node_main.is_module:
-            return style + Style(color="blue")
+            return (text, style + Style(color="blue"))
+        elif isinstance(self.data.node_main, SummaryNode):
+            return (text, style + self.fmt_module_children)
         else:
-            return style
+            return (text, style)
+
+    def access_guard(self):
+        # We want to show this for the summary nodes
+        return True
 
     def set(self, value):
         if super().set(value):
@@ -209,11 +216,11 @@ class RecipeCell(EditableCell):
         else:
             return super().get()
 
-    def style_postprocess(self, style: Style) -> Style:
+    def text_postprocess(self, text: str, style: Style) -> (str, Style):
         if self.data.node_main.is_module:
-            return style + Style(color="blue")
+            return (text, style + Style(color="blue"))
         else:
-            return style
+            return (text, style)
 
     def set(self, value):
         if super().set(value) and self.data.node_main.is_module:
@@ -292,6 +299,12 @@ class IngredientCell(Cell):
 
     def access_guard(self):
         return self.vispath in self.data.node_main.ingredients
+
+    def text_postprocess(self, text: str, style: Style) -> (str, Style):
+        if text == "0":
+            return ("", style)
+        else:
+            return (text, style)
 
     def get(self):
         if self.access_guard():
