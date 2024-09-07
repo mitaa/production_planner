@@ -1,4 +1,5 @@
----
+[![production_planner](https://github.com/mitaa/production_planner/actions/workflows/main.yml/badge.svg)](https://github.com/mitaa/production_planner/actions/workflows/main.yml)
+
 # Production Planner
 
 A simple production planner for Satisfactory.

@@ -296,7 +296,7 @@ def all_recipes_producer():
             continue
         duplicates = recip_names & set(producer_recipe_map.keys())
         if duplicates:
-            self.app.notify(str(duplicates))
+            APP.notify(str(duplicates))
         recipes.update(producer_recipe_map)
 
     prod = Producer(

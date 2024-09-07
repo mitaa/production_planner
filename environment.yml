@@ -1,0 +1,4 @@
+name: planner_table
+
+dependencies:
+  - python>=3.10
