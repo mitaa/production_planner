@@ -1,0 +1,34 @@
+!tree
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 2
+    mk: 1
+    producer: Smelter
+    purity: 0
+    recipe: Copper Ingot
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 4
+    mk: 1
+    producer: Constructor
+    purity: 0
+    recipe: Wire
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 1
+    mk: 1
+    producer: Constructor
+    purity: 0
+    recipe: Cable
+  shown: true

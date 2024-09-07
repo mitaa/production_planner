@@ -65,7 +65,7 @@ class DataFileAction(Screen[str]):
 
     def on_mount(self) -> None:
         # All these lines to simply move the cursor to the currently open file/folder
-        datafile = core.APP.active_table.sink.sink.target
+        datafile = core.APP.focused_table.sink.sink.target
         if not datafile:
             datafile = DataFile.get(Path(CONFIG.dpath_data) / "")
 

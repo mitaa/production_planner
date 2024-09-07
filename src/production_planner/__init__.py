@@ -21,9 +21,9 @@ Options:
 
 from . import core
 from .core import CONFIG
-
 from .datatable import PlannerTable
 from .io import PlannerManager
+from .help import HelpScreen
 
 from pathlib import Path
 import importlib.metadata
@@ -46,6 +46,10 @@ class Planner(App):
     CSS_PATH = "Planner.tcss"
     header = None
 
+    BINDINGS = [
+        ("h", "help", "Help")
+    ]
+
     def __init__(self, testrun=False, *args, **kwargs):
         # Suppresses toasts that differ based on test environment
         self._testrun = testrun
@@ -53,7 +57,7 @@ class Planner(App):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield PlannerTable()
+        yield PlannerTable(header_control=True)
         yield Footer()
 
     def is_table_shown(self, table: PlannerTable) -> bool:
@@ -61,23 +65,38 @@ class Planner(App):
 
     def on_mount(self) -> None:
         core.APP = self
-        self.app.active_table = self.query_one(PlannerTable)
+        self.app.focused_table = self.query_one(PlannerTable)
         self.manager = PlannerManager(self, iid_name="main")
         self.manager.load()
 
     def swap_active_table(self, new_table):
-        self.active_table.remove()
+        # FIXME: fix when implementing tabbed content ...
+        self.focused_table.remove()
 
-        self.active_table = new_table
-        self.mount(self.active_table, after=self.query_one(Header))
-        self.active_table.sink.load()
-        self.active_table.update()
+        self.focused_table = new_table
+        self.mount(self.focused_table, after=self.query_one(Header))
+        self.focused_table.sink.load()
+        self.focused_table.update()
 
     def exit(self, *args):
         # NOTE: saving here for shutdown since it will be missed by pytest if it's in the `def main()`
         self.manager.staging_commit()
         CONFIG.store.sync()
         super().exit(*args)
+
+    def action_help(self) -> None:
+        table = self.focused_table
+
+        def set_focused_table(*_):
+            self.focused_table = table
+
+        self.push_screen(HelpScreen(), set_focused_table)
+
+    def check_action(self, action: str, parameters: tuple[object, ...]):
+        is_main_screen = len(self.app.screen_stack) == 1
+        # this is always keep inherited (?) bindings like tab switching between widgets
+        is_my_binding = action in [binding for (_, binding, _) in self.__class__.BINDINGS]
+        return is_main_screen or (not is_my_binding)
 
 
 def main():

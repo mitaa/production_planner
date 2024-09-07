@@ -1,0 +1,80 @@
+Body {
+    height: 100%;
+    overflow-y: scroll;
+    width: 100%;
+    background: $surface;
+}
+
+QuickAccess {
+    width: 30;
+    dock: left;
+}
+
+LocationLink {
+    margin: 1 0 0 1;
+    height: 1;
+    padding: 1 2;
+    background: $boost;
+    color: $text;
+    box-sizing: content-box;
+    content-align: center middle;
+}
+
+LocationLink:hover {
+    background: $accent;
+    color: $text;
+    text-style: bold;
+}
+
+Section {
+    height: auto;
+    min-width: 40;
+    margin: 1 2 3 2;
+}
+
+TextContent {
+    max-width: 110;
+    margin: 0 2;
+}
+
+
+
+PlannerTable#help_plannertable {
+    width: auto;
+    height: auto;
+    margin: 2 2;
+}
+
+
+
+PlannerTable#table_controls {
+    width: auto;
+    height: auto;
+    margin: 2 2;
+}
+
+
+PlannerTable#summary_table {
+    width: auto;
+    height: auto;
+    margin: 2 2;
+}
+
+PlannerTable#highlighting_table {
+    width: auto;
+    height: auto;
+    margin: 2 2;
+}
+
+PlannerTable#power_table {
+    width: auto;
+    height: auto;
+    margin: 2 2;
+}
+
+
+PlannerTable#modules_table {
+    width: auto;
+    height: auto;
+    margin: 2 2;
+}

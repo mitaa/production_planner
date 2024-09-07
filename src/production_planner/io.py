@@ -88,7 +88,7 @@ class Sink:
         self.sink = self.Chunk(sink_target, sink=self)
 
         self.app = core.APP
-        self.table = table if table else PlannerTable(sink=self)
+        self.table = table if table else PlannerTable(sink=self, header_control=True)
         self.table.sink = self
 
     @property
@@ -206,7 +206,7 @@ class VoidSink(Sink):
 
 class FileChunk(DataChunk):
     def reset(self, source_chunk=None, delete_config=False) -> None:
-        if self.target.fullpath.is_file():
+        if self.target and self.target.fullpath.is_file():
             self.target.fullpath.unlink()
 
         if source_chunk:

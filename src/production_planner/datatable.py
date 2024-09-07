@@ -44,13 +44,15 @@ class SelectionContext:
     instance = None
 
     def __init__(self,
+                 table,
                  selection: Selection = None,
                  reselection:  Reselection = None):
+        self.table = table
         self.selection = selection or Selection()
         self.reselection = reselection or Reselection()
-        self.row = core.APP.active_table.cursor_coordinate.row + self.selection.offset
-        self.col = core.APP.active_table.cursor_coordinate.column
-        self.instance = core.APP.active_table.nodetree.get_node(self.row) if core.APP.active_table.nodetree else None
+        self.row = self.table.cursor_coordinate.row + self.selection.offset
+        self.col = self.table.cursor_coordinate.column
+        self.instance = self.table.nodetree.get_node(self.row) if self.table.nodetree else None
 
     def __enter__(self):
         return self.instance
@@ -65,7 +67,7 @@ class SelectionContext:
             row = self.row
             if self.reselection.at_node and (self.reselection.node or self.instance):
                 row = (self.reselection.node or self.instance).row_idx
-            core.APP.active_table.cursor_coordinate = Coordinate(row + self.reselection.offset, self.col)
+            self.table.cursor_coordinate = Coordinate(row + self.reselection.offset, self.col)
             self.reselection.done = True
 
 
@@ -95,7 +97,7 @@ class PlannerTable(DataTable):
     selected_producer = None
     selected_node = None
 
-    def __init__(self, *args, sink=None, load_path=None, load_yaml=None, **kwargs):
+    def __init__(self, *args, sink=None, load_path=None, load_yaml=None, header_control=False, **kwargs):
         super().__init__(*args, **kwargs)
         p = PRODUCERS[0]
         self.planner_nodes = []
@@ -115,11 +117,13 @@ class PlannerTable(DataTable):
         self.planner_columns = self.edit_columns[:]
         self.zebra_stripes = True
 
+        # might become obsolete when tabbed tables are implemented
+        self.header_control = header_control
         self.nodetree = NodeTree.from_nodes([])
 
         # FIXME: avoiding import cycle
         from . import io
-        self.sink = sink if sink else io.VoidSink(self)
+        self.sink = sink if sink else io.FileSink(self)
 
         if load_yaml:
             self.sink.load_yaml(load_yaml)
@@ -128,6 +132,15 @@ class PlannerTable(DataTable):
 
     def on_mount(self) -> None:
         ...
+
+    def on_focus(self):
+        self.app.focused_table = self
+
+    def on_blur(self):
+        # TODO: - maybe handle `None` case
+        #       - check if switching focus directly beween two tables works correctly
+        #         (make sure the Focus event fires *after* the Blur event)
+        self.app.focused_table = None
 
     def save_data(self, subpath=None) -> Optional[Tuple[DataFile]]:
         result = self.sink.sink_commit(subpath)
@@ -204,7 +217,7 @@ class PlannerTable(DataTable):
 
     def action_show_hide(self):
         self.num_write_mode = False
-        selected = SelectionContext(None, Reselection(offset=1))
+        selected = SelectionContext(self, None, Reselection(offset=1))
         if selected is None:
             return
         instance = selected.instance
@@ -219,7 +232,7 @@ class PlannerTable(DataTable):
         # FIXME: which line should be reselected?
 
     def action_collapse(self):
-        selected = SelectionContext()
+        selected = SelectionContext(self)
         if selected is None:
             return
         instance = selected.instance
@@ -228,7 +241,7 @@ class PlannerTable(DataTable):
             self.update(selected)
 
     def action_expand(self):
-        selected = SelectionContext()
+        selected = SelectionContext(self)
         if selected is None:
             return
         instance = selected.instance
@@ -238,7 +251,7 @@ class PlannerTable(DataTable):
 
     def on_data_table_cell_selected(self):
         col = self.cursor_coordinate.column
-        sel_ctxt = SelectionContext()
+        sel_ctxt = SelectionContext(self)
         instance = sel_ctxt.instance
         node = sel_ctxt.instance.node_main
         if isinstance(node, SummaryNode):
@@ -268,47 +281,42 @@ class PlannerTable(DataTable):
 
     def action_move_up(self):
         self.num_write_mode = False
-        selected = SelectionContext()
+        selected = SelectionContext(self)
         if selected.instance and selected.instance.parent:
             selected.instance.parent.shift_child(selected.instance, -1)
             self.update(selected)
 
     def action_move_down(self):
         self.num_write_mode = False
-        selected = SelectionContext()
+        selected = SelectionContext(self)
         if selected.instance and selected.instance.parent:
             selected.instance.parent.shift_child(selected.instance, 1)
         self.update(selected)
 
     def action_row_add(self):
-        selected = SelectionContext(reselection=Reselection(offset=1))
+        selected = SelectionContext(self, reselection=Reselection(offset=1))
         current_node = selected.instance if selected else None
         self.nodetree.add_children([NodeInstance(copy(self.planner_nodes[1]))],
                                at_idx=current_node)
         self.update(selected)
 
     def action_row_remove(self):
-        row = SelectionContext().row
-        selected = SelectionContext(None, Reselection(offset=0))
+        row = SelectionContext(self).row
+        selected = SelectionContext(self, None, Reselection(offset=0))
         if not selected:
             return
         del self.nodetree[row]
         self.update(selected)
 
     def maybe_dirtied(self):
-        self.app.title = self.sink.title
-
-    def check_action(self, action: str, parameters: tuple[object, ...]):
-        is_main_screen = len(self.app.screen_stack) == 1
-        # this is always keep inherited (?) bindings like tab switching between widgets
-        is_my_binding = action in [binding for (_, binding, _) in self.__class__.BINDINGS]
-        return is_main_screen or (not is_my_binding)
+        if self.header_control:
+            self.app.title = self.sink.title
 
     def on_key(self, event: events.Key) -> None:
-        if len(self.app.screen_stack) > 1:
+        if not self.has_focus:
             return
 
-        sel_ctxt = SelectionContext()
+        sel_ctxt = SelectionContext(self)
         col = self.edit_columns[sel_ctxt.col] if len(self.edit_columns) > sel_ctxt.col else None
         instance = sel_ctxt.instance
         if instance is None:
