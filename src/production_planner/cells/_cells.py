@@ -31,7 +31,7 @@ class Cell:
     read_only = True
     style_balance = False
     style_summary = False
-    selector = None
+    Selector = None
     is_numeric_editable = False
     bounds = Bounds(0, 999)
     vispath = None

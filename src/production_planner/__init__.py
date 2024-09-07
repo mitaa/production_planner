@@ -20,17 +20,14 @@ Options:
 """
 
 from . import core
-from .core import CONFIG, Node, SummaryNode, NodeInstance, NodeTree, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
+from .core import CONFIG, Node, SummaryNode, NodeInstance, NodeTree, PRODUCERS
 from .screens import SelectDataFile, SaveDataFile
 
-from .cells import Cell, EmptyCell, SetCellValue
-from .cells import ProducerCell, SelectProducer
-from .cells import PurityCell, SelectPurity
-from .cells import RecipeCell, SelectRecipe
-from .cells import CountCell, MkCell, ClockRateCell, PowerCell, IngredientCell
+from .cells import Cell, SetCellValue
+from .cells import ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
 
 from .datatable import PlannerTable
-from .datatable import SelectionContext, Selection, Reselection
+from .datatable import SelectionContext, Reselection
 
 import os
 from copy import copy
@@ -254,7 +251,7 @@ class Planner(App):
         self.selected_node = node
         cell = self.edit_columns[col](instance) if len(self.edit_columns) > col else None
 
-        if cell is not None and cell.selector:
+        if cell is not None and cell.Selector:
             if not cell.access_guard():
                 return
 
@@ -270,7 +267,7 @@ class Planner(App):
             def callback(assignments: [SetCellValue]):
                 self.call_after_refresh(update, assignments)
 
-            self.push_screen(cell.selector(), callback)
+            self.push_screen(cell.Selector(), callback)
 
     def action_move_up(self):
         self.num_write_mode = False
@@ -403,7 +400,6 @@ class Planner(App):
                 continue
             node = instance.node_main
             ingredients = [ingr.name for ingr in (node.recipe.inputs + node.recipe.outputs)]
-            hov = (style_hover if instance.row_idx > 0 else style_header_hover)
             row_highlight = []
             for idx, col in enumerate(self.columns):
                 if col.name in ingredients:

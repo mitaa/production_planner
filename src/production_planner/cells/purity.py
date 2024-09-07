@@ -19,9 +19,44 @@ class PurityCell(NumericEditaleCell):
     bounds = Bounds(1, 3)
     purity_map = list(reversed(Purity.__members__))
 
+    class Selector(Screen[Purity]):
+        BINDINGS = [
+            ("escape", "cancel", "Cancel"),
+        ]
+        data = []
+
+        def compose(self) -> ComposeResult:
+            yield DataTable()
+            yield Footer()
+
+        def on_mount(self) -> None:
+            def bool_to_mark(a, mark="x"):
+                return mark if a else ""
+
+            self.data = [
+                Purity.IMPURE,
+                Purity.NORMAL,
+                Purity.PURE,
+            ]
+            table = self.query_one(DataTable)
+            table.cursor_type = "row"
+            table.add_columns("Purity")
+            table.add_rows([[p.name.title()] for p in self.data])
+            try:
+                row = self.data.index(self.app.selected_node.purity)
+            except ValueError:
+                row = 0
+            table.cursor_coordinate = Coordinate(row, 0)
+
+        def action_cancel(self):
+            self.dismiss([])
+
+        def on_data_table_row_selected(self):
+            table = self.query_one(DataTable)
+            row = table.cursor_coordinate.row
+            self.dismiss([SetCellValue(PurityCell, self.data[row])])
+
     def __init__(self, *args, **kwargs):
-        # FIXME: avoiding circular import ..
-        self.selector = SelectPurity
         super().__init__(*args, **kwargs)
 
     def get_num(self):
@@ -33,41 +68,3 @@ class PurityCell(NumericEditaleCell):
 
     def access_guard(self):
         return self.data.node_main.producer.is_miner and super().access_guard()
-
-
-class SelectPurity(Screen[Purity]):
-    BINDINGS = [
-        ("escape", "cancel", "Cancel"),
-    ]
-    data = []
-
-    def compose(self) -> ComposeResult:
-        yield DataTable()
-        yield Footer()
-
-    def on_mount(self) -> None:
-        def bool_to_mark(a, mark="x"):
-            return mark if a else ""
-
-        self.data = [
-            Purity.IMPURE,
-            Purity.NORMAL,
-            Purity.PURE,
-        ]
-        table = self.query_one(DataTable)
-        table.cursor_type = "row"
-        table.add_columns("Purity")
-        table.add_rows([[p.name.title()] for p in self.data])
-        try:
-            row = self.data.index(self.app.selected_node.purity)
-        except ValueError as e:
-            row = 0
-        table.cursor_coordinate = Coordinate(row, 0)
-
-    def action_cancel(self):
-        self.dismiss([])
-
-    def on_data_table_row_selected(self):
-        table = self.query_one(DataTable)
-        row = table.cursor_coordinate.row
-        self.dismiss([SetCellValue(PurityCell, self.data[row])])
