@@ -13,9 +13,6 @@ from typing import Self
 
 from textual import log
 
-from rich.text import Text
-from rich.style import Style
-
 import yaml
 import platformdirs
 import json_store
@@ -234,6 +231,7 @@ class Purity(Enum):
     PURE   = 1
     NORMAL = 2
     IMPURE = 4
+
     def __str__(self):
         match self:
             case Purity.NA:
@@ -408,7 +406,6 @@ class Node:
         tree.update_summaries()
         tree.mark_from_module()
         module_recipe = tree.node_main.recipe
-        module_nodes = []
 
         module_recipe.name = os.path.splitext(fname)[0]
         # WARNING: we're not shadowing the class variable here - it should stay that way!
@@ -576,7 +573,7 @@ class NodeInstance:
                 self.parent.show_hide(shown=True)
 
     def swap_vis_space(self, shown=None):
-        shown = self.show_hide(shown=None)
+        self.show_hide(shown=None)
 
         if not self.parent and self.shown:
             for child in self.node_children:
@@ -732,6 +729,7 @@ class NodeTree(NodeInstance):
 
     def reload_modules(self, instances=None, module_stack=None):
         module_stack = module_stack or []
+
         def reload_module(instance) -> str | bool | None:
             if instance.node_main.is_module:
                 module = instance.node_main.recipe.name

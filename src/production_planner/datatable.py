@@ -372,8 +372,6 @@ class PlannerTable(DataTable):
         if not rows:
             return
 
-        style_header_hover = self.get_component_rich_style("datatable--header-hover")
-        style_hover = self.get_component_rich_style("datatable--hover")
         style_empty = Style()
         style_sum_pos = Style(bgcolor=Color.from_rgb(25, 50, 25))
         style_sum_neg = Style(bgcolor=Color.from_rgb(51, 13, 13))
