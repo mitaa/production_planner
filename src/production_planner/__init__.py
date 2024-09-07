@@ -21,8 +21,15 @@ Options:
 
 from . import core
 from .core import CONFIG, Node, SummaryNode, NodeInstance, NodeTree, Producer, Recipe, Purity, PRODUCERS, get_path, set_path
-from .screens import SelectProducer, SelectPurity, SelectRecipe, SelectDataFile, SaveDataFile, SetCellValue
-from .datatable import PlannerTable, Cell, EmptyCell, ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
+from .screens import SelectDataFile, SaveDataFile
+
+from .cells import Cell, EmptyCell, SetCellValue
+from .cells import ProducerCell, SelectProducer
+from .cells import PurityCell, SelectPurity
+from .cells import RecipeCell, SelectRecipe
+from .cells import CountCell, MkCell, ClockRateCell, PowerCell, IngredientCell
+
+from .datatable import PlannerTable
 from .datatable import SelectionContext, Selection, Reselection
 
 import os
