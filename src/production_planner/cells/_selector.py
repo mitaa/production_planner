@@ -70,6 +70,7 @@ class FilteredListSelector(Screen):
     data_filter = StringifyFilter()
     selected = None
     sidebar_enabled = False
+    sidebar_shown = False
 
     def on_mount(self) -> None:
         self.query_one(DataTable).cursor_type = "row"
@@ -78,24 +79,33 @@ class FilteredListSelector(Screen):
         self.sort()
         self.set_filt(None)
         self.query_one(DataTable).focus()
+        self.sidebar = self.query_one(Sidebar)
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Horizontal(Input(placeholder="<text filter>"))
         yield DataTable()
         yield Footer()
-        yield Sidebar(classes=("" if self.sidebar_enabled else "-hidden"))
+        yield Sidebar(classes=("" if self.sidebar_shown else "-hidden"))
+
+    def set_sidebar(self, show: bool) -> None:
+        if show:
+            self.sidebar.remove_class("-hidden")
+        else:
+            self.sidebar.add_class("-hidden")
+
+    @property
+    def is_sidebar_shown(self) -> bool:
+        return not self.sidebar.has_class("-hidden")
 
     def action_toggle_sidebar(self) -> None:
         if not self.sidebar_enabled:
             return
-
-        sidebar = self.query_one(Sidebar)
-        if sidebar.has_class("-hidden"):
-            sidebar.remove_class("-hidden")
+        if not self.is_sidebar_shown:
+            self.set_sidebar(True)
             self.update_sidebar()
         else:
-            sidebar.add_class("-hidden")
+            self.set_sidebar(False)
 
     def update_sidebar(self):
         pass

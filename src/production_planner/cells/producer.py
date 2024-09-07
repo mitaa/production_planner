@@ -25,6 +25,7 @@ class ProducerCell(EditableCell):
         class ProducerSelector(FilteredListSelector):
             screen_title = "Producers"
             sidebar_enabled = True
+            sidebar_shown = core.CONFIG.store["select_producer"]["show_sidebar"]
 
             def on_mount(self) -> None:
                 self.cell = ProducerCell
@@ -32,6 +33,10 @@ class ProducerCell(EditableCell):
                 self.selected = dst_table.selected_node.producer
                 self.query_one(DataTable).zebra_stripes = True
                 super().on_mount()
+
+            def action_toggle_sidebar(self) -> None:
+                super().action_toggle_sidebar()
+                core.CONFIG.store["select_producer"]["show_sidebar"] = not self.sidebar.has_class("-hidden")
 
             def update_sidebar(self):
                 self.query_one(Sidebar).set_producer(self.package()[0].value)
