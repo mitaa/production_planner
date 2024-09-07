@@ -19,42 +19,45 @@ class PurityCell(NumericEditaleCell):
     bounds = Bounds(1, 3)
     purity_map = list(reversed(Purity.__members__))
 
-    class Selector(Screen[Purity]):
-        BINDINGS = [
-            ("escape", "cancel", "Cancel"),
-        ]
-        data = []
-
-        def compose(self) -> ComposeResult:
-            yield DataTable()
-            yield Footer()
-
-        def on_mount(self) -> None:
-            def bool_to_mark(a, mark="x"):
-                return mark if a else ""
-
-            self.data = [
-                Purity.IMPURE,
-                Purity.NORMAL,
-                Purity.PURE,
+    @classmethod
+    def Selector(cls, dst_table):
+        class PuritySelector(Screen[Purity]):
+            BINDINGS = [
+                ("escape", "cancel", "Cancel"),
             ]
-            table = self.query_one(DataTable)
-            table.cursor_type = "row"
-            table.add_columns("Purity")
-            table.add_rows([[p.name.title()] for p in self.data])
-            try:
-                row = self.data.index(self.app.selected_node.purity)
-            except ValueError:
-                row = 0
-            table.cursor_coordinate = Coordinate(row, 0)
+            data = []
 
-        def action_cancel(self):
-            self.dismiss([])
+            def compose(self) -> ComposeResult:
+                yield DataTable()
+                yield Footer()
 
-        def on_data_table_row_selected(self):
-            table = self.query_one(DataTable)
-            row = table.cursor_coordinate.row
-            self.dismiss([SetCellValue(PurityCell, self.data[row])])
+            def on_mount(self) -> None:
+                def bool_to_mark(a, mark="x"):
+                    return mark if a else ""
+
+                self.data = [
+                    Purity.IMPURE,
+                    Purity.NORMAL,
+                    Purity.PURE,
+                ]
+                table = self.query_one(DataTable)
+                table.cursor_type = "row"
+                table.add_columns("Purity")
+                table.add_rows([[p.name.title()] for p in self.data])
+                try:
+                    row = self.data.index(dst_table.selected_node.purity)
+                except ValueError:
+                    row = 0
+                table.cursor_coordinate = Coordinate(row, 0)
+
+            def action_cancel(self):
+                self.dismiss([])
+
+            def on_data_table_row_selected(self):
+                table = self.query_one(DataTable)
+                row = table.cursor_coordinate.row
+                self.dismiss([SetCellValue(PurityCell, self.data[row])])
+        return PuritySelector
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

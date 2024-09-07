@@ -20,33 +20,36 @@ class ProducerCell(EditableCell):
     setpath = "node_main.producer"
     indent = True
 
-    class Selector(FilteredListSelector):
-        screen_title = "Producers"
-        sidebar_enabled = True
+    @classmethod
+    def Selector(cls, dst_table):
+        class ProducerSelector(FilteredListSelector):
+            screen_title = "Producers"
+            sidebar_enabled = True
 
-        def on_mount(self) -> None:
-            self.cell = ProducerCell
-            self.data = core.PRODUCERS
-            self.selected = self.app.selected_node.producer
-            self.query_one(DataTable).zebra_stripes = True
-            super().on_mount()
+            def on_mount(self) -> None:
+                self.cell = ProducerCell
+                self.data = core.PRODUCERS
+                self.selected = dst_table.selected_node.producer
+                self.query_one(DataTable).zebra_stripes = True
+                super().on_mount()
 
-        def update_sidebar(self):
-            self.query_one(Sidebar).set_producer(self.package()[0].value)
+            def update_sidebar(self):
+                self.query_one(Sidebar).set_producer(self.package()[0].value)
 
-        def update(self):
-            def bool_to_mark(a, mark="x"):
-                return Text(mark if a else "", justify="center")
-            table = self.query_one(DataTable)
-            table.clear(columns=True)
-            table.add_columns("Building", "Power", "Miner", "Power Gen")
-            rows = []
-            for p in self.data_filtered:
-                rows += [[ProducerCell(NodeInstance(Node(p, Recipe.empty()))).get_styled(),
-                          Text(str(p.base_power), justify="right"),
-                          bool_to_mark(p.is_miner),
-                          bool_to_mark(p.is_pow_gen)]]
-            table.add_rows(rows)
+            def update(self):
+                def bool_to_mark(a, mark="x"):
+                    return Text(mark if a else "", justify="center")
+                table = self.query_one(DataTable)
+                table.clear(columns=True)
+                table.add_columns("Building", "Power", "Miner", "Power Gen")
+                rows = []
+                for p in self.data_filtered:
+                    rows += [[ProducerCell(NodeInstance(Node(p, Recipe.empty()))).get_styled(),
+                              Text(str(p.base_power), justify="right"),
+                              bool_to_mark(p.is_miner),
+                              bool_to_mark(p.is_pow_gen)]]
+                table.add_rows(rows)
+        return ProducerSelector
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
