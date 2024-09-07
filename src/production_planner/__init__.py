@@ -23,9 +23,11 @@ from . import core
 from .core import CONFIG
 
 from .datatable import PlannerTable
+from .io import PlannerManager
 
 from pathlib import Path
 import importlib.metadata
+import traceback
 
 from docopt import docopt
 
@@ -42,19 +44,35 @@ __version__ = importlib.metadata.version("production_planner")
 
 class Planner(App):
     CSS_PATH = "Planner.tcss"
+    header = None
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield PlannerTable()
         yield Footer()
 
+    def is_table_shown(self, table: PlannerTable) -> bool:
+        raise NotImplemented
+
     def on_mount(self) -> None:
         core.APP = self
-        self.title = CONFIG.store["last_file"]
-        self.table = self.query_one(PlannerTable)
-        self.table.master_table = True
-        self.table.load_data(skip_on_nonexist=True)
-        self.table.update()
+        self.app.active_table = self.query_one(PlannerTable)
+        self.manager = PlannerManager(self, iid_name="main")
+        self.manager.load()
+
+    def swap_active_table(self, new_table):
+        self.active_table.remove()
+
+        self.active_table = new_table
+        self.mount(self.active_table, after=self.query_one(Header))
+        self.active_table.sink.load()
+        self.active_table.update()
+
+    def exit(self, *args):
+        # NOTE: saving here for shutdown since it will be missed by pytest if it's in the `def main()`
+        self.manager.staging_commit()
+        CONFIG.store.sync()
+        super().exit(*args)
 
 
 def main():
@@ -64,10 +82,15 @@ def main():
 
     planner = Planner()
     try:
-        planner.run()
-    finally:
-        planner.table.save_data()
+        planner.app.run()
+    except BaseException:
+        # TODO: maybe move the try-except into the App.{run, run_test, etc} instead
+        # NOTE: saving here since `App.exit` doesn't seem to run when an Exception is encountered ...
+        planner.manager.staging_commit()
         CONFIG.store.sync()
+        print(traceback.format_exc())
+    finally:
+        ...
 
 
 if __name__ == "__main__":

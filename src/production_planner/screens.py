@@ -3,11 +3,13 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from . import core
 from .core import CONFIG
 
 import os
 from pathlib import Path
 from typing import Iterable
+from functools import partial
 
 from textual import on
 from textual.containers import Grid
@@ -48,20 +50,12 @@ class DataFileAction(Screen[str]):
     SecondDTree = None
 
     def compose(self) -> ComposeResult:
-        self.first_dtree = self.FirstDTree(CONFIG.dpath_data)
-        if self.SecondDTree:
-            self.second_dtree = self.SecondDTree(CONFIG.dpath_data)
-
         if self.entry:
             def has_dot(value: str) -> bool:
                 return "." not in value
             yield Pretty([])
             yield Input(placeholder="file name", validators=[Function(has_dot, "Don't add file extension manually"), ])
 
-        yield self.first_dtree
-        if self.SecondDTree:
-            self.second_dtree = self.SecondDTree(CONFIG.dpath_data)
-            yield self.second_dtree
         yield Footer()
 
     @property
@@ -71,29 +65,54 @@ class DataFileAction(Screen[str]):
 
     def on_mount(self) -> None:
         # All these lines to simply move the cursor to the currently open file/folder
-        prev_path = Path(CONFIG.store["last_file"])
+        target = core.APP.active_table.sink.sink.target
+        if target:
+            datapath = CONFIG.normalize_data_path(Path(target))
+        else:
+            datapath.root = Path(CONFIG.dpath_data)
+            datapath.name = Path("")
+
+        self.first_dtree = self.FirstDTree(datapath.root)
+        self.mount(self.first_dtree, before=self.query_one(Footer))
+
+        if self.SecondDTree:
+            # TODO: provide a way to change the root for this loading/saving action
+            self.second_dtree = self.SecondDTree(datapath.root)
+            self.mount(self.second_dtree, after=self.first_dtree)
+
         if self.entry:
-            self.query_one(Input).value = os.path.splitext(str(prev_path))[0]
+            self.query_one(Input).value = os.path.splitext(str(datapath.name))[0]
 
         tree = self.first_dtree
-        node_current = tree.root
-        with tree.prevent(tree.FileSelected):
-            if self.expand_all:
-                tree.expand_all()
+        if self.expand_all:
+            tree.expand_all()
 
-            for name in prev_path.parts:
-                for node in node_current.children:
+        def preselect(start=True):
+            if start:
+                preselect.node_current = tree.root
+                preselect.path_parts = list(datapath.name.parts)[::-1]
+            preselect.node_children = list(preselect.node_current.children)[::-1]
+
+            with tree.prevent(tree.FileSelected):
+                if not preselect.path_parts:
+                    return
+                name = preselect.path_parts.pop()
+                while preselect.node_children:
+                    node = preselect.node_children.pop()
                     if name == node.label.plain:
-                        node_current = node
-                        node_current.expand()
+                        preselect.node_current = node
+                        preselect.node_current.expand()
+                        tree.move_cursor(preselect.node_current)
                         # FIXME: Expanding a node will asynchronously load the contained files and folders.
                         #        That leads to not being able to move the cursor to those nodes since `children` is not populated yet.
                         #        I'm not quite sure how to block until all that lazy loading is finished and integrated into the tree.
                         #
                         #        Perhaps one quick fix would be to manually build the substructure without relying on `node.expand`...
+                        self.set_timer(0.1, partial(preselect, False))
+                        return
                 else:
-                    break
-            tree.move_cursor(node_current)
+                    return
+        self.call_after_refresh(preselect)
 
     @on(Input.Changed)
     def show_invalid_reasons(self, event: Input.Changed) -> None:

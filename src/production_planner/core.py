@@ -11,7 +11,9 @@ import json
 from pathlib import Path
 from typing import Self
 
+import textual
 from textual import log
+from textual.app import ScreenStackError
 
 import yaml
 import platformdirs
@@ -39,6 +41,42 @@ def ensure_keys(store, key_def_pairings={}):
         ensure_key(store, k, v)
 
 
+@dataclass
+class DataPath:
+    _fullpath: Path
+    _root: Path
+    name: Path
+
+    @property
+    def linkpath(self):
+        return self.name
+
+    @property
+    def root(self):
+        return self._root
+
+    @root.setter
+    def root(self, value):
+        self._root = value
+        self._fullpath = Path(value) / self.name.name
+
+    @property
+    def fullpath(self):
+        return self._fullpath
+
+
+class ExternalPath(DataPath):
+    @property
+    def linkpath(self):
+        return self.fullpath
+
+    @DataPath.fullpath.setter
+    def fullpath(self, value):
+        self._fullpath = Path(value)
+        self._root = self._fullpath.parent
+        self.name = self._fullpath.name
+
+
 @static
 def CONFIG():
     class ConfigStore:
@@ -53,7 +91,28 @@ def CONFIG():
         def dpath_data(self, value):
             self._dpath_data = Path(value)
             os.makedirs(self.dpath_data, exist_ok=True)
+            # TODO: store dpath_data in the config when requested
             self.fpath_config = self.dpath_data / ".config.json"
+
+            # TODO: reload/reroot already open files?
+            #       currently broken somehow
+            # try:
+            #     app = textual.active_app.get()
+            #     app.notify(f"Portable data path set to: {value}", timeout=10)
+            #     if APP and APP.header:
+            #         APP.manager.reload_all()
+            # except (LookupError, ScreenStackError):
+            #     pass
+
+        def normalize_data_path(self, subpath: Path) -> DataPath:
+            root = self.dpath_data
+            if subpath.is_absolute():
+                try:
+                    subpath = subpath.relative_to(self.dpath_data)
+                except ValueError:
+                    root = subpath.parent
+                    return ExternalPath(root / subpath.name, root, Path(subpath.name))
+            return DataPath(root / subpath, root, subpath)
 
         @property
         def fpath_config(self):
@@ -64,11 +123,11 @@ def CONFIG():
             self._fpath_config = Path(value)
             self.store = json_store.open(self.fpath_config, json_kw={ "indent": 4 })
             ensure_keys(self.store, {
-                "last_file": ".cached.yaml",
                 "select_producer": {
                     "show_sidebar": True,
                 }
             })
+
     return ConfigStore()
 
 
@@ -293,8 +352,8 @@ def all_recipes_producer():
         if producer.is_module:
             continue
         duplicates = recip_names & set(producer_recipe_map.keys())
-        if duplicates:
-            APP.notify(str(duplicates))
+        # if duplicates:
+        #     APP.notify(str(duplicates))
         recipes.update(producer_recipe_map)
 
     prod = Producer(
@@ -399,7 +458,8 @@ class Node:
         if not (CONFIG.dpath_data / fname).is_file():
             return False
 
-        tree = load_data(CONFIG.dpath_data / fname)
+        from . import io
+        tree = io.load_data(CONFIG.dpath_data / fname)
         if tree is None:
             raise ValueError("Unexpected Data Format")
 
@@ -796,22 +856,3 @@ yaml.add_constructor(u'!instance', instance_constructor)
 
 yaml.add_representer(NodeTree, tree_representer)
 yaml.add_constructor(u'!tree', tree_constructor)
-
-
-def load_data(fpath) -> None | NodeTree:
-    with open(fpath, "r") as fp:
-        data = yaml.unsafe_load(fp)
-        match data:
-            case NodeTree():
-                tree = data
-            case[Node(), *_]:
-                tree = NodeTree.from_nodes(data)
-            case[Recipe(), NodeTree()]:
-                _, tree = data
-            case[Recipe(), *_]:
-                _, data = data
-                tree = NodeTree.from_nodes(data)
-            case _:
-                log(f"Could not parse file: `{fpath}`", timeout=10)
-                return
-    return tree

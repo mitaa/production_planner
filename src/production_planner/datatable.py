@@ -4,7 +4,7 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from . import core
-from .core import CONFIG, Node, SummaryNode, NodeInstance, NodeTree, PRODUCERS
+from .core import CONFIG, DataPath, Node, SummaryNode, NodeInstance, NodeTree, PRODUCERS
 from .cells import Cell, SetCellValue
 from .cells import ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
 from .screens import SelectDataFile, SaveDataFile
@@ -13,6 +13,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from copy import copy
+from typing import Optional, Tuple
 
 from textual.widgets import DataTable
 from textual.coordinate import Coordinate
@@ -46,9 +47,9 @@ class SelectionContext:
                  reselection:  Reselection = None):
         self.selection = selection or Selection()
         self.reselection = reselection or Reselection()
-        self.row = core.APP.table.cursor_coordinate.row + self.selection.offset
-        self.col = core.APP.table.cursor_coordinate.column
-        self.instance = core.APP.table.nodetree.get_node(self.row) if core.APP.table.nodetree else None
+        self.row = core.APP.active_table.cursor_coordinate.row + self.selection.offset
+        self.col = core.APP.active_table.cursor_coordinate.column
+        self.instance = core.APP.active_table.nodetree.get_node(self.row) if core.APP.active_table.nodetree else None
 
     def __enter__(self):
         return self.instance
@@ -63,14 +64,13 @@ class SelectionContext:
             row = self.row
             if self.reselection.at_node and (self.reselection.node or self.instance):
                 row = (self.reselection.node or self.instance).row_idx
-            core.APP.table.cursor_coordinate = Coordinate(row + self.reselection.offset, self.col)
+            core.APP.active_table.cursor_coordinate = Coordinate(row + self.reselection.offset, self.col)
             self.reselection.done = True
 
 
 class PlannerTable(DataTable):
     rows_to_highlight = []
     cols_to_highlight = []
-    master_table = False
 
     BINDINGS = [
         ("+", "row_add", "Add"),
@@ -94,7 +94,7 @@ class PlannerTable(DataTable):
     selected_producer = None
     selected_node = None
 
-    def __init__(self, *args, load_path=None, load_yaml=None, **kwargs):
+    def __init__(self, *args, sink=None, load_path=None, load_yaml=None, **kwargs):
         super().__init__(*args, **kwargs)
         p = PRODUCERS[0]
         self.planner_nodes = []
@@ -116,67 +116,22 @@ class PlannerTable(DataTable):
 
         self.nodetree = NodeTree.from_nodes([])
 
-        if load_path:
-            self.load_data(load_path)
-        elif load_yaml:
-            # TODO: implement
-            ...
+        # FIXME: avoiding import cycle
+        from . import io
+        self.sink = sink if sink else io.VoidSink(self)
+
+        if load_yaml:
+            self.sink.load_yaml(load_yaml)
+        elif load_path:
+            self.sink.load(load_path)
 
     def on_mount(self) -> None:
         ...
 
-    def _normalize_data_path(self, subpath: Path) -> (Path, Path):
-        root = CONFIG.dpath_data
-        if subpath.is_absolute():
-            try:
-                subpath = subpath.relative_to(CONFIG.dpath_data)
-            except ValueError:
-                root = subpath.parent
-                subpath = subpath.name
-        return (root, subpath)
-
-    def load_data(self, subpath=Path(".cached.yaml"), skip_on_nonexist=False) -> bool:
-        root, subpath = self._normalize_data_path(subpath)
-        fpath = root / subpath
-
-        if not fpath.is_file():
-            if not skip_on_nonexist:
-                self.notify(f"File does not exist: `{fpath}`", severity="error", timeout=10)
-            return
-
-        tree = core.load_data(fpath)
-        if tree is None:
-            self.notify(f"Could not parse file: `{fpath}`", severity="error", timeout=10)
-        else:
-            self.nodetree = tree
-
-        curname = os.path.splitext(CONFIG.store["last_file"])[0]
-        self.nodetree.reload_modules(module_stack=[curname])
-
-        fname = fpath.name
-        if self.master_table and not fname.startswith("."):
-            CONFIG.store["last_file"] = str(subpath)
-            self.app.title = subpath
-            self.notify(f"File loaded: `{subpath}`\n{root}", timeout=10)
-        last_fpath = CONFIG.dpath_data / CONFIG.store["last_file"]
-        tree = core.load_data(last_fpath) if last_fpath.is_file() else None
-        if tree is not None:
-            self.loaded_hash = hash(tree)
-        self.update()
-
-    def save_data(self, subpath=Path(".cached.yaml")) -> bool:
-        root, subpath = self._normalize_data_path(subpath)
-        fpath = root / subpath
-        if not fpath.parent.is_dir():
-            os.makedirs(fpath.parent)
-
-        with open(fpath, "w") as fp:
-            yaml.dump(self.nodetree, fp)
-        if self.master_table and not fpath.name.startswith("."):
-            CONFIG.store["last_file"] = str(subpath)
-            self.app.title = subpath
-            self.notify(f"File saved: `{subpath}\n{root}`", timeout=10)
-            self.loaded_hash = hash(self.nodetree)
+    def save_data(self, subpath=None) -> Optional[Tuple[DataPath]]:
+        result = self.sink.sink_commit(subpath)
+        self.app.title = self.sink.title
+        return result
 
     def action_save(self):
         def save_file(subpath: Path) -> None:
@@ -192,30 +147,52 @@ class PlannerTable(DataTable):
                             severity="warning",
                             timeout=10)
                 return
-            self.save_data(subpath)
+            result = self.save_data(subpath)
+            if result:
+                self.notify(f"File saved: `{result.name}\n{result.root}`", timeout=10)
+            else:
+                datapath = CONFIG.normalize_data_path(subpath)
+                self.notify(f"File saving failed: `{datapath.name}\n{datapath.root}`",
+                            severity="error",
+                            timeout=10)
         self.app.push_screen(SaveDataFile(), save_file)
+
+    def load_data(self, subpath) -> Optional[Tuple[DataPath]]:
+        ret = self.sink.load(subpath)
+        # self.app.title = self.sink.title
+        return ret
 
     def action_load(self):
         def load_file(subpath: Path) -> None:
             if not subpath:
                 self.notify("Loading File Canceled")
                 return
-            self.load_data(subpath)
+            result = self.load_data(subpath)
+            if result:
+                self.notify(f"File loaded: `{result.name}`\n{result.root}", timeout=10)
         self.app.push_screen(SelectDataFile(), load_file)
+
+    def apply_data(self, tree: NodeTree | None):
+        if tree is not None:
+            self.nodetree = tree
+            self.update()
 
     def action_delete(self):
         def delete_file(subpath: Path) -> None:
             if not subpath:
                 self.notify("File Deletion Canceled")
                 return
-            root, subpath = self._normalize_data_path(subpath)
-            fpath = root / subpath
+            datapath = CONFIG.normalize_data_path(subpath)
 
-            if not fpath.is_file():
-                self.notify(f"File does not exist: `{fpath}`", severity="error", timeout=10)
+            if not datapath.fullpath.is_file():
+                self.notify(f"File does not exist: `{datapath.name}`\n{datapath.root}",
+                            severity="error",
+                            timeout=10)
                 return
-            os.remove(fpath)
-        # FIXME: if the currently open file is deleted then the modified indicator should be shown in the header
+            os.remove(datapath.fullpath)
+            self.app.manager.reset_sink_from_path(datapath.fullpath)
+            self.notify(f"File deleted: `{datapath.name}`\n{datapath.root}", timeout=10)
+            self.app.title = self.sink.title
         self.app.push_screen(SelectDataFile(), delete_file)
 
     def action_show_hide(self):
@@ -310,6 +287,9 @@ class PlannerTable(DataTable):
             return
         del self.nodetree[row]
         self.update(selected)
+
+    def maybe_dirtied(self):
+        self.app.title = self.sink.title
 
     def check_action(self, action: str, parameters: tuple[object, ...]):
         is_main_screen = len(self.app.screen_stack) == 1
@@ -420,12 +400,7 @@ class PlannerTable(DataTable):
             self.highlight_cols += [row_highlight]
 
     def update(self, selected: SelectionContext = None):
-        if self.master_table:
-            if self.loaded_hash != hash(self.nodetree):
-                self.app.title = f"*{CONFIG.store['last_file']}"
-            else:
-                self.app.title = CONFIG.store["last_file"]
-
+        self.maybe_dirtied()
         instance = selected.instance if selected else None
 
         nodes, ingredients = self.update_columns(instance)
