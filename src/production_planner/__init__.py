@@ -27,7 +27,6 @@ from .datatable import SelectionContext, Selection, Reselection
 
 import os
 from copy import copy
-from dataclasses import dataclass
 from pathlib import Path
 import importlib.metadata
 
@@ -36,7 +35,6 @@ from docopt import docopt
 from textual import events
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer
-from textual.coordinate import Coordinate
 
 from rich.style import Style
 from rich.color import Color
@@ -100,11 +98,8 @@ class Planner(App):
                              PowerCell]
 
         self.columns = self.edit_columns[:]
-
-        # last row at which the ingredient columns / highlights have been updated
-        self.last_update_row = None
-
         self.table.zebra_stripes = True
+
         self.data = NodeTree.from_nodes([])
         self.load_data(skip_on_nonexist=True)
         self.update()
@@ -256,13 +251,18 @@ class Planner(App):
             if not cell.access_guard():
                 return
 
-            def callback(assignments: [SetCellValue]):
+            def update(assignments):
                 if assignments:
                     for ass in assignments:
                         cell = ass.column(instance)
                         cell.set(ass.value)
                     node.update()
                     self.update(sel_ctxt)
+
+            # FIXME: https://github.com/Textualize/textual/issues/4928
+            def callback(assignments: [SetCellValue]):
+                self.call_after_refresh(update, assignments)
+
             self.push_screen(cell.selector(), callback)
 
     def action_move_up(self):
@@ -309,8 +309,6 @@ class Planner(App):
         instance = sel_ctxt.instance
         if instance is None:
             return
-
-        node = instance.node_main
 
         if (col is None) or (not col(instance).access_guard() or col.read_only):
             self.num_write_mode = False
