@@ -146,7 +146,7 @@ class PlannerTable(DataTable):
         fname = fpath.name
         if not fname.startswith("."):
             CONFIG.store["last_file"] = str(subpath)
-            self.title = subpath
+            self.app.title = subpath
             self.notify(f"File loaded: `{subpath}`\n{root}", timeout=10)
         last_fpath = CONFIG.dpath_data / CONFIG.store["last_file"]
         tree = core.load_data(last_fpath) if last_fpath.is_file() else None
@@ -163,7 +163,7 @@ class PlannerTable(DataTable):
             yaml.dump(self.nodetree, fp)
         if not fpath.name.startswith("."):
             CONFIG.store["last_file"] = str(subpath)
-            self.title = subpath
+            self.app.title = subpath
             self.notify(f"File saved: `{subpath}\n{root}`", timeout=10)
             self.loaded_hash = hash(self.nodetree)
 
