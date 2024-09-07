@@ -70,6 +70,7 @@ class SelectionContext:
 class PlannerTable(DataTable):
     rows_to_highlight = []
     cols_to_highlight = []
+    master_table = False
 
     BINDINGS = [
         ("+", "row_add", "Add"),
@@ -93,7 +94,8 @@ class PlannerTable(DataTable):
     selected_producer = None
     selected_node = None
 
-    def on_mount(self) -> None:
+    def __init__(self, *args, load_path=None, load_yaml=None, **kwargs):
+        super().__init__(*args, **kwargs)
         p = PRODUCERS[0]
         self.planner_nodes = []
         for p in PRODUCERS:
@@ -113,7 +115,15 @@ class PlannerTable(DataTable):
         self.zebra_stripes = True
 
         self.nodetree = NodeTree.from_nodes([])
-        self.update()
+
+        if load_path:
+            self.load_data(load_path)
+        elif load_yaml:
+            # TODO: implement
+            ...
+
+    def on_mount(self) -> None:
+        ...
 
     def _normalize_data_path(self, subpath: Path) -> (Path, Path):
         root = CONFIG.dpath_data
@@ -144,7 +154,7 @@ class PlannerTable(DataTable):
         self.nodetree.reload_modules(module_stack=[curname])
 
         fname = fpath.name
-        if not fname.startswith("."):
+        if self.master_table and not fname.startswith("."):
             CONFIG.store["last_file"] = str(subpath)
             self.app.title = subpath
             self.notify(f"File loaded: `{subpath}`\n{root}", timeout=10)
@@ -152,6 +162,7 @@ class PlannerTable(DataTable):
         tree = core.load_data(last_fpath) if last_fpath.is_file() else None
         if tree is not None:
             self.loaded_hash = hash(tree)
+        self.update()
 
     def save_data(self, subpath=Path(".cached.yaml")) -> bool:
         root, subpath = self._normalize_data_path(subpath)
@@ -161,7 +172,7 @@ class PlannerTable(DataTable):
 
         with open(fpath, "w") as fp:
             yaml.dump(self.nodetree, fp)
-        if not fpath.name.startswith("."):
+        if self.master_table and not fpath.name.startswith("."):
             CONFIG.store["last_file"] = str(subpath)
             self.app.title = subpath
             self.notify(f"File saved: `{subpath}\n{root}`", timeout=10)
@@ -190,7 +201,6 @@ class PlannerTable(DataTable):
                 self.notify("Loading File Canceled")
                 return
             self.load_data(subpath)
-            self.update()
         self.app.push_screen(SelectDataFile(), load_file)
 
     def action_delete(self):
@@ -410,10 +420,11 @@ class PlannerTable(DataTable):
             self.highlight_cols += [row_highlight]
 
     def update(self, selected: SelectionContext = None):
-        if self.loaded_hash != hash(self.nodetree):
-            self.app.title = f"*{CONFIG.store['last_file']}"
-        else:
-            self.app.title = CONFIG.store["last_file"]
+        if self.master_table:
+            if self.loaded_hash != hash(self.nodetree):
+                self.app.title = f"*{CONFIG.store['last_file']}"
+            else:
+                self.app.title = CONFIG.store["last_file"]
 
         instance = selected.instance if selected else None
 

@@ -52,6 +52,7 @@ class Planner(App):
         core.APP = self
         self.title = CONFIG.store["last_file"]
         self.table = self.query_one(PlannerTable)
+        self.table.master_table = True
         self.table.load_data(skip_on_nonexist=True)
         self.table.update()
 
