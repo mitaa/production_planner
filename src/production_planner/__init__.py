@@ -286,7 +286,7 @@ class Planner(App):
     def action_row_add(self):
         selected = SelectionContext(reselection=Reselection(offset=1))
         current_node = selected.instance if selected else None
-        self.data.add_children([NodeInstance(copy(self.planner_nodes[0]))],
+        self.data.add_children([NodeInstance(copy(self.planner_nodes[1]))],
                                at_idx=current_node)
         self.update(selected)
 
