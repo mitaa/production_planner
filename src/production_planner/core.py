@@ -428,20 +428,20 @@ class Node:
         ingredient_mult = rate_mult * (self.clock_rate * self.count) / 100
         # FIXME: use floats to improve accuracy and modify number formatting display elsewhere
         for inp in self.recipe.inputs:
-            self.ingredients[inp.name] = int(inp.count * ingredient_mult * -1)
+            self.ingredients[inp.name] = inp.count * ingredient_mult * -1
 
         for out in self.recipe.outputs:
             if self.producer.is_miner:
-                self.ingredients[out.name] = int((out.count/self.purity.value) * (pow(2, self.mk)) * ingredient_mult)
+                self.ingredients[out.name] = (out.count/self.purity.value) * (pow(2, self.mk)) * ingredient_mult
             else:
-                self.ingredients[out.name] = int(out.count * ingredient_mult)
+                self.ingredients[out.name] = out.count * ingredient_mult
 
         if self.producer.is_pow_gen:
             pass # TODO
         elif self.is_module:
             self.energy = self.energy_module * self.count
         else:
-            self.energy = round(self.producer.base_power * math.pow((self.clock_rate/100), 1.321928) * self.count)
+            self.energy = self.producer.base_power * math.pow((self.clock_rate/100), 1.321928) * self.count
 
     @property
     def is_module(self):

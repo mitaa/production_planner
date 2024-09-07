@@ -4,6 +4,9 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from ._cells import Cell
+from ..core import get_path
+
+import math
 
 
 class PowerCell(Cell):
@@ -11,3 +14,10 @@ class PowerCell(Cell):
     vispath = "node_main.energy"
     read_only = True
     justify = "right"
+
+    def get(self):
+        if self.access_guard():
+            value = get_path(self.data, self.vispath)
+            return math.ceil(value)
+        else:
+            return self.default_na

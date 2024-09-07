@@ -26,6 +26,11 @@ class IngredientCell(Cell):
 
     def get(self):
         if self.access_guard():
-            return self.data.node_main.ingredients[self.vispath]
+            value = self.data.node_main.ingredients[self.vispath]
+            truncated_value = int(value)
+            if value - truncated_value < 0.01:
+                return truncated_value
+            else:
+                return round(value, 2)
         else:
             return self.default_na
