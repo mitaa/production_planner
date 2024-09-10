@@ -4,7 +4,7 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from . import core
-from .core import CONFIG, DataPath, Node, SummaryNode, NodeInstance, NodeTree, PRODUCERS
+from .core import CONFIG, DataFile, Node, SummaryNode, NodeInstance, NodeTree, PRODUCERS
 from .cells import Cell, SetCellValue
 from .cells import ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
 from .screens import SelectDataFile, SaveDataFile
@@ -128,7 +128,7 @@ class PlannerTable(DataTable):
     def on_mount(self) -> None:
         ...
 
-    def save_data(self, subpath=None) -> Optional[Tuple[DataPath]]:
+    def save_data(self, subpath=None) -> Optional[Tuple[DataFile]]:
         result = self.sink.sink_commit(subpath)
         self.app.title = self.sink.title
         return result
@@ -151,13 +151,13 @@ class PlannerTable(DataTable):
             if result:
                 self.notify(f"File saved: `{result.name}\n{result.root}`", timeout=10)
             else:
-                datapath = CONFIG.normalize_data_path(subpath)
-                self.notify(f"File saving failed: `{datapath.name}\n{datapath.root}`",
+                datafile = CONFIG.normalize_data_path(subpath)
+                self.notify(f"File saving failed: `{datafile.subpath}\n{datafile.root}`",
                             severity="error",
                             timeout=10)
         self.app.push_screen(SaveDataFile(), save_file)
 
-    def load_data(self, subpath) -> Optional[Tuple[DataPath]]:
+    def load_data(self, subpath) -> Optional[Tuple[DataFile]]:
         ret = self.sink.load(subpath)
         # self.app.title = self.sink.title
         return ret
@@ -182,16 +182,16 @@ class PlannerTable(DataTable):
             if not subpath:
                 self.notify("File Deletion Canceled")
                 return
-            datapath = CONFIG.normalize_data_path(subpath)
+            datafile = CONFIG.normalize_data_path(subpath)
 
-            if not datapath.fullpath.is_file():
-                self.notify(f"File does not exist: `{datapath.name}`\n{datapath.root}",
+            if not datafile.fullpath.is_file():
+                self.notify(f"File does not exist: `{datafile.subpath}`\n{datafile.root}",
                             severity="error",
                             timeout=10)
                 return
-            os.remove(datapath.fullpath)
-            self.app.manager.reset_sink_from_path(datapath.fullpath)
-            self.notify(f"File deleted: `{datapath.name}`\n{datapath.root}", timeout=10)
+            os.remove(datafile.fullpath)
+            self.app.manager.reset_sink_from_path(datafile.fullpath)
+            self.notify(f"File deleted: `{datafile.subpath}`\n{datafile.root}", timeout=10)
             self.app.title = self.sink.title
         self.app.push_screen(SelectDataFile(), delete_file)
 

@@ -70,7 +70,7 @@ class DataFileAction(Screen[str]):
             datapath = CONFIG.normalize_data_path(Path(target))
         else:
             datapath.root = Path(CONFIG.dpath_data)
-            datapath.name = Path("")
+            datapath.subpath = Path("")
 
         self.first_dtree = self.FirstDTree(datapath.root)
         self.mount(self.first_dtree, before=self.query_one(Footer))
@@ -81,7 +81,7 @@ class DataFileAction(Screen[str]):
             self.mount(self.second_dtree, after=self.first_dtree)
 
         if self.entry:
-            self.query_one(Input).value = os.path.splitext(str(datapath.name))[0]
+            self.query_one(Input).value = os.path.splitext(str(datapath.subpath))[0]
 
         tree = self.first_dtree
         if self.expand_all:
@@ -90,7 +90,7 @@ class DataFileAction(Screen[str]):
         def preselect(start=True):
             if start:
                 preselect.node_current = tree.root
-                preselect.path_parts = list(datapath.name.parts)[::-1]
+                preselect.path_parts = list(datapath.subpath.parts)[::-1]
             preselect.node_children = list(preselect.node_current.children)[::-1]
 
             with tree.prevent(tree.FileSelected):

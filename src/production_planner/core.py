@@ -42,14 +42,14 @@ def ensure_keys(store, key_def_pairings={}):
 
 
 @dataclass
-class DataPath:
+class DataFile:
     _fullpath: Path
     _root: Path
-    name: Path
+    subpath: Path
 
     @property
     def linkpath(self):
-        return self.name
+        return self.subpath
 
     @property
     def root(self):
@@ -58,23 +58,28 @@ class DataPath:
     @root.setter
     def root(self, value):
         self._root = value
-        self._fullpath = Path(value) / self.name.name
+        self._fullpath = Path(value) / self.subpath.name
 
     @property
     def fullpath(self):
         return self._fullpath
 
 
-class ExternalPath(DataPath):
+@dataclass
+class PortableFile(DataFile):
+    pass
+
+
+class ExternalFile(DataFile):
     @property
     def linkpath(self):
         return self.fullpath
 
-    @DataPath.fullpath.setter
+    @DataFile.fullpath.setter
     def fullpath(self, value):
         self._fullpath = Path(value)
         self._root = self._fullpath.parent
-        self.name = self._fullpath.name
+        self.subpath = self._fullpath.name
 
 
 @static
@@ -104,15 +109,15 @@ def CONFIG():
             # except (LookupError, ScreenStackError):
             #     pass
 
-        def normalize_data_path(self, subpath: Path) -> DataPath:
+        def normalize_data_path(self, subpath: Path) -> DataFile:
             root = self.dpath_data
             if subpath.is_absolute():
                 try:
                     subpath = subpath.relative_to(self.dpath_data)
                 except ValueError:
                     root = subpath.parent
-                    return ExternalPath(root / subpath.name, root, Path(subpath.name))
-            return DataPath(root / subpath, root, subpath)
+                    return ExternalFile(root / subpath.name, root, Path(subpath.name))
+            return PortableFile(root / subpath, root, subpath)
 
         @property
         def fpath_config(self):

@@ -5,7 +5,7 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from . import core
-from .core import CONFIG, DataPath, NodeTree, Node, Recipe, ensure_keys
+from .core import CONFIG, DataFile, NodeTree, Node, Recipe, ensure_keys
 from .datatable import PlannerTable
 
 import os
@@ -44,7 +44,7 @@ class DataChunk:
     def reset(self) -> None:
         pass
 
-    def save(self, data=None) -> Tuple[DataPath] | bool | None:
+    def save(self, data=None) -> Tuple[DataFile] | bool | None:
         """
         Returns
         * True  if successful
@@ -102,7 +102,7 @@ class Sink:
 
     @property
     def subpath(self) -> Path:
-        return CONFIG.normalize_data_path(Path(self.sink.target or "<unnamed>.yaml")).name
+        return CONFIG.normalize_data_path(Path(self.sink.target or "<unnamed>.yaml")).subpath
 
     @property
     def name(self) -> str:
@@ -116,17 +116,17 @@ class Sink:
         self.staging.checksum = hash(self.staging.data)
         return self.staging.checksum != self.sink.checksum
 
-    def load(self, subpath=None) -> Optional[DataPath]:
+    def load(self, subpath=None) -> Optional[DataFile]:
         def parse_error(target):
-            self.app.notify(f"Could not parse {self.tystr}: `{target.name}`\n{target.root}", severity="error", timeout=10)
+            self.app.notify(f"Could not parse {self.tystr}: `{target.subpath}`\n{target.root}", severity="error", timeout=10)
 
         def not_exist_error(target):
-            self.app.notify(f"Target does not exist: `{target.name}`\n{target.root}", severity="error", timeout=10)
+            self.app.notify(f"Target does not exist: `{target.subpath}`\n{target.root}", severity="error", timeout=10)
 
         if subpath:
-            sinkpath = CONFIG.normalize_data_path(subpath)
-            if sinkpath.fullpath.is_file():
-                self.sink.target = sinkpath.linkpath
+            sinkfile = CONFIG.normalize_data_path(subpath)
+            if sinkfile.fullpath.is_file():
+                self.sink.target = sinkfile.linkpath
             else:
                 not_exist_error(CONFIG.normalize_data_path(self.sink.target))
                 return
@@ -168,21 +168,21 @@ class Sink:
             # Can happen if the `.staging` folder / sink is new
             if not self.sink.target:
                 return None
-            sinkpath = CONFIG.normalize_data_path(self.sink.target)
-        return sinkpath
+            sinkfile = CONFIG.normalize_data_path(self.sink.target)
+        return sinkfile
 
     def load_yaml(self, data: str):
         self.staging.data = parse_yaml(data)
         self.staging.checksum = hash(self.staging.data)
         self.table.apply_data(self.staging.data)
 
-    def staging_commit(self) -> Optional[DataPath]:
+    def staging_commit(self) -> Optional[DataFile]:
         # Preserve `None` sentinel value as is (gets shown as <untitled>)
         self.config["target"] = str(self.sink.target) if self.sink.target else self.sink.target
         self.config.sync()
         return self.staging.save()
 
-    def sink_commit(self, subpath=None) -> Optional[Tuple[DataPath]]:
+    def sink_commit(self, subpath=None) -> Optional[Tuple[DataFile]]:
         self.sink.target = CONFIG.normalize_data_path(subpath).linkpath
         result = self.sink.save(self.staging.data)
         if result:
@@ -214,7 +214,7 @@ class FileChunk(DataChunk):
         else:
             self.data = None
 
-    def save(self, data=None) -> Tuple[DataPath] | bool | None:
+    def save(self, data=None) -> Tuple[DataFile] | bool | None:
         """
         Returns
         * True  if successful
@@ -225,14 +225,14 @@ class FileChunk(DataChunk):
             return False
 
         data = data if data else self.data
-        datapath = CONFIG.normalize_data_path(self.target)
+        datafile = CONFIG.normalize_data_path(self.target)
         try:
-            with open(datapath.fullpath, "w") as fp:
+            with open(datafile.fullpath, "w") as fp:
                 yaml.dump(data, fp)
             self.data = data
         except (FileNotFoundError, TypeError, WindowsError, OSError):
             return None
-        return datapath
+        return datafile
 
     def load(self) -> bool | None:
         """
