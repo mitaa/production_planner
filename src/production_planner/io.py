@@ -241,7 +241,7 @@ class FileChunk(DataChunk):
         * False if target doesn't exist
         * None  if an error occurs
         """
-        fpath = CONFIG.normalize_data_path(self.target).fullpath
+        fpath = CONFIG.normalize_data_path(self.target or Path("")).fullpath
         if self.target and fpath.is_file():
             with open(fpath, "r") as fp:
                 raw = fp.read()
