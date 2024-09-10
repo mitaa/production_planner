@@ -4,7 +4,7 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from . import core
-from .core import CONFIG
+from .core import CONFIG, DataFile
 
 import os
 from pathlib import Path
