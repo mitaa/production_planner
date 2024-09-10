@@ -106,7 +106,7 @@ class Sink:
 
     @property
     def name(self) -> str:
-        return self.subpath
+        return os.path.splitext(self.subpath)[0]
 
     @property
     def is_dirty(self) -> bool:
