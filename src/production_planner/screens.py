@@ -67,7 +67,7 @@ class DataFileAction(Screen[str]):
         # All these lines to simply move the cursor to the currently open file/folder
         datafile = core.APP.active_table.sink.sink.target
         if not datafile:
-            datafile = DataFile.get(Path(CONFIG.dpath_data) / ".yaml")
+            datafile = DataFile.get(Path(CONFIG.dpath_data) / "")
 
         self.first_dtree = self.FirstDTree(datafile.root)
         self.mount(self.first_dtree, before=self.query_one(Footer))

@@ -102,7 +102,10 @@ class Sink:
 
     @property
     def subpath(self) -> Path:
-        return (self.sink.target.subpath or "<unnamed>.yaml")
+        if self.sink.target:
+            return self.sink.target.subpath
+        else:
+            return "<unnamed>.yaml"
 
     @property
     def name(self) -> str:
