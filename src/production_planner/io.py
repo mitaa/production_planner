@@ -5,7 +5,7 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from . import core
-from .core import CONFIG, DataFile, NodeTree, Node, Recipe, ensure_keys
+from .core import CONFIG, DataFile, PortableFile, NodeTree, Node, Recipe, ensure_keys
 from .datatable import PlannerTable
 
 import os
@@ -25,7 +25,7 @@ import json_store
 
 @dataclass
 class DataChunk:
-    target: Optional[Path] = None
+    target: Optional[DataFile] = None
     checksum: int = hash(None)
     # TODO: actually populate and use mtime
     mtime: int = 0
@@ -83,8 +83,8 @@ class Sink:
         self.staging_root = staging_root
         self.iid_sink = table_iid
 
-        self.staging = self.Chunk(staging_target, sink=self)
-        sink_target = Path(self.config["target"]) if self.config["target"] else None
+        self.staging = self.Chunk(CONFIG.normalize_data_path(staging_target) if staging_target else staging_target, sink=self)
+        sink_target = CONFIG.normalize_data_path(Path(self.config["target"])) if self.config["target"] else None
         self.sink = self.Chunk(sink_target, sink=self)
 
         self.app = core.APP
@@ -102,7 +102,7 @@ class Sink:
 
     @property
     def subpath(self) -> Path:
-        return CONFIG.normalize_data_path(Path(self.sink.target or "<unnamed>.yaml")).subpath
+        return (self.sink.target.subpath or "<unnamed>.yaml")
 
     @property
     def name(self) -> str:
@@ -126,9 +126,9 @@ class Sink:
         if subpath:
             sinkfile = CONFIG.normalize_data_path(subpath)
             if sinkfile.fullpath.is_file():
-                self.sink.target = sinkfile.linkpath
+                self.sink.target = sinkfile
             else:
-                not_exist_error(CONFIG.normalize_data_path(self.sink.target))
+                not_exist_error(self.sink.target)
                 return
 
         if subpath:
@@ -168,7 +168,7 @@ class Sink:
             # Can happen if the `.staging` folder / sink is new
             if not self.sink.target:
                 return None
-            sinkfile = CONFIG.normalize_data_path(self.sink.target)
+            sinkfile = self.sink.target
         return sinkfile
 
     def load_yaml(self, data: str):
@@ -178,15 +178,17 @@ class Sink:
 
     def staging_commit(self) -> Optional[DataFile]:
         # Preserve `None` sentinel value as is (gets shown as <untitled>)
-        self.config["target"] = str(self.sink.target) if self.sink.target else self.sink.target
+        self.config["target"] = str(self.sink.target.linkpath) if self.sink.target else self.sink.target
         self.config.sync()
         return self.staging.save()
 
     def sink_commit(self, subpath=None) -> Optional[Tuple[DataFile]]:
-        self.sink.target = CONFIG.normalize_data_path(subpath).linkpath
+        if subpath:
+            self.sink.target = CONFIG.normalize_data_path(subpath)
+
         result = self.sink.save(self.staging.data)
         if result:
-            self.config["target"] = str(self.sink.target)
+            self.config["target"] = str(self.sink.target.linkpath)
         else:
             return
 
@@ -201,12 +203,8 @@ class VoidSink(Sink):
 
 class FileChunk(DataChunk):
     def reset(self, source_chunk=None, delete_config=False) -> None:
-        if self.target.is_file():
-            self.target.unlink()
-
-            config_fpath = self.target.with_suffix(self.target.suffix + ".sink")
-            if config_fpath.is_file() and delete_config:
-                config_fpath.unlink()
+        if self.target.fullpath.is_file():
+            self.target.fullpath.unlink()
 
         if source_chunk:
             self.data = parse_yaml(yaml.dump(source_chunk.data))
@@ -225,7 +223,7 @@ class FileChunk(DataChunk):
             return False
 
         data = data if data else self.data
-        datafile = CONFIG.normalize_data_path(self.target)
+        datafile = self.target
         try:
             with open(datafile.fullpath, "w") as fp:
                 yaml.dump(data, fp)
@@ -241,9 +239,8 @@ class FileChunk(DataChunk):
         * False if target doesn't exist
         * None  if an error occurs
         """
-        fpath = CONFIG.normalize_data_path(self.target or Path("")).fullpath
-        if self.target and fpath.is_file():
-            with open(fpath, "r") as fp:
+        if self.target and self.target.fullpath.is_file():
+            with open(self.target.fullpath, "r") as fp:
                 raw = fp.read()
             self.data = parse_yaml(raw)
             return True if self.data else None
@@ -307,7 +304,7 @@ class PlannerManager:
     def reset_sink_from_path(self, subpath, keep_cache=True):
         target = CONFIG.normalize_data_path(Path(subpath))
         for sink in self.sinks:
-            if CONFIG.normalize_data_path(sink.sink.target).fullpath == target.fullpath:
+            if sink.sink.target.fullpath == target.fullpath:
                 sink.sink.reset()
             # FIXME: likely broken
             if not keep_cache:

@@ -149,7 +149,7 @@ class PlannerTable(DataTable):
                 return
             result = self.save_data(subpath)
             if result:
-                self.notify(f"File saved: `{result.name}\n{result.root}`", timeout=10)
+                self.notify(f"File saved: `{result.subpath}\n{result.root}`", timeout=10)
             else:
                 datafile = CONFIG.normalize_data_path(subpath)
                 self.notify(f"File saving failed: `{datafile.subpath}\n{datafile.root}`",
@@ -169,7 +169,7 @@ class PlannerTable(DataTable):
                 return
             result = self.load_data(subpath)
             if result:
-                self.notify(f"File loaded: `{result.name}`\n{result.root}", timeout=10)
+                self.notify(f"File loaded: `{result.subpath}`\n{result.root}", timeout=10)
         self.app.push_screen(SelectDataFile(), load_file)
 
     def apply_data(self, tree: NodeTree | None):

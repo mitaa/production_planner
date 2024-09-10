@@ -65,23 +65,20 @@ class DataFileAction(Screen[str]):
 
     def on_mount(self) -> None:
         # All these lines to simply move the cursor to the currently open file/folder
-        target = core.APP.active_table.sink.sink.target
-        if target:
-            datapath = CONFIG.normalize_data_path(Path(target))
-        else:
-            datapath.root = Path(CONFIG.dpath_data)
-            datapath.subpath = Path("")
+        datafile = core.APP.active_table.sink.sink.target
+        if not datafile:
+            datafile = CONFIG.normalize_data_path(Path(CONFIG.dpath_data) / ".yaml")
 
-        self.first_dtree = self.FirstDTree(datapath.root)
+        self.first_dtree = self.FirstDTree(datafile.root)
         self.mount(self.first_dtree, before=self.query_one(Footer))
 
         if self.SecondDTree:
             # TODO: provide a way to change the root for this loading/saving action
-            self.second_dtree = self.SecondDTree(datapath.root)
+            self.second_dtree = self.SecondDTree(datafile.root)
             self.mount(self.second_dtree, after=self.first_dtree)
 
         if self.entry:
-            self.query_one(Input).value = os.path.splitext(str(datapath.subpath))[0]
+            self.query_one(Input).value = os.path.splitext(str(datafile.subpath.name))[0]
 
         tree = self.first_dtree
         if self.expand_all:
@@ -90,7 +87,7 @@ class DataFileAction(Screen[str]):
         def preselect(start=True):
             if start:
                 preselect.node_current = tree.root
-                preselect.path_parts = list(datapath.subpath.parts)[::-1]
+                preselect.path_parts = list(datafile.subpath.parts)[::-1]
             preselect.node_children = list(preselect.node_current.children)[::-1]
 
             with tree.prevent(tree.FileSelected):
