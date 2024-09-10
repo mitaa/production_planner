@@ -151,7 +151,7 @@ class PlannerTable(DataTable):
             if result:
                 self.notify(f"File saved: `{result.subpath}\n{result.root}`", timeout=10)
             else:
-                datafile = CONFIG.normalize_data_path(subpath)
+                datafile = DataFile.get(subpath)
                 self.notify(f"File saving failed: `{datafile.subpath}\n{datafile.root}`",
                             severity="error",
                             timeout=10)
@@ -182,7 +182,7 @@ class PlannerTable(DataTable):
             if not subpath:
                 self.notify("File Deletion Canceled")
                 return
-            datafile = CONFIG.normalize_data_path(subpath)
+            datafile = DataFile.get(subpath)
 
             if not datafile.fullpath.is_file():
                 self.notify(f"File does not exist: `{datafile.subpath}`\n{datafile.root}",

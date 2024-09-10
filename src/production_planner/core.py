@@ -43,13 +43,23 @@ def ensure_keys(store, key_def_pairings={}):
 
 @dataclass
 class DataFile:
-    _fullpath: Path
-    _root: Path
     subpath: Path
+    _root: Path
+    _fullpath: Path = None
 
-    @property
-    def linkpath(self):
-        return self.subpath
+    def __post_init__(self):
+        self._fullpath = self.root / self.subpath
+
+    @classmethod
+    def get(self, path: Path) -> Self:
+        root = CONFIG.dpath_data
+        if path.is_absolute():
+            try:
+                path = path.relative_to(CONFIG.dpath_data)
+            except ValueError:
+                root = path.parent
+                return ExternalFile(Path(path.name), root)
+        return PortableFile(path)
 
     @property
     def root(self):
@@ -64,17 +74,25 @@ class DataFile:
     def fullpath(self):
         return self._fullpath
 
-
-@dataclass
-class PortableFile(DataFile):
-    pass
-
-
-class ExternalFile(DataFile):
     @property
     def linkpath(self):
         return self.fullpath
 
+
+@dataclass
+class PortableFile(DataFile):
+    _root: Path = None
+
+    def __post_init__(self):
+        self._root = CONFIG.dpath_data
+        super().__post_init__()
+
+    @property
+    def linkpath(self):
+        return self.subpath
+
+
+class ExternalFile(DataFile):
     @DataFile.fullpath.setter
     def fullpath(self, value):
         self._fullpath = Path(value)
@@ -108,16 +126,6 @@ def CONFIG():
             #         APP.manager.reload_all()
             # except (LookupError, ScreenStackError):
             #     pass
-
-        def normalize_data_path(self, subpath: Path) -> DataFile:
-            root = self.dpath_data
-            if subpath.is_absolute():
-                try:
-                    subpath = subpath.relative_to(self.dpath_data)
-                except ValueError:
-                    root = subpath.parent
-                    return ExternalFile(root / subpath.name, root, Path(subpath.name))
-            return PortableFile(root / subpath, root, subpath)
 
         @property
         def fpath_config(self):

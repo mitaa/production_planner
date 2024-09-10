@@ -83,8 +83,8 @@ class Sink:
         self.staging_root = staging_root
         self.iid_sink = table_iid
 
-        self.staging = self.Chunk(CONFIG.normalize_data_path(staging_target) if staging_target else staging_target, sink=self)
-        sink_target = CONFIG.normalize_data_path(Path(self.config["target"])) if self.config["target"] else None
+        self.staging = self.Chunk(DataFile.get(staging_target) if staging_target else staging_target, sink=self)
+        sink_target = DataFile.get(Path(self.config["target"])) if self.config["target"] else None
         self.sink = self.Chunk(sink_target, sink=self)
 
         self.app = core.APP
@@ -124,7 +124,7 @@ class Sink:
             self.app.notify(f"Target does not exist: `{target.subpath}`\n{target.root}", severity="error", timeout=10)
 
         if subpath:
-            sinkfile = CONFIG.normalize_data_path(subpath)
+            sinkfile = DataFile.get(subpath)
             if sinkfile.fullpath.is_file():
                 self.sink.target = sinkfile
             else:
@@ -184,7 +184,7 @@ class Sink:
 
     def sink_commit(self, subpath=None) -> Optional[Tuple[DataFile]]:
         if subpath:
-            self.sink.target = CONFIG.normalize_data_path(subpath)
+            self.sink.target = DataFile.get(subpath)
 
         result = self.sink.save(self.staging.data)
         if result:
@@ -302,7 +302,7 @@ class PlannerManager:
             sink.staging_commit()
 
     def reset_sink_from_path(self, subpath, keep_cache=True):
-        target = CONFIG.normalize_data_path(Path(subpath))
+        target = DataFile.get(Path(subpath))
         for sink in self.sinks:
             if sink.sink.target.fullpath == target.fullpath:
                 sink.sink.reset()
