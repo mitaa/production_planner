@@ -7,6 +7,7 @@ from ._cells import EditableCell, SetCellValue
 from ._selector import StringifyFilter, FilteredListSelector, Sidebar
 from .producer import ProducerCell
 from .. import core
+from .. core import ModuleFile
 from ..core import CONFIG, PRODUCER_NAMES, PRODUCER_MAP, Recipe, Ingredient, all_recipes_producer, Node, NodeInstance
 
 import os
@@ -220,6 +221,6 @@ class RecipeCell(EditableCell):
 
     def set(self, value):
         if super().set(value) and self.data.node_main.is_module:
-            self.data.set_module(self.data.node_main.recipe.name)
+            self.data.set_module(ModuleFile(self.data.node_main.recipe.name))
             curname = os.path.splitext(str(core.APP.active_table.sink.sink.target.linkpath.name))[0]
             core.APP.active_table.nodetree.reload_modules([self.data], module_stack=[curname])

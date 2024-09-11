@@ -84,7 +84,7 @@ class Sink:
         self.iid_sink = table_iid
 
         self.staging = self.Chunk(DataFile.get(staging_target) if staging_target else staging_target, sink=self)
-        sink_target = DataFile.get(Path(self.config["target"])) if self.config["target"] else None
+        sink_target = DataFile.get(self.config["target"]) if self.config["target"] else None
         self.sink = self.Chunk(sink_target, sink=self)
 
         self.app = core.APP
@@ -189,12 +189,15 @@ class Sink:
         if subpath:
             self.sink.target = DataFile.get(subpath)
 
+        # implicitly sets `sink.data = staging.data`
         result = self.sink.save(self.staging.data)
         if result:
             self.config["target"] = str(self.sink.target.linkpath)
         else:
             return
 
+        # implicitly serializes and deserializes `sink.data` and assigns it to `staging.data`
+        # necessary to keep `staging.data is not sink.data` true
         self.staging.reset(self.sink)
         self.table.apply_data(self.staging.data)
         return result
@@ -306,7 +309,7 @@ class PlannerManager:
             sink.staging_commit()
 
     def reset_sink_from_path(self, subpath, keep_cache=True):
-        target = DataFile.get(Path(subpath))
+        target = DataFile.get(subpath)
         for sink in self.sinks:
             if sink.sink.target.fullpath == target.fullpath:
                 sink.sink.reset()

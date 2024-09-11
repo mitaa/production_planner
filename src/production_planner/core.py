@@ -51,7 +51,8 @@ class DataFile:
         self._fullpath = self.root / self.subpath
 
     @classmethod
-    def get(self, path: Path) -> Self:
+    def get(self, path: str | Path) -> Self:
+        path = Path(path)
         root = CONFIG.dpath_data
         if path.is_absolute():
             try:
@@ -78,6 +79,9 @@ class DataFile:
     def linkpath(self):
         return self.fullpath
 
+    def __bool__(self) -> bool:
+        return bool(self.subpath.name)
+
 
 @dataclass
 class PortableFile(DataFile):
@@ -98,6 +102,25 @@ class ExternalFile(DataFile):
         self._fullpath = Path(value)
         self._root = self._fullpath.parent
         self.subpath = self._fullpath.name
+
+
+class ModuleFile:
+    file: DataFile
+
+    def __init__(self, module_id: str):
+        self.file = DataFile.get(os.path.splitext(module_id)[0] + ".yaml")
+
+    @property
+    def fullpath(self):
+        return self.file.fullpath
+
+    @property
+    def linkpath(self):
+        return self.file.linkpath
+
+    @property
+    def id(self):
+        return os.path.splitext(self.linkpath)[0]
 
 
 @static
@@ -452,46 +475,59 @@ class Node:
         self.energy = 0
         self.update()
 
-    def update_module_listings(self):
+    def update_module_listings(self, subroot=None):
         if not self.producer.is_module:
             return
-        self.producer.recipes = [Recipe.empty()]
-        names = list(os.scandir(CONFIG.dpath_data))
-        fnames = [entry.name for entry in names if entry.is_file() if not entry.name.startswith(".")]
-        for fname in fnames:
-            self.update_module_listing(fname)
-        self.producer.update_recipe_map()
 
-    def update_module_listing(self, fname) -> bool:
+        if not subroot:
+            self.producer.recipes = [Recipe.empty()]
+            root = CONFIG.dpath_data
+        else:
+            root = subroot
+
+        for entry in os.scandir(root):
+            if not entry.name.startswith("."):
+                if entry.is_file() and Path(entry.name).suffix == ".yaml":
+                    self.update_module_listing(ModuleFile(entry.path))
+                elif entry.is_dir():
+                    self.update_module_listings(entry.path)
+
+        if not subroot:
+            self.producer.update_recipe_map()
+
+    def update_module_listing(self, modulefile: ModuleFile) -> bool:
         if not self.producer.is_module:
             return
-        if not fname.lower().endswith(".yaml"):
-            fname += ".yaml"
 
-        if not (CONFIG.dpath_data / fname).is_file():
+        if not modulefile.fullpath.is_file():
             return False
 
         from . import io
-        tree = io.load_data(CONFIG.dpath_data / fname)
+        tree = io.load_data(modulefile.fullpath)
         if tree is None:
-            raise ValueError("Unexpected Data Format")
+            APP.notify(f"Failed loading module: {modulefile.id}")
+            return False
 
         tree.update_summaries()
         tree.mark_from_module()
-        module_recipe = tree.node_main.recipe
 
-        module_recipe.name = os.path.splitext(fname)[0]
-        # WARNING: we're not shadowing the class variable here - it should stay that way!
-        self.module_listings[fname] = (module_recipe, tree)
+        tree.node_main.recipe.name = modulefile.id
+
+        self.register_module(modulefile.id, tree)
+
         idx_delete = None
         idx_insert = len(self.producer.recipes)
         for idx, recipe in enumerate(self.producer.recipes):
-            if recipe.name == module_recipe.name:
+            if recipe.name == tree.node_main.recipe.name:
                 idx_delete = idx_insert = idx
         if idx_delete is not None:
             del self.producer.recipes[idx_delete]
-        self.producer.recipes.insert(idx_insert, module_recipe)
+        self.producer.recipes.insert(idx_insert, tree.node_main.recipe)
         return True
+
+    @classmethod
+    def register_module(cls, module_id, tree):
+        cls.module_listings[module_id] = (tree.node_main.recipe, tree)
 
     def update(self):
         self.energy = 0
@@ -548,7 +584,9 @@ def node_constructor(loader, node):
     if prod.is_module:
         if not data["recipe"] in SEEN_MODULES:
             SEEN_MODULES.add(data["recipe"])
-            node.update_module_listing(data["recipe"])
+            module_file = ModuleFile(data["recipe"])
+
+            node.update_module_listing(module_file)
             prod.update_recipe_map()
         if data["recipe"] in prod.recipe_map:
             node.recipe = prod.recipe_map[data["recipe"]]
@@ -739,16 +777,18 @@ class NodeInstance:
             child.parent = self
             child.update_parents()
 
-    def set_module(self, module_name: str):
+    def set_module(self, module_file: ModuleFile):
         if not self.node_main.is_module:
             return
 
-        fname = f"{module_name}.yaml"
-        if not self.node_main.update_module_listing(fname):
-            return
-        module_tree = self.node_main.module_listings[fname][1]
-        self.node_children.clear()
-        self.add_children([module_tree])
+        if module_file:
+            self.node_children.clear()
+            if not self.node_main.update_module_listing(module_file):
+                return
+
+            module_tree = self.node_main.module_listings[module_file.id][1]
+            self.add_children([module_tree])
+
         if self.node_children:
             self.node_main.energy_module = self.node_children[0].node_main.energy
 
@@ -817,7 +857,7 @@ class NodeTree(NodeInstance):
                     substack = module_stack[idx:] + [module]
                     log("\n".join(substack))
                     return None
-                instance.set_module(module)
+                instance.set_module(ModuleFile(module))
                 return True
             else:
                 return False
