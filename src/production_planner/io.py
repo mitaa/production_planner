@@ -228,6 +228,7 @@ class FileChunk(DataChunk):
         data = data if data else self.data
         datafile = self.target
         try:
+            os.makedirs(datafile.fullpath.parent, exist_ok=True)
             with open(datafile.fullpath, "w") as fp:
                 yaml.dump(data, fp)
             self.data = data
