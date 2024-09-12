@@ -9,7 +9,7 @@ from enum import Enum
 from dataclasses import dataclass
 import json
 from pathlib import Path
-from typing import Self
+from typing import Self, Optional
 
 import textual
 from textual import log
@@ -280,7 +280,70 @@ class Producer:
 
     @property
     def is_module(self):
-        return self.name in ["Module", "Blueprint"]
+        return False
+
+
+class _ModuleProducer(Producer):
+    module_index = {}
+
+    @property
+    def is_module(self):
+        return True
+
+    @classmethod
+    def register_module(cls, module_id, tree):
+        # TODO: change from tuple to simple Nodetree, in combination with new tree.recipe property
+        cls.module_index[module_id] = (tree.node_main.recipe, tree)
+
+    @classmethod
+    def get_module_tree(cls, module_id):
+        return cls.module_index[module_id][1]
+
+    def rescan_modules(self, subroot=None):
+        if not subroot:
+            self.recipes = [Recipe.empty()]
+            root = CONFIG.dpath_data
+        else:
+            root = subroot
+
+        for entry in os.scandir(root):
+            if not entry.name.startswith("."):
+                if entry.is_file() and Path(entry.name).suffix == ".yaml":
+                    self.update_module(ModuleFile(entry.path))
+                elif entry.is_dir():
+                    self.rescan_modules(entry.path)
+
+        if not subroot:
+            self.update_recipe_map()
+
+    def update_module(self, modulefile: ModuleFile) -> Optional:
+        if not modulefile.fullpath.is_file():
+            return None
+
+        from . import io
+        tree = io.load_data(modulefile.fullpath)
+        if tree is None:
+            APP.notify(f"Failed loading module: {modulefile.id}")
+            return None
+
+        tree.update_summaries()
+        tree.mark_from_module()
+
+        tree.node_main.recipe.name = modulefile.id
+
+        self.register_module(modulefile.id, tree)
+
+        idx_delete = None
+        idx_insert = len(self.recipes)
+        # FIXME: refer to the actual MODULE PRODUCER
+        # FIXME: move update module listing / register module into an appropriate location
+        for idx, recipe in enumerate(self.recipes):
+            if recipe.name == tree.node_main.recipe.name:
+                idx_delete = idx_insert = idx
+        if idx_delete is not None:
+            del self.recipes[idx_delete]
+        self.recipes.insert(idx_insert, tree.node_main.recipe)
+        return tree
 
 
 class Producers:
@@ -335,39 +398,40 @@ class Purity(Enum):
                 return self.name
 
 
-empty_producer = Producer(
-        "",
-        abstract=False,
-        is_miner=False,
-        is_pow_gen=False,
-        max_mk=0,
-        base_power=0,
-        recipes={"":     [60, [], []], },
-        description="",
+EMPTY_PRODUCER = Producer(
+    "",
+    abstract=False,
+    is_miner=False,
+    is_pow_gen=False,
+    max_mk=0,
+    base_power=0,
+    recipes={"":     [60, [], []], },
+    description="",
 )
 
-summary_producer = Producer(
-        "Summary",
-        abstract=False,
-        is_miner=False,
-        is_pow_gen=False,
-        max_mk=0,
-        base_power=0,
-        recipes={"":     [60, [], []], },
-        description="",
+SUMMARY_PRODUCER = Producer(
+    "Summary",
+    abstract=False,
+    is_miner=False,
+    is_pow_gen=False,
+    max_mk=0,
+    base_power=0,
+    recipes={"":     [60, [], []], },
+    description="",
 )
 
-module_producer = Producer(
-        "Module",
-        abstract=True,
-        is_miner=False,
-        is_pow_gen=False,
-        max_mk=0,
-        base_power=0,
-        recipes={"": [60, [], []], },
-        description="A pseudo producer which allows to embed other files into this one."
+MODULE_PRODUCER = _ModuleProducer(
+    "Module",
+    abstract=True,
+    is_miner=False,
+    is_pow_gen=False,
+    max_mk=0,
+    base_power=0,
+    recipes={"": [60, [], []], },
+    description="A pseudo producer which allows to embed other files into this one."
 )
-PRODUCERS = [module_producer]
+
+PRODUCERS = [MODULE_PRODUCER]
 data_fpath = os.path.join(os.path.split(os.path.abspath(__file__))[0], "production_buildings.json")
 with open(data_fpath) as fp:
     data = json.load(fp)
@@ -412,10 +476,9 @@ PRODUCER_MAP["Blueprint"] = PRODUCER_MAP["Module"]
 
 class Node:
     yaml_tag = "!Node"
-    module_listings = {}
 
     # defaults to be shadowed (avoiding AttributeError's)
-    producer = empty_producer
+    producer = EMPTY_PRODUCER
 
     def __init__(self, producer, recipe, count=1, clock_rate=100, mk=1, purity=Purity.NORMAL, is_dummy=False):
         # a dummy is a read-only, non-interactable, row - for example expanded from a module
@@ -475,60 +538,6 @@ class Node:
         self.energy = 0
         self.update()
 
-    def update_module_listings(self, subroot=None):
-        if not self.producer.is_module:
-            return
-
-        if not subroot:
-            self.producer.recipes = [Recipe.empty()]
-            root = CONFIG.dpath_data
-        else:
-            root = subroot
-
-        for entry in os.scandir(root):
-            if not entry.name.startswith("."):
-                if entry.is_file() and Path(entry.name).suffix == ".yaml":
-                    self.update_module_listing(ModuleFile(entry.path))
-                elif entry.is_dir():
-                    self.update_module_listings(entry.path)
-
-        if not subroot:
-            self.producer.update_recipe_map()
-
-    def update_module_listing(self, modulefile: ModuleFile) -> bool:
-        if not self.producer.is_module:
-            return
-
-        if not modulefile.fullpath.is_file():
-            return False
-
-        from . import io
-        tree = io.load_data(modulefile.fullpath)
-        if tree is None:
-            APP.notify(f"Failed loading module: {modulefile.id}")
-            return False
-
-        tree.update_summaries()
-        tree.mark_from_module()
-
-        tree.node_main.recipe.name = modulefile.id
-
-        self.register_module(modulefile.id, tree)
-
-        idx_delete = None
-        idx_insert = len(self.producer.recipes)
-        for idx, recipe in enumerate(self.producer.recipes):
-            if recipe.name == tree.node_main.recipe.name:
-                idx_delete = idx_insert = idx
-        if idx_delete is not None:
-            del self.producer.recipes[idx_delete]
-        self.producer.recipes.insert(idx_insert, tree.node_main.recipe)
-        return True
-
-    @classmethod
-    def register_module(cls, module_id, tree):
-        cls.module_listings[module_id] = (tree.node_main.recipe, tree)
-
     def update(self):
         self.energy = 0
         self.ingredients = {}
@@ -586,7 +595,7 @@ def node_constructor(loader, node):
             SEEN_MODULES.add(data["recipe"])
             module_file = ModuleFile(data["recipe"])
 
-            node.update_module_listing(module_file)
+            MODULE_PRODUCER.update_module(module_file)
             prod.update_recipe_map()
         if data["recipe"] in prod.recipe_map:
             node.recipe = prod.recipe_map[data["recipe"]]
@@ -619,7 +628,7 @@ yaml.add_constructor(u'!ingredient', ingredient_constructor)
 class SummaryNode(Node):
     def __init__(self, nodes):
         self.row_idx = 0
-        super().__init__(summary_producer, self.update_recipe(nodes), is_dummy=True)
+        super().__init__(SUMMARY_PRODUCER, self.update_recipe(nodes), is_dummy=True)
 
     def producer_reset(self):
         ...
@@ -657,7 +666,7 @@ yaml.add_constructor(u'!summary', summary_constructor)
 
 class NodeInstance:
     row_to_node_index = []
-    blueprints = set()
+    session_modules = set()
 
     def __init__(self, node:Node, children:[Self]=None, parent:[Self]=None, shown=True, expanded=True, row_idx=None, level=0):
         self.parent = parent
@@ -670,7 +679,6 @@ class NodeInstance:
         self.node_children = children
         self.shown = shown
         self.expanded = expanded
-        # TODO: self.activated = activated
         self.indent_str = " " * max(0, level - 2)
         self.row_idx = row_idx
         self.level = level
@@ -783,21 +791,21 @@ class NodeInstance:
 
         if module_file:
             self.node_children.clear()
-            if not self.node_main.update_module_listing(module_file):
+            tree = MODULE_PRODUCER.update_module(module_file)
+            if not tree:
                 return
 
-            module_tree = self.node_main.module_listings[module_file.id][1]
-            self.add_children([module_tree])
+            self.add_children([tree])
 
         if self.node_children:
             self.node_main.energy_module = self.node_children[0].node_main.energy
 
     def collect_modules(self, level=0):
         if level == 0:
-            self.blueprints.clear()
+            self.session_modules.clear()
 
         if self.node_main.is_module:
-            self.blueprints.add(self.node_main.recipe.name)
+            self.session_modules.add(self.node_main.recipe.name)
 
         for child in self.node_children:
             child.collect_modules(level + 1)
@@ -828,6 +836,11 @@ class NodeTree(NodeInstance):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    @property
+    def recipe(self) -> Recipe:
+        assert isinstance(self.children[0], SummaryNode)
+        return self.children[0].node_main.recipe
+
     @classmethod
     def from_nodeinstances(cls, instances: [NodeInstance]) -> Self:
         nodes = [instance.node_main for instance in instances]
@@ -847,7 +860,7 @@ class NodeTree(NodeInstance):
             if instance.node_main.is_module:
                 module = instance.node_main.recipe.name
                 log(f"reloading module: {module}")
-                self.blueprints.add(module)
+                self.session_modules.add(module)
                 if module in module_stack:
                     log("Error: Recursive Modules!")
                     APP.notify(f"Error; Resursive Modules: ({'>'.join(module_stack)})",

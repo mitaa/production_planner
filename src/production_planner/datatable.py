@@ -4,7 +4,8 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from . import core
-from .core import CONFIG, DataFile, ModuleFile, Node, SummaryNode, NodeInstance, NodeTree, PRODUCERS
+from .core import PRODUCERS, MODULE_PRODUCER
+from .core import DataFile, ModuleFile, Node, SummaryNode, NodeInstance, NodeTree
 from .cells import Cell, SetCellValue
 from .cells import ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
 from .screens import SelectDataFile, SaveDataFile
@@ -139,11 +140,12 @@ class PlannerTable(DataTable):
                 self.notify("Saving File Canceled")
                 return
             self.nodetree.collect_modules()
-            if subpath.stem in self.nodetree.blueprints:
+            # TODO: create a test
+            if ModuleFile(subpath).id in self.nodetree.session_modules:
                 self.notify(f"Saving to `{subpath}` would create recursive modules",
                             severity="error",
                             timeout=10)
-                self.notify(f"Modules included: {repr(self.nodetree.blueprints)}",
+                self.notify(f"Modules included: {repr(self.nodetree.session_modules)}",
                             severity="warning",
                             timeout=10)
                 return
@@ -177,7 +179,9 @@ class PlannerTable(DataTable):
         if tree is not None:
             self.nodetree = tree
             if self.sink.sink.target:
-                self.nodetree.reload_modules(module_stack=[ModuleFile(self.sink.sink.target.linkpath).id])
+                modulefile = ModuleFile(self.sink.sink.target.linkpath)
+                MODULE_PRODUCER.update_module(modulefile)
+                self.nodetree.reload_modules(module_stack=[modulefile.id])
             self.update()
 
     def action_delete(self):

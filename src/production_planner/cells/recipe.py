@@ -9,6 +9,7 @@ from .producer import ProducerCell
 from .. import core
 from .. core import ModuleFile
 from ..core import CONFIG, PRODUCER_NAMES, PRODUCER_MAP, Recipe, Ingredient, all_recipes_producer, Node, NodeInstance
+from .. core import MODULE_PRODUCER
 
 import os
 from enum import Enum
@@ -108,7 +109,7 @@ class RecipeCell(EditableCell):
                 self.add_producer_column = False
                 self.cell = RecipeCell
                 if table.selected_node.is_module:
-                    table.selected_node.update_module_listings()
+                    MODULE_PRODUCER.rescan_modules()
 
                 self.data = table.selected_producer.recipes
                 self.selected = table.selected_node.recipe
