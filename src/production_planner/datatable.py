@@ -176,6 +176,8 @@ class PlannerTable(DataTable):
     def apply_data(self, tree: NodeTree | None):
         if tree is not None:
             self.nodetree = tree
+            if self.sink.sink.target:
+                self.nodetree.reload_modules(module_stack=[ModuleFile(self.sink.sink.target.linkpath).id])
             self.update()
 
     def action_delete(self):

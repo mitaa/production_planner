@@ -163,10 +163,7 @@ class Sink:
             else:
                 self.staging.data = parse_yaml(yaml.dump(self.sink.data))
 
-        curname = os.path.splitext(str(subpath))[0]
-
         self.table.apply_data(self.staging.data)
-        self.table.nodetree.reload_modules(module_stack=[curname])
         if not subpath:
             # Can happen if the `.staging` folder / sink is new
             if not self.sink.target:
