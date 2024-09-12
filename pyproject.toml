@@ -19,9 +19,23 @@ dependencies = [
     "rich",
     "platformdirs",
     "pyaml",
-    "json-store>=4.0",
-    "docopt>=0.6.0"
+    "json-store >= 4.0",
+    "docopt >= 0.6.0"
     ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest >= 8.3.1",
+    "pytest-xdist >= 3.6",
+    "pytest-asyncio",
+    "pytest-cov >= 5.0.0",
+    "pytest-textual-snapshot >= 1.0"
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.setuptools]
 include-package-data = true
