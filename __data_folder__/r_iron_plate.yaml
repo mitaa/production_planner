@@ -1,0 +1,78 @@
+!tree
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 150
+    count: 1
+    mk: 1
+    producer: Miner
+    purity: 2
+    recipe: Iron Ore
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 3
+    mk: 1
+    producer: Smelter
+    purity: 0
+    recipe: Iron Ingot
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 1
+    mk: 1
+    producer: Constructor
+    purity: 0
+    recipe: Iron Plate
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 150
+    count: 1
+    mk: 1
+    producer: Constructor
+    purity: 0
+    recipe: Screw
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 2
+    mk: 1
+    producer: Constructor
+    purity: 0
+    recipe: Iron Rod
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 50
+    count: 1
+    mk: 1
+    producer: Assembler
+    purity: 0
+    recipe: Reinforced Iron Plate
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 50
+    count: 1
+    mk: 1
+    producer: Assembler
+    purity: 0
+    recipe: Reinforced Iron Plate
+  shown: true

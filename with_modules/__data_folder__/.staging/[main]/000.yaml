@@ -1,0 +1,247 @@
+!tree
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 1
+    mk: 2
+    producer: Miner
+    purity: 2
+    recipe: Iron Ore
+  shown: true
+- !instance
+  children:
+  - !tree
+    - !instance
+      children: []
+      expanded: true
+      main: !node
+        clock_rate: 100
+        count: 4
+        mk: 1
+        producer: Smelter
+        purity: 0
+        recipe: Iron Ingot
+      shown: true
+    - !instance
+      children: []
+      expanded: true
+      main: !node
+        clock_rate: 100
+        count: 8
+        mk: 1
+        producer: Constructor
+        purity: 0
+        recipe: Iron Rod
+      shown: true
+    - !instance
+      children: []
+      expanded: true
+      main: !node
+        clock_rate: 100
+        count: 8
+        mk: 1
+        producer: Constructor
+        purity: 0
+        recipe: Iron Rebar
+      shown: true
+  expanded: false
+  main: !node
+    clock_rate: 100
+    count: 1
+    mk: 1
+    producer: Module
+    purity: 0
+    recipe: m_Weap_Iron_Rebar
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 1
+    mk: 2
+    producer: Miner
+    purity: 1
+    recipe: Sulfur
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 1
+    mk: 2
+    producer: Miner
+    purity: 4
+    recipe: Coal
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 1
+    mk: 1
+    producer: Oil Extractor
+    purity: 4
+    recipe: Crude Oil
+  shown: true
+- !instance
+  children:
+  - !tree
+    - !instance
+      children: []
+      expanded: true
+      main: !node
+        clock_rate: 100
+        count: 1
+        mk: 1
+        producer: Refinery
+        purity: 0
+        recipe: Polymer Resin
+      shown: true
+    - !instance
+      children: []
+      expanded: true
+      main: !node
+        clock_rate: 100
+        count: 2
+        mk: 1
+        producer: Assembler
+        purity: 0
+        recipe: Black Powder
+      shown: true
+    - !instance
+      children: []
+      expanded: true
+      main: !node
+        clock_rate: 100
+        count: 2
+        mk: 1
+        producer: Refinery
+        purity: 0
+        recipe: Smokeless Powder
+      shown: true
+  expanded: false
+  main: !node
+    clock_rate: 100
+    count: 1
+    mk: 1
+    producer: Module
+    purity: 0
+    recipe: m_Weap_Powder
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 109
+    count: 1
+    mk: 1
+    producer: Water Extractor
+    purity: 0
+    recipe: Water
+  shown: true
+- !instance
+  children:
+  - !tree
+    - !instance
+      children: []
+      expanded: true
+      main: !node
+        clock_rate: 100
+        count: 1
+        mk: 1
+        producer: Refinery
+        purity: 0
+        recipe: Residual Rubber
+      shown: true
+    - !instance
+      children: []
+      expanded: true
+      main: !node
+        clock_rate: 100
+        count: 3
+        mk: 1
+        producer: Refinery
+        purity: 0
+        recipe: Polyester Fabric
+      shown: true
+    - !instance
+      children: []
+      expanded: true
+      main: !node
+        clock_rate: 100
+        count: 1
+        mk: 1
+        producer: Manufacturer
+        purity: 0
+        recipe: Gas Filter
+      shown: true
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 1
+    mk: 1
+    producer: Module
+    purity: 0
+    recipe: m_Weap_Gas_Filter
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 1
+    mk: 2
+    producer: Miner
+    purity: 2
+    recipe: Copper Ore
+  shown: true
+- !instance
+  children:
+  - !tree
+    - !instance
+      children: []
+      expanded: true
+      main: !node
+        clock_rate: 100
+        count: 2
+        mk: 1
+        producer: Smelter
+        purity: 0
+        recipe: Copper Ingot
+      shown: true
+    - !instance
+      children: []
+      expanded: true
+      main: !node
+        clock_rate: 100
+        count: 3
+        mk: 1
+        producer: Constructor
+        purity: 0
+        recipe: Copper Sheet
+      shown: true
+    - !instance
+      children: []
+      expanded: true
+      main: !node
+        clock_rate: 100
+        count: 2
+        mk: 1
+        producer: Assembler
+        purity: 0
+        recipe: Rifle Ammo
+      shown: true
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 2
+    mk: 1
+    producer: Module
+    purity: 0
+    recipe: m_Weap_Rifle_Ammo
+  shown: true

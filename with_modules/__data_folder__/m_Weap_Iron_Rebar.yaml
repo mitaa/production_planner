@@ -1,0 +1,34 @@
+!tree
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 4
+    mk: 1
+    producer: Smelter
+    purity: 0
+    recipe: Iron Ingot
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 8
+    mk: 1
+    producer: Constructor
+    purity: 0
+    recipe: Iron Rod
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 8
+    mk: 1
+    producer: Constructor
+    purity: 0
+    recipe: Iron Rebar
+  shown: true

@@ -1,0 +1,34 @@
+!tree
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 1
+    mk: 1
+    producer: Refinery
+    purity: 0
+    recipe: Polymer Resin
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 2
+    mk: 1
+    producer: Assembler
+    purity: 0
+    recipe: Black Powder
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 2
+    mk: 1
+    producer: Refinery
+    purity: 0
+    recipe: Smokeless Powder
+  shown: true

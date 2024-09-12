@@ -1,0 +1,34 @@
+!tree
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 1
+    mk: 1
+    producer: Refinery
+    purity: 0
+    recipe: Residual Rubber
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 3
+    mk: 1
+    producer: Refinery
+    purity: 0
+    recipe: Polyester Fabric
+  shown: true
+- !instance
+  children: []
+  expanded: true
+  main: !node
+    clock_rate: 100
+    count: 1
+    mk: 1
+    producer: Manufacturer
+    purity: 0
+    recipe: Gas Filter
+  shown: true
