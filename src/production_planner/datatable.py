@@ -4,7 +4,7 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from . import core
-from .core import CONFIG, DataFile, Node, SummaryNode, NodeInstance, NodeTree, PRODUCERS
+from .core import CONFIG, DataFile, ModuleFile, Node, SummaryNode, NodeInstance, NodeTree, PRODUCERS
 from .cells import Cell, SetCellValue
 from .cells import ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
 from .screens import SelectDataFile, SaveDataFile
@@ -149,7 +149,8 @@ class PlannerTable(DataTable):
                 return
             result = self.save_data(subpath)
             if result:
-                self.notify(f"File saved: `{result.subpath}\n{result.root}`", timeout=10)
+                if not self.app._testrun:
+                    self.notify(f"File saved: `{result.subpath}\n{result.root}`", timeout=10)
             else:
                 datafile = DataFile.get(subpath)
                 self.notify(f"File saving failed: `{datafile.subpath}\n{datafile.root}`",
@@ -159,7 +160,6 @@ class PlannerTable(DataTable):
 
     def load_data(self, subpath) -> Optional[Tuple[DataFile]]:
         ret = self.sink.load(subpath)
-        # self.app.title = self.sink.title
         return ret
 
     def action_load(self):
@@ -169,7 +169,8 @@ class PlannerTable(DataTable):
                 return
             result = self.load_data(subpath)
             if result:
-                self.notify(f"File loaded: `{result.subpath}`\n{result.root}", timeout=10)
+                if not self.app._testrun:
+                    self.notify(f"File loaded: `{result.subpath}`\n{result.root}", timeout=10)
         self.app.push_screen(SelectDataFile(), load_file)
 
     def apply_data(self, tree: NodeTree | None):

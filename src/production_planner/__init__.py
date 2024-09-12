@@ -46,6 +46,11 @@ class Planner(App):
     CSS_PATH = "Planner.tcss"
     header = None
 
+    def __init__(self, testrun=False, *args, **kwargs):
+        # Suppresses toasts that differ based on test environment
+        self._testrun = testrun
+        super().__init__(*args, **kwargs)
+
     def compose(self) -> ComposeResult:
         yield Header()
         yield PlannerTable()
