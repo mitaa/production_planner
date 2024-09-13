@@ -141,11 +141,11 @@ class PlannerTable(DataTable):
                 return
             self.nodetree.collect_modules()
             # TODO: create a test
-            if ModuleFile(subpath).id in self.nodetree.session_modules:
+            if ModuleFile(subpath).id in self.nodetree.tree_modules:
                 self.notify(f"Saving to `{subpath}` would create recursive modules",
                             severity="error",
                             timeout=10)
-                self.notify(f"Modules included: {repr(self.nodetree.session_modules)}",
+                self.notify(f"Modules included: {repr(self.nodetree.tree_modules)}",
                             severity="warning",
                             timeout=10)
                 return
@@ -418,7 +418,7 @@ class PlannerTable(DataTable):
             node.update()
             is_summary = isinstance(node, SummaryNode)
             if is_summary:
-                node.update_recipe(inst.node_main for inst in node_instance.node_children)
+                node.update_summary(inst.node_main for inst in node_instance.node_children)
             row = [Column(node_instance) for Column in self.edit_columns]
 
             for ingredient in ingredients:

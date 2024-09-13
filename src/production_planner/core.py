@@ -628,12 +628,12 @@ yaml.add_constructor(u'!ingredient', ingredient_constructor)
 class SummaryNode(Node):
     def __init__(self, nodes):
         self.row_idx = 0
-        super().__init__(SUMMARY_PRODUCER, self.update_recipe(nodes), is_dummy=True)
+        super().__init__(SUMMARY_PRODUCER, self.update_summary(nodes), is_dummy=True)
 
     def producer_reset(self):
         ...
 
-    def update_recipe(self, nodes: [Node]) -> Recipe:
+    def update_summary(self, nodes: [Node]) -> Recipe:
         # TODO: also handle power consumption
         power = 0
         sums = {}
@@ -665,12 +665,15 @@ yaml.add_constructor(u'!summary', summary_constructor)
 
 
 class NodeInstance:
+    # FIXME: this is shared between all instances but this must not be true for unrelated NodeTrees
     row_to_node_index = []
-    session_modules = set()
 
-    def __init__(self, node:Node, children:[Self]=None, parent:[Self]=None, shown=True, expanded=True, row_idx=None, level=0):
+    def __init__(self, node: Node, children: [Self] = None, parent: [Self] = None, shown=True, expanded=True, row_idx=None, level=0):
+        self.tree_modules = set()
+
         self.parent = parent
         self.node_main = node
+
         if children is None:
             children = []
 
@@ -764,7 +767,7 @@ class NodeInstance:
         if isinstance(self.node_main, SummaryNode):
             # Note: the innermost nodes get their recipe updated before the outer nodes
             #       because of the `get_nodes` calls above
-            self.node_main.update_recipe([cinstance.node_main for cinstance in self.node_children])
+            self.node_main.update_summary([cinstance.node_main for cinstance in self.node_children])
 
         if level < 2:
             NodeInstance.row_to_node_index += [self] * len(nodes)
@@ -778,7 +781,7 @@ class NodeInstance:
         if not isinstance(self.node_main, SummaryNode):
             return
 
-        self.node_main.update_recipe([cinstance.node_main for cinstance in self.node_children])
+        self.node_main.update_summary([cinstance.node_main for cinstance in self.node_children])
 
     def update_parents(self):
         for child in self.node_children:
@@ -789,6 +792,7 @@ class NodeInstance:
         if not self.node_main.is_module:
             return
 
+        # FIXME: guard against recursive modules here..
         if module_file:
             self.node_children.clear()
             tree = MODULE_PRODUCER.update_module(module_file)
@@ -797,15 +801,16 @@ class NodeInstance:
 
             self.add_children([tree])
 
-        if self.node_children:
-            self.node_main.energy_module = self.node_children[0].node_main.energy
+            if self.node_children:
+                # FIXME: sum with nested modules isn't always correct
+                self.node_main.energy_module = self.node_children[0].node_main.energy
 
     def collect_modules(self, level=0):
         if level == 0:
-            self.session_modules.clear()
+            self.tree_modules.clear()
 
         if self.node_main.is_module:
-            self.session_modules.add(self.node_main.recipe.name)
+            self.tree_modules.add(self.node_main.recipe.name)
 
         for child in self.node_children:
             child.collect_modules(level + 1)
@@ -860,7 +865,7 @@ class NodeTree(NodeInstance):
             if instance.node_main.is_module:
                 module = instance.node_main.recipe.name
                 log(f"reloading module: {module}")
-                self.session_modules.add(module)
+                self.tree_modules.add(module)
                 if module in module_stack:
                     log("Error: Recursive Modules!")
                     APP.notify(f"Error; Resursive Modules: ({'>'.join(module_stack)})",
