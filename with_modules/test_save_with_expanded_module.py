@@ -10,6 +10,10 @@ from production_planner import Planner
 import pytest
 
 
-@pytest.mark.parametrize("keys", (["s", "enter", "enter"],))
+# FIXME: It seems that there is some inconsistency with the footer bindings
+# being shown or not without any change to the code - some `textual` issue ?
+#
+# Adding the `cursor down` hopefully helps with that
+@pytest.mark.parametrize("keys", (["s", "enter", "enter", "down"],))
 def test_save_with_module(snap_compare, keys):
     assert snap_compare(Planner(testrun=True), terminal_size=(150, 30), run_before=press_before(keys))
