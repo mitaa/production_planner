@@ -466,7 +466,11 @@ MODULE_PRODUCER = _ModuleProducer(
 )
 
 PRODUCERS = [MODULE_PRODUCER]
-data_fpath = os.path.join(os.path.split(os.path.abspath(__file__))[0], "gamedata/production_buildings_v1.0.0.1_366202.json")
+
+# TODO: reorganize files
+from . import gamedata
+# TODO: add selected game version to CONFIG
+data_fpath = gamedata.get()
 
 with open(data_fpath) as fp:
     data = json.load(fp)
@@ -650,14 +654,15 @@ def node_constructor(loader, node):
         else:
             node.recipe = Recipe.empty("! " + data["recipe"])
     else:
-        if data["recipe"] in prod.recipe_map:
-            node.recipe = prod.recipe_map[data["recipe"]]
+        recipe_name = data["recipe"].removeprefix("!").strip()
+        if recipe_name in prod.recipe_map:
+            node.recipe = prod.recipe_map[recipe_name]
         else:
-            alternate = "Alternate: " + data["recipe"]
+            alternate = "Alternate: " + recipe_name
             if alternate in prod.recipe_map:
-                node.recipe = prod.recipe_map["Alternate: " + data["recipe"]]
+                node.recipe = prod.recipe_map["Alternate: " + recipe_name]
             else:
-                node.recipe = Recipe(f"! { data['recipe'] }", 60, [], [], False)
+                node.recipe = Recipe(f"! { recipe_name }", 60, [], [], False)
     node.update()
     return node
 
