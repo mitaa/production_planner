@@ -10,6 +10,7 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 from typing import Self, Optional
+from collections import OrderedDict
 
 import textual
 from textual import log
@@ -198,17 +199,21 @@ class Ingredient:
     def __hash__(self):
         return hash((self.name, self.count))
 
+    def to_json_schema(self):
+        return [self.count, self.name]
+
 
 class Recipe(yaml.YAMLObject):
     yaml_tag = u"!recipe"
 
     recipe_to_producer_map = {}
 
-    def __init__(self, name, cycle_rate, inputs: [(int, str)], outputs: [(int, str)]):
+    def __init__(self, name, cycle_rate, inputs: [(int, str)], outputs: [(int, str)], is_alternate=False):
         self.name = name
         self.cycle_rate = cycle_rate
         self.inputs = list(Ingredient(name, count) for count, name in inputs)
         self.outputs = list(Ingredient(name, count) for count, name in outputs)
+        self.is_alternate = is_alternate
 
     def __str__(self):
         return f"{self.name}/{self.cycle_rate} {', '.join(map(str, self.inputs))} <> {', '.join(map(str, self.outputs))}"
@@ -244,6 +249,11 @@ class Recipe(yaml.YAMLObject):
                 outputs += [(quantity, ingredient)]
         return cls(name, cycle_rate, inputs, outputs)
 
+    def to_json_schema(self):
+        return {
+            self.name: [self.cycle_rate, [inp.to_json_schema() for inp in self.inputs], [out.to_json_schema() for out in self.outputs], self.is_alternate]
+        }
+
 
 class Producer:
     def __init__(self, name, *, is_miner, is_pow_gen, max_mk, base_power, recipes, description, abstract=False):
@@ -278,9 +288,33 @@ class Producer:
         else:
             return self.name
 
+    def __repr__(self):
+        return f"<Producer: {self.name}, recipes: {self.recipes}>"
+
     @property
     def is_module(self):
         return False
+
+
+class ProducerEncoder(json.JSONEncoder):
+    def default(self, producer):
+        if isinstance(producer, Producer):
+            recipes = OrderedDict()
+            for recipe in producer.recipes:
+                recipes.update(recipe.to_json_schema())
+
+            return {
+                producer.name: {
+                    "description": producer.description,
+                    "is_miner": producer.is_miner,
+                    "is_pow_gen": producer.is_pow_gen,
+                    "max_mk": producer.max_mk,
+                    "base_power": producer.base_power,
+                    "recipes": recipes,
+                }
+            }
+        # Let the base class default method raise the TypeError
+        return super().default(producer)
 
 
 class _ModuleProducer(Producer):
@@ -432,7 +466,8 @@ MODULE_PRODUCER = _ModuleProducer(
 )
 
 PRODUCERS = [MODULE_PRODUCER]
-data_fpath = os.path.join(os.path.split(os.path.abspath(__file__))[0], "production_buildings.json")
+data_fpath = os.path.join(os.path.split(os.path.abspath(__file__))[0], "gamedata/production_buildings_v1.0.0.1_366202.json")
+
 with open(data_fpath) as fp:
     data = json.load(fp)
 
@@ -470,8 +505,21 @@ def all_recipes_producer():
     return prod
 
 
+PRODUCER_ALIASES = {
+    "Coal Generator": ["Coal-Powered Generator"],
+    "Fuel Generator": ["Fuel-Powered Generator"],
+    "Coal-Powered Generator": ["Coal Generator"],
+    "Fuel-Powered Generator": ["Fuel Generator"],
+}
+
+
 PRODUCER_MAP = {p.name: p for p in ([all_recipes_producer] + PRODUCERS)}
 PRODUCER_MAP["Blueprint"] = PRODUCER_MAP["Module"]
+
+for name, aliases in PRODUCER_ALIASES.items():
+    if name in PRODUCER_MAP:
+        for alias in aliases:
+            PRODUCER_MAP[alias] = PRODUCER_MAP[name]
 
 
 class Node:
@@ -602,7 +650,11 @@ def node_constructor(loader, node):
         else:
             node.recipe = Recipe.empty("! " + data["recipe"])
     else:
-        node.recipe = prod.recipe_map[data["recipe"]]
+        if data["recipe"] in prod.recipe_map:
+            node.recipe = prod.recipe_map[data["recipe"]]
+        else:
+            node.recipe = prod.recipe_map["Alternate: " + data["recipe"]]
+            # TODO: do not fail on unrecognized recipe
     node.update()
     return node
 

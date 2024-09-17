@@ -1,3 +1,3 @@
-include src/production_planner/*.json
+include src/production_planner/gamedata/*.json
 include src/production_planner/*.tcss
 include src/production_planner/cells/*.tcss
