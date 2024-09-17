@@ -39,10 +39,10 @@ class GameDataFileVersion:
         self.file_versions += [self]
 
     def __index__(self, idx):
-        return GameDataFilter(self)[idx]
+        return GameDataVersionFilter(self)[idx]
 
 
-class GameDataFilter:
+class GameDataVersionFilter:
     def __init__(self):
         self._version_names = ["postfix", "patch", "minor", "major"]
         self.version_sequence = []
@@ -92,7 +92,7 @@ class GameDataFilter:
                 return version
 
 
-def get(major=None, minor=None, patch=None, postfix=None, build=None) -> Path:
+def get(major=None, minor=None, patch=None, postfix=None, build=None) -> GameDataFileVersion:
     from production_planner.core import CONFIG
 
     re_parse_fname = re.compile("production_buildings_v(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\.(?P<postfix>\d+)_(?P<build>\d+).json")
@@ -108,16 +108,16 @@ def get(major=None, minor=None, patch=None, postfix=None, build=None) -> Path:
                                 int(match.group("postfix")),
                                 int(match.group("build")))
     if build:
-        version = GameDataFilter.get_build(build)
+        version = GameDataVersionFilter.get_build(build)
         return Path(version.fpath)
     else:
-        filt = GameDataFilter()
+        filt = GameDataVersionFilter()
         for v in [major, minor, patch, postfix]:
             if v is None:
                 break
             filt[v]
         version = filt.latest()
-        return Path(version.fpath)
+        return version
 
 
 def main():

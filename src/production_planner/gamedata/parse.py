@@ -36,6 +36,7 @@ from collections import OrderedDict
 # }
 #
 # FIXME: recipes need to have power added (Particle Generator, etc)...
+# TODO: add Alien Power Augmenter ("Build_AlienPowerBuilding_C")
 
 
 class Docs(object):
