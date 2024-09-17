@@ -4,6 +4,8 @@
 
 A simple production planner for Satisfactory.
 
+***Recipes now updated to 1.0 !***
+
 ![](data/production_planner-readme.png?)
 
 ## Getting Started

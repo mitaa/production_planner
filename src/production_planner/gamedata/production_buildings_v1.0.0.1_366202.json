@@ -1,0 +1,6673 @@
+{
+  "Miner": {
+    "description": "Extracts solid resources from the resource node it is built on. \r\nDefault extraction rate is 60\u00a0resources per minute. \r\nExtraction rate varies based on resource node purity. Outputs all extracted resources onto connected Conveyor Belts.",
+    "is_miner": true,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 5.0,
+    "recipes": {
+      "Iron Ore": [
+        60,
+        [],
+        [
+          [
+            60,
+            "Iron Ore"
+          ]
+        ],
+        false
+      ],
+      "Coal": [
+        60,
+        [],
+        [
+          [
+            60,
+            "Coal"
+          ]
+        ],
+        false
+      ],
+      "Sulfur": [
+        60,
+        [],
+        [
+          [
+            60,
+            "Sulfur"
+          ]
+        ],
+        false
+      ],
+      "SAM": [
+        60,
+        [],
+        [
+          [
+            60,
+            "SAM"
+          ]
+        ],
+        false
+      ],
+      "Bauxite": [
+        60,
+        [],
+        [
+          [
+            60,
+            "Bauxite"
+          ]
+        ],
+        false
+      ],
+      "Caterium Ore": [
+        60,
+        [],
+        [
+          [
+            60,
+            "Caterium Ore"
+          ]
+        ],
+        false
+      ],
+      "Copper Ore": [
+        60,
+        [],
+        [
+          [
+            60,
+            "Copper Ore"
+          ]
+        ],
+        false
+      ],
+      "Raw Quartz": [
+        60,
+        [],
+        [
+          [
+            60,
+            "Raw Quartz"
+          ]
+        ],
+        false
+      ],
+      "Limestone": [
+        60,
+        [],
+        [
+          [
+            60,
+            "Limestone"
+          ]
+        ],
+        false
+      ],
+      "Uranium": [
+        60,
+        [],
+        [
+          [
+            60,
+            "Uranium"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Water Extractor": {
+    "description": "Extracts water from the body of water it is built on.\r\nNote: the water needs to be sufficiently deep, and rivers are generally not deep enough.\r\n\r\nDefault Extraction Rate: 120\u202fm\u00b3\u00a0of water per minute.\r\nHead Lift: 10\u202fm\r\n(Allows fluids to be transported 10 meters upwards.)",
+    "is_miner": false,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 20.0,
+    "recipes": {
+      "Water": [
+        60,
+        [],
+        [
+          [
+            120,
+            "Water"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Oil Extractor": {
+    "description": "Extracts Crude Oil when built on an oil node. Extraction rates vary based on node purity.\r\n\r\nDefault Extraction Rate: 120\u202fm\u00b3\u00a0of oil per minute.\r\nHead Lift: 10\u202fm\r\n(Allows fluids to be transported 10 meters upwards.)",
+    "is_miner": true,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 40.0,
+    "recipes": {
+      "Crude Oil": [
+        60,
+        [],
+        [
+          [
+            120,
+            "Crude Oil"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Resource Well Pressurizer": {
+    "description": "Activates a Resource Well by pressurizing the underground resource. Must be placed on a Resource Well.\r\nOnce activated, Resource Well Extractors can be placed on the surrounding sub-nodes to extract the resource.\r\nRequires power. Overclocking increases the output potential of the entire Resource Well.",
+    "is_miner": false,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 150.0,
+    "recipes": {}
+  },
+  "Resource Well Extractor": {
+    "description": "Collects pressurized resources when placed on the activated sub-nodes of a Resource Well. Does not require power.\r\n\r\nDefault Extraction Rate: 60\u202fm\u00b3\u00a0of fluid per minute.\r\nHead Lift: 10\u202fm\r\n(Allows fluids to be transported 10 meters upwards.)",
+    "is_miner": true,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 0.0,
+    "recipes": {
+      "Crude Oil": [
+        60,
+        [],
+        [
+          [
+            60,
+            "Crude Oil"
+          ]
+        ],
+        false
+      ],
+      "Nitrogen Gas": [
+        60,
+        [],
+        [
+          [
+            60,
+            "Nitrogen Gas"
+          ]
+        ],
+        false
+      ],
+      "Water": [
+        60,
+        [],
+        [
+          [
+            60,
+            "Water"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Smelter": {
+    "description": "Smelts ore into ingots.\r\n\r\nCan be automated by feeding ore in via a Conveyor Belt connected to the input port. The resulting ingots can be automatically extracted by connecting a Conveyor Belt to the output port.",
+    "is_miner": false,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 4.0,
+    "recipes": {
+      "Iron Ingot": [
+        2,
+        [
+          [
+            1,
+            "Iron Ore"
+          ]
+        ],
+        [
+          [
+            1,
+            "Iron Ingot"
+          ]
+        ],
+        false
+      ],
+      "Pure Aluminum Ingot": [
+        2,
+        [
+          [
+            2,
+            "Aluminum Scrap"
+          ]
+        ],
+        [
+          [
+            1,
+            "Aluminum Ingot"
+          ]
+        ],
+        true
+      ],
+      "Caterium Ingot": [
+        4,
+        [
+          [
+            3,
+            "Caterium Ore"
+          ]
+        ],
+        [
+          [
+            1,
+            "Caterium Ingot"
+          ]
+        ],
+        false
+      ],
+      "Red FICSMAS Ornament": [
+        12,
+        [
+          [
+            1,
+            "FICSMAS Gift"
+          ]
+        ],
+        [
+          [
+            1,
+            "Red FICSMAS Ornament"
+          ]
+        ],
+        false
+      ],
+      "Blue FICSMAS Ornament": [
+        12,
+        [
+          [
+            1,
+            "FICSMAS Gift"
+          ]
+        ],
+        [
+          [
+            2,
+            "Blue FICSMAS Ornament"
+          ]
+        ],
+        false
+      ],
+      "Copper Ingot": [
+        2,
+        [
+          [
+            1,
+            "Copper Ore"
+          ]
+        ],
+        [
+          [
+            1,
+            "Copper Ingot"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Foundry": {
+    "description": "Smelts 2\u00a0resources into alloy ingots.\r\n\r\nCan be automated by feeding ore in via Conveyor Belts connected to the input ports. The resulting ingots can be automatically extracted by connecting a Conveyor Belt to the output port.",
+    "is_miner": false,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 16.0,
+    "recipes": {
+      "Steel Ingot": [
+        4,
+        [
+          [
+            3,
+            "Iron Ore"
+          ],
+          [
+            3,
+            "Coal"
+          ]
+        ],
+        [
+          [
+            3,
+            "Steel Ingot"
+          ]
+        ],
+        false
+      ],
+      "Aluminum Ingot": [
+        4,
+        [
+          [
+            6,
+            "Aluminum Scrap"
+          ],
+          [
+            5,
+            "Silica"
+          ]
+        ],
+        [
+          [
+            4,
+            "Aluminum Ingot"
+          ]
+        ],
+        false
+      ],
+      "Copper Alloy Ingot": [
+        6,
+        [
+          [
+            5,
+            "Copper Ore"
+          ],
+          [
+            5,
+            "Iron Ore"
+          ]
+        ],
+        [
+          [
+            10,
+            "Copper Ingot"
+          ]
+        ],
+        true
+      ],
+      "Coke Steel Ingot": [
+        12,
+        [
+          [
+            15,
+            "Iron Ore"
+          ],
+          [
+            15,
+            "Petroleum Coke"
+          ]
+        ],
+        [
+          [
+            20,
+            "Steel Ingot"
+          ]
+        ],
+        true
+      ],
+      "Molded Steel Pipe": [
+        6,
+        [
+          [
+            5,
+            "Steel Ingot"
+          ],
+          [
+            3,
+            "Concrete"
+          ]
+        ],
+        [
+          [
+            5,
+            "Steel Pipe"
+          ]
+        ],
+        true
+      ],
+      "Steel Cast Plate": [
+        4,
+        [
+          [
+            1,
+            "Iron Ingot"
+          ],
+          [
+            1,
+            "Steel Ingot"
+          ]
+        ],
+        [
+          [
+            3,
+            "Iron Plate"
+          ]
+        ],
+        true
+      ],
+      "Molded Beam": [
+        12,
+        [
+          [
+            24,
+            "Steel Ingot"
+          ],
+          [
+            16,
+            "Concrete"
+          ]
+        ],
+        [
+          [
+            9,
+            "Steel Beam"
+          ]
+        ],
+        true
+      ],
+      "Fused Quartz Crystal": [
+        20,
+        [
+          [
+            25,
+            "Raw Quartz"
+          ],
+          [
+            12,
+            "Coal"
+          ]
+        ],
+        [
+          [
+            18,
+            "Quartz Crystal"
+          ]
+        ],
+        true
+      ],
+      "Basic Iron Ingot": [
+        12,
+        [
+          [
+            5,
+            "Iron Ore"
+          ],
+          [
+            8,
+            "Limestone"
+          ]
+        ],
+        [
+          [
+            10,
+            "Iron Ingot"
+          ]
+        ],
+        true
+      ],
+      "Tempered Copper Ingot": [
+        12,
+        [
+          [
+            5,
+            "Copper Ore"
+          ],
+          [
+            8,
+            "Petroleum Coke"
+          ]
+        ],
+        [
+          [
+            12,
+            "Copper Ingot"
+          ]
+        ],
+        true
+      ],
+      "Tempered Caterium Ingot": [
+        8,
+        [
+          [
+            6,
+            "Caterium Ore"
+          ],
+          [
+            2,
+            "Petroleum Coke"
+          ]
+        ],
+        [
+          [
+            3,
+            "Caterium Ingot"
+          ]
+        ],
+        true
+      ],
+      "Compacted Steel Ingot": [
+        24,
+        [
+          [
+            2,
+            "Iron Ore"
+          ],
+          [
+            1,
+            "Compacted Coal"
+          ]
+        ],
+        [
+          [
+            4,
+            "Steel Ingot"
+          ]
+        ],
+        true
+      ],
+      "Solid Steel Ingot": [
+        3,
+        [
+          [
+            2,
+            "Iron Ingot"
+          ],
+          [
+            2,
+            "Coal"
+          ]
+        ],
+        [
+          [
+            3,
+            "Steel Ingot"
+          ]
+        ],
+        true
+      ],
+      "Iron Alloy Ingot": [
+        12,
+        [
+          [
+            8,
+            "Iron Ore"
+          ],
+          [
+            2,
+            "Copper Ore"
+          ]
+        ],
+        [
+          [
+            15,
+            "Iron Ingot"
+          ]
+        ],
+        true
+      ],
+      "Copper FICSMAS Ornament": [
+        12,
+        [
+          [
+            2,
+            "Red FICSMAS Ornament"
+          ],
+          [
+            2,
+            "Copper Ingot"
+          ]
+        ],
+        [
+          [
+            1,
+            "Copper FICSMAS Ornament"
+          ]
+        ],
+        false
+      ],
+      "Iron FICSMAS Ornament": [
+        12,
+        [
+          [
+            3,
+            "Blue FICSMAS Ornament"
+          ],
+          [
+            3,
+            "Iron Ingot"
+          ]
+        ],
+        [
+          [
+            1,
+            "Iron FICSMAS Ornament"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Constructor": {
+    "description": "Crafts 1\u00a0part into another part.\r\n\r\nCan be automated by feeding component parts in via a Conveyor Belt connected to the input port. The resulting parts can be automatically extracted by connecting a Conveyor Belt to the output port.",
+    "is_miner": false,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 4.0,
+    "recipes": {
+      "Iron Plate": [
+        6,
+        [
+          [
+            3,
+            "Iron Ingot"
+          ]
+        ],
+        [
+          [
+            2,
+            "Iron Plate"
+          ]
+        ],
+        false
+      ],
+      "Iron Rod": [
+        4,
+        [
+          [
+            1,
+            "Iron Ingot"
+          ]
+        ],
+        [
+          [
+            1,
+            "Iron Rod"
+          ]
+        ],
+        false
+      ],
+      "Ficsite Trigon": [
+        6,
+        [
+          [
+            1,
+            "Ficsite Ingot"
+          ]
+        ],
+        [
+          [
+            3,
+            "Ficsite Trigon"
+          ]
+        ],
+        false
+      ],
+      "Reanimated SAM": [
+        2,
+        [
+          [
+            4,
+            "SAM"
+          ]
+        ],
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ]
+        ],
+        false
+      ],
+      "Charcoal": [
+        4,
+        [
+          [
+            1,
+            "Wood"
+          ]
+        ],
+        [
+          [
+            10,
+            "Coal"
+          ]
+        ],
+        true
+      ],
+      "Biocoal": [
+        8,
+        [
+          [
+            5,
+            "Biomass"
+          ]
+        ],
+        [
+          [
+            6,
+            "Coal"
+          ]
+        ],
+        true
+      ],
+      "Steel Rod": [
+        5,
+        [
+          [
+            1,
+            "Steel Ingot"
+          ]
+        ],
+        [
+          [
+            4,
+            "Iron Rod"
+          ]
+        ],
+        true
+      ],
+      "Steel Beam": [
+        4,
+        [
+          [
+            4,
+            "Steel Ingot"
+          ]
+        ],
+        [
+          [
+            1,
+            "Steel Beam"
+          ]
+        ],
+        false
+      ],
+      "Steel Pipe": [
+        6,
+        [
+          [
+            3,
+            "Steel Ingot"
+          ]
+        ],
+        [
+          [
+            2,
+            "Steel Pipe"
+          ]
+        ],
+        false
+      ],
+      "Steel Canister": [
+        6,
+        [
+          [
+            4,
+            "Steel Ingot"
+          ]
+        ],
+        [
+          [
+            4,
+            "Empty Canister"
+          ]
+        ],
+        true
+      ],
+      "Empty Canister": [
+        4,
+        [
+          [
+            2,
+            "Plastic"
+          ]
+        ],
+        [
+          [
+            4,
+            "Empty Canister"
+          ]
+        ],
+        false
+      ],
+      "Quartz Crystal": [
+        8,
+        [
+          [
+            5,
+            "Raw Quartz"
+          ]
+        ],
+        [
+          [
+            3,
+            "Quartz Crystal"
+          ]
+        ],
+        false
+      ],
+      "Aluminum Casing": [
+        2,
+        [
+          [
+            3,
+            "Aluminum Ingot"
+          ]
+        ],
+        [
+          [
+            2,
+            "Aluminum Casing"
+          ]
+        ],
+        false
+      ],
+      "Silica": [
+        8,
+        [
+          [
+            3,
+            "Raw Quartz"
+          ]
+        ],
+        [
+          [
+            5,
+            "Silica"
+          ]
+        ],
+        false
+      ],
+      "Copper Sheet": [
+        6,
+        [
+          [
+            2,
+            "Copper Ingot"
+          ]
+        ],
+        [
+          [
+            1,
+            "Copper Sheet"
+          ]
+        ],
+        false
+      ],
+      "Copper Powder": [
+        6,
+        [
+          [
+            30,
+            "Copper Ingot"
+          ]
+        ],
+        [
+          [
+            5,
+            "Copper Powder"
+          ]
+        ],
+        false
+      ],
+      "Empty Fluid Tank": [
+        1,
+        [
+          [
+            1,
+            "Aluminum Ingot"
+          ]
+        ],
+        [
+          [
+            1,
+            "Empty Fluid Tank"
+          ]
+        ],
+        false
+      ],
+      "Iron Pipe": [
+        12,
+        [
+          [
+            20,
+            "Iron Ingot"
+          ]
+        ],
+        [
+          [
+            5,
+            "Steel Pipe"
+          ]
+        ],
+        true
+      ],
+      "Aluminum Beam": [
+        8,
+        [
+          [
+            3,
+            "Aluminum Ingot"
+          ]
+        ],
+        [
+          [
+            3,
+            "Steel Beam"
+          ]
+        ],
+        true
+      ],
+      "Aluminum Rod": [
+        8,
+        [
+          [
+            1,
+            "Aluminum Ingot"
+          ]
+        ],
+        [
+          [
+            7,
+            "Iron Rod"
+          ]
+        ],
+        true
+      ],
+      "Caterium Wire": [
+        4,
+        [
+          [
+            1,
+            "Caterium Ingot"
+          ]
+        ],
+        [
+          [
+            8,
+            "Wire"
+          ]
+        ],
+        true
+      ],
+      "Iron Wire": [
+        24,
+        [
+          [
+            5,
+            "Iron Ingot"
+          ]
+        ],
+        [
+          [
+            9,
+            "Wire"
+          ]
+        ],
+        true
+      ],
+      "Steel Screw": [
+        12,
+        [
+          [
+            1,
+            "Steel Beam"
+          ]
+        ],
+        [
+          [
+            52,
+            "Screw"
+          ]
+        ],
+        true
+      ],
+      "Cast Screw": [
+        24,
+        [
+          [
+            5,
+            "Iron Ingot"
+          ]
+        ],
+        [
+          [
+            20,
+            "Screw"
+          ]
+        ],
+        true
+      ],
+      "Quickwire": [
+        5,
+        [
+          [
+            1,
+            "Caterium Ingot"
+          ]
+        ],
+        [
+          [
+            5,
+            "Quickwire"
+          ]
+        ],
+        false
+      ],
+      "Solid Biofuel": [
+        4,
+        [
+          [
+            8,
+            "Biomass"
+          ]
+        ],
+        [
+          [
+            4,
+            "Solid Biofuel"
+          ]
+        ],
+        false
+      ],
+      "Hog Protein": [
+        3,
+        [
+          [
+            1,
+            "Hog Remains"
+          ]
+        ],
+        [
+          [
+            1,
+            "Alien Protein"
+          ]
+        ],
+        false
+      ],
+      "Spitter Protein": [
+        3,
+        [
+          [
+            1,
+            "Spitter Remains"
+          ]
+        ],
+        [
+          [
+            1,
+            "Alien Protein"
+          ]
+        ],
+        false
+      ],
+      "Biomass (Mycelia)": [
+        4,
+        [
+          [
+            1,
+            "Mycelia"
+          ]
+        ],
+        [
+          [
+            10,
+            "Biomass"
+          ]
+        ],
+        false
+      ],
+      "Power Shard (1)": [
+        8,
+        [
+          [
+            1,
+            "Blue Power Slug"
+          ]
+        ],
+        [
+          [
+            1,
+            "Power Shard"
+          ]
+        ],
+        false
+      ],
+      "Stinger Protein": [
+        3,
+        [
+          [
+            1,
+            "Stinger Remains"
+          ]
+        ],
+        [
+          [
+            1,
+            "Alien Protein"
+          ]
+        ],
+        false
+      ],
+      "Hatcher Protein": [
+        3,
+        [
+          [
+            1,
+            "Hatcher Remains"
+          ]
+        ],
+        [
+          [
+            1,
+            "Alien Protein"
+          ]
+        ],
+        false
+      ],
+      "Alien DNA Capsule": [
+        6,
+        [
+          [
+            1,
+            "Alien Protein"
+          ]
+        ],
+        [
+          [
+            1,
+            "Alien DNA Capsule"
+          ]
+        ],
+        false
+      ],
+      "Biomass (Alien Protein)": [
+        4,
+        [
+          [
+            1,
+            "Alien Protein"
+          ]
+        ],
+        [
+          [
+            100,
+            "Biomass"
+          ]
+        ],
+        false
+      ],
+      "Iron Rebar": [
+        4,
+        [
+          [
+            1,
+            "Iron Rod"
+          ]
+        ],
+        [
+          [
+            1,
+            "Iron Rebar"
+          ]
+        ],
+        false
+      ],
+      "Power Shard (5)": [
+        24,
+        [
+          [
+            1,
+            "Purple Power Slug"
+          ]
+        ],
+        [
+          [
+            5,
+            "Power Shard"
+          ]
+        ],
+        false
+      ],
+      "Power Shard (2)": [
+        12,
+        [
+          [
+            1,
+            "Yellow Power Slug"
+          ]
+        ],
+        [
+          [
+            2,
+            "Power Shard"
+          ]
+        ],
+        false
+      ],
+      "Snowball": [
+        12,
+        [
+          [
+            3,
+            "Actual Snow"
+          ]
+        ],
+        [
+          [
+            1,
+            "Snowball"
+          ]
+        ],
+        false
+      ],
+      "Actual Snow": [
+        12,
+        [
+          [
+            5,
+            "FICSMAS Gift"
+          ]
+        ],
+        [
+          [
+            2,
+            "Actual Snow"
+          ]
+        ],
+        false
+      ],
+      "FICSMAS Tree Branch": [
+        6,
+        [
+          [
+            1,
+            "FICSMAS Gift"
+          ]
+        ],
+        [
+          [
+            1,
+            "FICSMAS Tree Branch"
+          ]
+        ],
+        false
+      ],
+      "FICSMAS Bow": [
+        12,
+        [
+          [
+            2,
+            "FICSMAS Gift"
+          ]
+        ],
+        [
+          [
+            1,
+            "FICSMAS Bow"
+          ]
+        ],
+        false
+      ],
+      "Candy Cane": [
+        12,
+        [
+          [
+            3,
+            "FICSMAS Gift"
+          ]
+        ],
+        [
+          [
+            1,
+            "Candy Cane"
+          ]
+        ],
+        false
+      ],
+      "Biomass (Leaves)": [
+        5,
+        [
+          [
+            10,
+            "Leaves"
+          ]
+        ],
+        [
+          [
+            5,
+            "Biomass"
+          ]
+        ],
+        false
+      ],
+      "Biomass (Wood)": [
+        4,
+        [
+          [
+            4,
+            "Wood"
+          ]
+        ],
+        [
+          [
+            20,
+            "Biomass"
+          ]
+        ],
+        false
+      ],
+      "Concrete": [
+        4,
+        [
+          [
+            3,
+            "Limestone"
+          ]
+        ],
+        [
+          [
+            1,
+            "Concrete"
+          ]
+        ],
+        false
+      ],
+      "Screw": [
+        6,
+        [
+          [
+            1,
+            "Iron Rod"
+          ]
+        ],
+        [
+          [
+            4,
+            "Screw"
+          ]
+        ],
+        false
+      ],
+      "Cable": [
+        2,
+        [
+          [
+            2,
+            "Wire"
+          ]
+        ],
+        [
+          [
+            1,
+            "Cable"
+          ]
+        ],
+        false
+      ],
+      "Wire": [
+        4,
+        [
+          [
+            1,
+            "Copper Ingot"
+          ]
+        ],
+        [
+          [
+            2,
+            "Wire"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Assembler": {
+    "description": "Crafts 2\u00a0parts into another part.\r\n\r\nCan be automated by feeding component parts in via Conveyor Belts connected to the input ports. The resulting parts can be automatically extracted by connecting a Conveyor Belt to the output port.",
+    "is_miner": false,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 15.0,
+    "recipes": {
+      "Compacted Coal": [
+        12,
+        [
+          [
+            5,
+            "Coal"
+          ],
+          [
+            5,
+            "Sulfur"
+          ]
+        ],
+        [
+          [
+            5,
+            "Compacted Coal"
+          ]
+        ],
+        true
+      ],
+      "Circuit Board": [
+        8,
+        [
+          [
+            2,
+            "Copper Sheet"
+          ],
+          [
+            4,
+            "Plastic"
+          ]
+        ],
+        [
+          [
+            1,
+            "Circuit Board"
+          ]
+        ],
+        false
+      ],
+      "Versatile Framework": [
+        24,
+        [
+          [
+            1,
+            "Modular Frame"
+          ],
+          [
+            12,
+            "Steel Beam"
+          ]
+        ],
+        [
+          [
+            2,
+            "Versatile Framework"
+          ]
+        ],
+        false
+      ],
+      "Rubber Concrete": [
+        6,
+        [
+          [
+            10,
+            "Limestone"
+          ],
+          [
+            2,
+            "Rubber"
+          ]
+        ],
+        [
+          [
+            9,
+            "Concrete"
+          ]
+        ],
+        true
+      ],
+      "Alclad Aluminum Sheet": [
+        6,
+        [
+          [
+            3,
+            "Aluminum Ingot"
+          ],
+          [
+            1,
+            "Copper Ingot"
+          ]
+        ],
+        [
+          [
+            3,
+            "Alclad Aluminum Sheet"
+          ]
+        ],
+        false
+      ],
+      "Encased Industrial Beam": [
+        10,
+        [
+          [
+            3,
+            "Steel Beam"
+          ],
+          [
+            6,
+            "Concrete"
+          ]
+        ],
+        [
+          [
+            1,
+            "Encased Industrial Beam"
+          ]
+        ],
+        false
+      ],
+      "Motor": [
+        12,
+        [
+          [
+            2,
+            "Rotor"
+          ],
+          [
+            2,
+            "Stator"
+          ]
+        ],
+        [
+          [
+            1,
+            "Motor"
+          ]
+        ],
+        false
+      ],
+      "Stator": [
+        12,
+        [
+          [
+            3,
+            "Steel Pipe"
+          ],
+          [
+            8,
+            "Wire"
+          ]
+        ],
+        [
+          [
+            1,
+            "Stator"
+          ]
+        ],
+        false
+      ],
+      "Automated Wiring": [
+        24,
+        [
+          [
+            1,
+            "Stator"
+          ],
+          [
+            20,
+            "Cable"
+          ]
+        ],
+        [
+          [
+            1,
+            "Automated Wiring"
+          ]
+        ],
+        false
+      ],
+      "AI Limiter": [
+        12,
+        [
+          [
+            5,
+            "Copper Sheet"
+          ],
+          [
+            20,
+            "Quickwire"
+          ]
+        ],
+        [
+          [
+            1,
+            "AI Limiter"
+          ]
+        ],
+        false
+      ],
+      "Fused Wire": [
+        20,
+        [
+          [
+            4,
+            "Copper Ingot"
+          ],
+          [
+            1,
+            "Caterium Ingot"
+          ]
+        ],
+        [
+          [
+            30,
+            "Wire"
+          ]
+        ],
+        true
+      ],
+      "Electrode Circuit Board": [
+        12,
+        [
+          [
+            4,
+            "Rubber"
+          ],
+          [
+            8,
+            "Petroleum Coke"
+          ]
+        ],
+        [
+          [
+            1,
+            "Circuit Board"
+          ]
+        ],
+        true
+      ],
+      "Copper Rotor": [
+        16,
+        [
+          [
+            6,
+            "Copper Sheet"
+          ],
+          [
+            52,
+            "Screw"
+          ]
+        ],
+        [
+          [
+            3,
+            "Rotor"
+          ]
+        ],
+        true
+      ],
+      "Modular Frame": [
+        60,
+        [
+          [
+            3,
+            "Reinforced Iron Plate"
+          ],
+          [
+            12,
+            "Iron Rod"
+          ]
+        ],
+        [
+          [
+            2,
+            "Modular Frame"
+          ]
+        ],
+        false
+      ],
+      "Rotor": [
+        15,
+        [
+          [
+            5,
+            "Iron Rod"
+          ],
+          [
+            25,
+            "Screw"
+          ]
+        ],
+        [
+          [
+            1,
+            "Rotor"
+          ]
+        ],
+        false
+      ],
+      "Smart Plating": [
+        30,
+        [
+          [
+            1,
+            "Reinforced Iron Plate"
+          ],
+          [
+            1,
+            "Rotor"
+          ]
+        ],
+        [
+          [
+            1,
+            "Smart Plating"
+          ]
+        ],
+        false
+      ],
+      "Coated Iron Plate": [
+        8,
+        [
+          [
+            5,
+            "Iron Ingot"
+          ],
+          [
+            1,
+            "Plastic"
+          ]
+        ],
+        [
+          [
+            10,
+            "Iron Plate"
+          ]
+        ],
+        true
+      ],
+      "Coated Iron Canister": [
+        4,
+        [
+          [
+            2,
+            "Iron Plate"
+          ],
+          [
+            1,
+            "Copper Sheet"
+          ]
+        ],
+        [
+          [
+            4,
+            "Empty Canister"
+          ]
+        ],
+        true
+      ],
+      "Bolted Frame": [
+        24,
+        [
+          [
+            3,
+            "Reinforced Iron Plate"
+          ],
+          [
+            56,
+            "Screw"
+          ]
+        ],
+        [
+          [
+            2,
+            "Modular Frame"
+          ]
+        ],
+        true
+      ],
+      "Adhered Iron Plate": [
+        16,
+        [
+          [
+            3,
+            "Iron Plate"
+          ],
+          [
+            1,
+            "Rubber"
+          ]
+        ],
+        [
+          [
+            1,
+            "Reinforced Iron Plate"
+          ]
+        ],
+        true
+      ],
+      "Encased Plutonium Cell": [
+        12,
+        [
+          [
+            2,
+            "Plutonium Pellet"
+          ],
+          [
+            4,
+            "Concrete"
+          ]
+        ],
+        [
+          [
+            1,
+            "Encased Plutonium Cell"
+          ]
+        ],
+        false
+      ],
+      "Pressure Conversion Cube": [
+        60,
+        [
+          [
+            1,
+            "Fused Modular Frame"
+          ],
+          [
+            2,
+            "Radio Control Unit"
+          ]
+        ],
+        [
+          [
+            1,
+            "Pressure Conversion Cube"
+          ]
+        ],
+        false
+      ],
+      "Assembly Director System": [
+        80,
+        [
+          [
+            2,
+            "Adaptive Control Unit"
+          ],
+          [
+            1,
+            "Supercomputer"
+          ]
+        ],
+        [
+          [
+            1,
+            "Assembly Director System"
+          ]
+        ],
+        false
+      ],
+      "Electromagnetic Control Rod": [
+        30,
+        [
+          [
+            3,
+            "Stator"
+          ],
+          [
+            2,
+            "AI Limiter"
+          ]
+        ],
+        [
+          [
+            2,
+            "Electromagnetic Control Rod"
+          ]
+        ],
+        false
+      ],
+      "Magnetic Field Generator": [
+        120,
+        [
+          [
+            5,
+            "Versatile Framework"
+          ],
+          [
+            2,
+            "Electromagnetic Control Rod"
+          ]
+        ],
+        [
+          [
+            2,
+            "Magnetic Field Generator"
+          ]
+        ],
+        false
+      ],
+      "Plutonium Fuel Unit": [
+        120,
+        [
+          [
+            20,
+            "Encased Plutonium Cell"
+          ],
+          [
+            1,
+            "Pressure Conversion Cube"
+          ]
+        ],
+        [
+          [
+            1,
+            "Plutonium Fuel Rod"
+          ]
+        ],
+        true
+      ],
+      "OC Supercomputer": [
+        20,
+        [
+          [
+            2,
+            "Radio Control Unit"
+          ],
+          [
+            2,
+            "Cooling System"
+          ]
+        ],
+        [
+          [
+            1,
+            "Supercomputer"
+          ]
+        ],
+        true
+      ],
+      "Heat Sink": [
+        8,
+        [
+          [
+            5,
+            "Alclad Aluminum Sheet"
+          ],
+          [
+            3,
+            "Copper Sheet"
+          ]
+        ],
+        [
+          [
+            1,
+            "Heat Sink"
+          ]
+        ],
+        false
+      ],
+      "Electric Motor": [
+        16,
+        [
+          [
+            1,
+            "Electromagnetic Control Rod"
+          ],
+          [
+            2,
+            "Rotor"
+          ]
+        ],
+        [
+          [
+            2,
+            "Motor"
+          ]
+        ],
+        true
+      ],
+      "Automated Miner": [
+        60,
+        [
+          [
+            4,
+            "Steel Pipe"
+          ],
+          [
+            4,
+            "Iron Plate"
+          ]
+        ],
+        [
+          [
+            1,
+            "Portable Miner"
+          ]
+        ],
+        true
+      ],
+      "Alclad Casing": [
+        8,
+        [
+          [
+            20,
+            "Aluminum Ingot"
+          ],
+          [
+            10,
+            "Copper Ingot"
+          ]
+        ],
+        [
+          [
+            15,
+            "Aluminum Casing"
+          ]
+        ],
+        true
+      ],
+      "Plastic AI Limiter": [
+        15,
+        [
+          [
+            30,
+            "Quickwire"
+          ],
+          [
+            7,
+            "Plastic"
+          ]
+        ],
+        [
+          [
+            2,
+            "AI Limiter"
+          ]
+        ],
+        true
+      ],
+      "Quickwire Stator": [
+        15,
+        [
+          [
+            4,
+            "Steel Pipe"
+          ],
+          [
+            15,
+            "Quickwire"
+          ]
+        ],
+        [
+          [
+            2,
+            "Stator"
+          ]
+        ],
+        true
+      ],
+      "Cheap Silica": [
+        8,
+        [
+          [
+            3,
+            "Raw Quartz"
+          ],
+          [
+            5,
+            "Limestone"
+          ]
+        ],
+        [
+          [
+            7,
+            "Silica"
+          ]
+        ],
+        true
+      ],
+      "Steel Rotor": [
+        12,
+        [
+          [
+            2,
+            "Steel Pipe"
+          ],
+          [
+            6,
+            "Wire"
+          ]
+        ],
+        [
+          [
+            1,
+            "Rotor"
+          ]
+        ],
+        true
+      ],
+      "Encased Industrial Pipe": [
+        15,
+        [
+          [
+            6,
+            "Steel Pipe"
+          ],
+          [
+            5,
+            "Concrete"
+          ]
+        ],
+        [
+          [
+            1,
+            "Encased Industrial Beam"
+          ]
+        ],
+        true
+      ],
+      "Stitched Iron Plate": [
+        32,
+        [
+          [
+            10,
+            "Iron Plate"
+          ],
+          [
+            20,
+            "Wire"
+          ]
+        ],
+        [
+          [
+            3,
+            "Reinforced Iron Plate"
+          ]
+        ],
+        true
+      ],
+      "Bolted Iron Plate": [
+        12,
+        [
+          [
+            18,
+            "Iron Plate"
+          ],
+          [
+            50,
+            "Screw"
+          ]
+        ],
+        [
+          [
+            3,
+            "Reinforced Iron Plate"
+          ]
+        ],
+        true
+      ],
+      "Fused Quickwire": [
+        8,
+        [
+          [
+            1,
+            "Caterium Ingot"
+          ],
+          [
+            5,
+            "Copper Ingot"
+          ]
+        ],
+        [
+          [
+            12,
+            "Quickwire"
+          ]
+        ],
+        true
+      ],
+      "Steeled Frame": [
+        60,
+        [
+          [
+            2,
+            "Reinforced Iron Plate"
+          ],
+          [
+            10,
+            "Steel Pipe"
+          ]
+        ],
+        [
+          [
+            3,
+            "Modular Frame"
+          ]
+        ],
+        true
+      ],
+      "Heat Exchanger": [
+        6,
+        [
+          [
+            3,
+            "Aluminum Casing"
+          ],
+          [
+            3,
+            "Rubber"
+          ]
+        ],
+        [
+          [
+            1,
+            "Heat Sink"
+          ]
+        ],
+        true
+      ],
+      "Fine Black Powder": [
+        8,
+        [
+          [
+            1,
+            "Sulfur"
+          ],
+          [
+            2,
+            "Compacted Coal"
+          ]
+        ],
+        [
+          [
+            6,
+            "Black Powder"
+          ]
+        ],
+        true
+      ],
+      "Electromagnetic Connection Rod": [
+        15,
+        [
+          [
+            2,
+            "Stator"
+          ],
+          [
+            1,
+            "High-Speed Connector"
+          ]
+        ],
+        [
+          [
+            2,
+            "Electromagnetic Control Rod"
+          ]
+        ],
+        true
+      ],
+      "Fine Concrete": [
+        12,
+        [
+          [
+            3,
+            "Silica"
+          ],
+          [
+            12,
+            "Limestone"
+          ]
+        ],
+        [
+          [
+            10,
+            "Concrete"
+          ]
+        ],
+        true
+      ],
+      "Crystal Computer": [
+        36,
+        [
+          [
+            3,
+            "Circuit Board"
+          ],
+          [
+            1,
+            "Crystal Oscillator"
+          ]
+        ],
+        [
+          [
+            2,
+            "Computer"
+          ]
+        ],
+        true
+      ],
+      "Caterium Circuit Board": [
+        48,
+        [
+          [
+            10,
+            "Plastic"
+          ],
+          [
+            30,
+            "Quickwire"
+          ]
+        ],
+        [
+          [
+            7,
+            "Circuit Board"
+          ]
+        ],
+        true
+      ],
+      "Silicon Circuit Board": [
+        24,
+        [
+          [
+            11,
+            "Copper Sheet"
+          ],
+          [
+            11,
+            "Silica"
+          ]
+        ],
+        [
+          [
+            5,
+            "Circuit Board"
+          ]
+        ],
+        true
+      ],
+      "Quickwire Cable": [
+        24,
+        [
+          [
+            3,
+            "Quickwire"
+          ],
+          [
+            2,
+            "Rubber"
+          ]
+        ],
+        [
+          [
+            11,
+            "Cable"
+          ]
+        ],
+        true
+      ],
+      "Insulated Cable": [
+        12,
+        [
+          [
+            9,
+            "Wire"
+          ],
+          [
+            6,
+            "Rubber"
+          ]
+        ],
+        [
+          [
+            20,
+            "Cable"
+          ]
+        ],
+        true
+      ],
+      "Black Powder": [
+        4,
+        [
+          [
+            1,
+            "Coal"
+          ],
+          [
+            1,
+            "Sulfur"
+          ]
+        ],
+        [
+          [
+            2,
+            "Black Powder"
+          ]
+        ],
+        false
+      ],
+      "Homing Rifle Ammo": [
+        24,
+        [
+          [
+            20,
+            "Rifle Ammo"
+          ],
+          [
+            1,
+            "High-Speed Connector"
+          ]
+        ],
+        [
+          [
+            10,
+            "Homing Rifle Ammo"
+          ]
+        ],
+        false
+      ],
+      "Stun Rebar": [
+        6,
+        [
+          [
+            1,
+            "Iron Rebar"
+          ],
+          [
+            5,
+            "Quickwire"
+          ]
+        ],
+        [
+          [
+            1,
+            "Stun Rebar"
+          ]
+        ],
+        false
+      ],
+      "Gas Nobelisk": [
+        12,
+        [
+          [
+            1,
+            "Nobelisk"
+          ],
+          [
+            10,
+            "Biomass"
+          ]
+        ],
+        [
+          [
+            1,
+            "Gas Nobelisk"
+          ]
+        ],
+        false
+      ],
+      "Fabric": [
+        4,
+        [
+          [
+            1,
+            "Mycelia"
+          ],
+          [
+            5,
+            "Biomass"
+          ]
+        ],
+        [
+          [
+            1,
+            "Fabric"
+          ]
+        ],
+        false
+      ],
+      "Pulse Nobelisk": [
+        60,
+        [
+          [
+            5,
+            "Nobelisk"
+          ],
+          [
+            1,
+            "Crystal Oscillator"
+          ]
+        ],
+        [
+          [
+            5,
+            "Pulse Nobelisk"
+          ]
+        ],
+        false
+      ],
+      "Shatter Rebar": [
+        12,
+        [
+          [
+            2,
+            "Iron Rebar"
+          ],
+          [
+            3,
+            "Quartz Crystal"
+          ]
+        ],
+        [
+          [
+            1,
+            "Shatter Rebar"
+          ]
+        ],
+        false
+      ],
+      "Rifle Ammo": [
+        12,
+        [
+          [
+            3,
+            "Copper Sheet"
+          ],
+          [
+            2,
+            "Smokeless Powder"
+          ]
+        ],
+        [
+          [
+            15,
+            "Rifle Ammo"
+          ]
+        ],
+        false
+      ],
+      "Cluster Nobelisk": [
+        24,
+        [
+          [
+            3,
+            "Nobelisk"
+          ],
+          [
+            4,
+            "Smokeless Powder"
+          ]
+        ],
+        [
+          [
+            1,
+            "Cluster Nobelisk"
+          ]
+        ],
+        false
+      ],
+      "Nobelisk": [
+        6,
+        [
+          [
+            2,
+            "Black Powder"
+          ],
+          [
+            2,
+            "Steel Pipe"
+          ]
+        ],
+        [
+          [
+            1,
+            "Nobelisk"
+          ]
+        ],
+        false
+      ],
+      "FICSMAS Wonder Star": [
+        60,
+        [
+          [
+            5,
+            "FICSMAS Decoration"
+          ],
+          [
+            20,
+            "Candy Cane"
+          ]
+        ],
+        [
+          [
+            1,
+            "FICSMAS Wonder Star"
+          ]
+        ],
+        false
+      ],
+      "FICSMAS Decoration": [
+        60,
+        [
+          [
+            15,
+            "FICSMAS Tree Branch"
+          ],
+          [
+            6,
+            "FICSMAS Ornament Bundle"
+          ]
+        ],
+        [
+          [
+            2,
+            "FICSMAS Decoration"
+          ]
+        ],
+        false
+      ],
+      "FICSMAS Ornament Bundle": [
+        12,
+        [
+          [
+            1,
+            "Copper FICSMAS Ornament"
+          ],
+          [
+            1,
+            "Iron FICSMAS Ornament"
+          ]
+        ],
+        [
+          [
+            1,
+            "FICSMAS Ornament Bundle"
+          ]
+        ],
+        false
+      ],
+      "Reinforced Iron Plate": [
+        12,
+        [
+          [
+            6,
+            "Iron Plate"
+          ],
+          [
+            12,
+            "Screw"
+          ]
+        ],
+        [
+          [
+            1,
+            "Reinforced Iron Plate"
+          ]
+        ],
+        false
+      ],
+      "Sweet Fireworks": [
+        24,
+        [
+          [
+            6,
+            "FICSMAS Tree Branch"
+          ],
+          [
+            3,
+            "Candy Cane"
+          ]
+        ],
+        [
+          [
+            1,
+            "Sweet Fireworks"
+          ]
+        ],
+        false
+      ],
+      "Fancy Fireworks": [
+        24,
+        [
+          [
+            4,
+            "FICSMAS Tree Branch"
+          ],
+          [
+            3,
+            "FICSMAS Bow"
+          ]
+        ],
+        [
+          [
+            1,
+            "Fancy Fireworks"
+          ]
+        ],
+        false
+      ],
+      "Sparkly Fireworks": [
+        24,
+        [
+          [
+            3,
+            "FICSMAS Tree Branch"
+          ],
+          [
+            2,
+            "Actual Snow"
+          ]
+        ],
+        [
+          [
+            1,
+            "Sparkly Fireworks"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Manufacturer": {
+    "description": "Crafts 3\u00a0or 4\u00a0parts into another part.\r\n\r\nCan be automated by feeding component parts in via Conveyor Belts connected to the input ports. The resulting parts can be automatically extracted by connecting a Conveyor Belt to the output port.",
+    "is_miner": false,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 55.0,
+    "recipes": {
+      "SAM Fluctuator": [
+        6,
+        [
+          [
+            6,
+            "Reanimated SAM"
+          ],
+          [
+            5,
+            "Wire"
+          ],
+          [
+            3,
+            "Steel Pipe"
+          ]
+        ],
+        [
+          [
+            1,
+            "SAM Fluctuator"
+          ]
+        ],
+        false
+      ],
+      "Crystal Oscillator": [
+        120,
+        [
+          [
+            36,
+            "Quartz Crystal"
+          ],
+          [
+            28,
+            "Cable"
+          ],
+          [
+            5,
+            "Reinforced Iron Plate"
+          ]
+        ],
+        [
+          [
+            2,
+            "Crystal Oscillator"
+          ]
+        ],
+        false
+      ],
+      "Plastic Smart Plating": [
+        24,
+        [
+          [
+            1,
+            "Reinforced Iron Plate"
+          ],
+          [
+            1,
+            "Rotor"
+          ],
+          [
+            3,
+            "Plastic"
+          ]
+        ],
+        [
+          [
+            2,
+            "Smart Plating"
+          ]
+        ],
+        true
+      ],
+      "Automated Speed Wiring": [
+        32,
+        [
+          [
+            2,
+            "Stator"
+          ],
+          [
+            40,
+            "Wire"
+          ],
+          [
+            1,
+            "High-Speed Connector"
+          ]
+        ],
+        [
+          [
+            4,
+            "Automated Wiring"
+          ]
+        ],
+        true
+      ],
+      "Heavy Flexible Frame": [
+        16,
+        [
+          [
+            5,
+            "Modular Frame"
+          ],
+          [
+            3,
+            "Encased Industrial Beam"
+          ],
+          [
+            20,
+            "Rubber"
+          ],
+          [
+            104,
+            "Screw"
+          ]
+        ],
+        [
+          [
+            1,
+            "Heavy Modular Frame"
+          ]
+        ],
+        true
+      ],
+      "Computer": [
+        24,
+        [
+          [
+            4,
+            "Circuit Board"
+          ],
+          [
+            8,
+            "Cable"
+          ],
+          [
+            16,
+            "Plastic"
+          ]
+        ],
+        [
+          [
+            1,
+            "Computer"
+          ]
+        ],
+        false
+      ],
+      "Heavy Modular Frame": [
+        30,
+        [
+          [
+            5,
+            "Modular Frame"
+          ],
+          [
+            20,
+            "Steel Pipe"
+          ],
+          [
+            5,
+            "Encased Industrial Beam"
+          ],
+          [
+            120,
+            "Screw"
+          ]
+        ],
+        [
+          [
+            1,
+            "Heavy Modular Frame"
+          ]
+        ],
+        false
+      ],
+      "Modular Engine": [
+        60,
+        [
+          [
+            2,
+            "Motor"
+          ],
+          [
+            15,
+            "Rubber"
+          ],
+          [
+            2,
+            "Smart Plating"
+          ]
+        ],
+        [
+          [
+            1,
+            "Modular Engine"
+          ]
+        ],
+        false
+      ],
+      "Adaptive Control Unit": [
+        60,
+        [
+          [
+            5,
+            "Automated Wiring"
+          ],
+          [
+            5,
+            "Circuit Board"
+          ],
+          [
+            1,
+            "Heavy Modular Frame"
+          ],
+          [
+            2,
+            "Computer"
+          ]
+        ],
+        [
+          [
+            1,
+            "Adaptive Control Unit"
+          ]
+        ],
+        false
+      ],
+      "Flexible Framework": [
+        16,
+        [
+          [
+            1,
+            "Modular Frame"
+          ],
+          [
+            6,
+            "Steel Beam"
+          ],
+          [
+            8,
+            "Rubber"
+          ]
+        ],
+        [
+          [
+            2,
+            "Versatile Framework"
+          ]
+        ],
+        true
+      ],
+      "Turbo Pressure Motor": [
+        32,
+        [
+          [
+            4,
+            "Motor"
+          ],
+          [
+            1,
+            "Pressure Conversion Cube"
+          ],
+          [
+            24,
+            "Packaged Nitrogen Gas"
+          ],
+          [
+            8,
+            "Stator"
+          ]
+        ],
+        [
+          [
+            2,
+            "Turbo Motor"
+          ]
+        ],
+        true
+      ],
+      "Plutonium Fuel Rod": [
+        240,
+        [
+          [
+            30,
+            "Encased Plutonium Cell"
+          ],
+          [
+            18,
+            "Steel Beam"
+          ],
+          [
+            6,
+            "Electromagnetic Control Rod"
+          ],
+          [
+            10,
+            "Heat Sink"
+          ]
+        ],
+        [
+          [
+            1,
+            "Plutonium Fuel Rod"
+          ]
+        ],
+        false
+      ],
+      "Supercomputer": [
+        32,
+        [
+          [
+            4,
+            "Computer"
+          ],
+          [
+            2,
+            "AI Limiter"
+          ],
+          [
+            3,
+            "High-Speed Connector"
+          ],
+          [
+            28,
+            "Plastic"
+          ]
+        ],
+        [
+          [
+            1,
+            "Supercomputer"
+          ]
+        ],
+        false
+      ],
+      "Radio Control Unit": [
+        48,
+        [
+          [
+            32,
+            "Aluminum Casing"
+          ],
+          [
+            1,
+            "Crystal Oscillator"
+          ],
+          [
+            2,
+            "Computer"
+          ]
+        ],
+        [
+          [
+            2,
+            "Radio Control Unit"
+          ]
+        ],
+        false
+      ],
+      "High-Speed Connector": [
+        16,
+        [
+          [
+            56,
+            "Quickwire"
+          ],
+          [
+            10,
+            "Cable"
+          ],
+          [
+            1,
+            "Circuit Board"
+          ]
+        ],
+        [
+          [
+            1,
+            "High-Speed Connector"
+          ]
+        ],
+        false
+      ],
+      "Super-State Computer": [
+        25,
+        [
+          [
+            3,
+            "Computer"
+          ],
+          [
+            1,
+            "Electromagnetic Control Rod"
+          ],
+          [
+            10,
+            "Battery"
+          ],
+          [
+            25,
+            "Wire"
+          ]
+        ],
+        [
+          [
+            1,
+            "Supercomputer"
+          ]
+        ],
+        true
+      ],
+      "Uranium Fuel Rod": [
+        150,
+        [
+          [
+            50,
+            "Encased Uranium Cell"
+          ],
+          [
+            3,
+            "Encased Industrial Beam"
+          ],
+          [
+            5,
+            "Electromagnetic Control Rod"
+          ]
+        ],
+        [
+          [
+            1,
+            "Uranium Fuel Rod"
+          ]
+        ],
+        false
+      ],
+      "Radio Control System": [
+        40,
+        [
+          [
+            1,
+            "Crystal Oscillator"
+          ],
+          [
+            10,
+            "Circuit Board"
+          ],
+          [
+            60,
+            "Aluminum Casing"
+          ],
+          [
+            30,
+            "Rubber"
+          ]
+        ],
+        [
+          [
+            3,
+            "Radio Control Unit"
+          ]
+        ],
+        true
+      ],
+      "Classic Battery": [
+        8,
+        [
+          [
+            6,
+            "Sulfur"
+          ],
+          [
+            7,
+            "Alclad Aluminum Sheet"
+          ],
+          [
+            8,
+            "Plastic"
+          ],
+          [
+            12,
+            "Wire"
+          ]
+        ],
+        [
+          [
+            4,
+            "Battery"
+          ]
+        ],
+        true
+      ],
+      "Infused Uranium Cell": [
+        12,
+        [
+          [
+            5,
+            "Uranium"
+          ],
+          [
+            3,
+            "Silica"
+          ],
+          [
+            5,
+            "Sulfur"
+          ],
+          [
+            15,
+            "Quickwire"
+          ]
+        ],
+        [
+          [
+            4,
+            "Encased Uranium Cell"
+          ]
+        ],
+        true
+      ],
+      "Turbo Electric Motor": [
+        64,
+        [
+          [
+            7,
+            "Motor"
+          ],
+          [
+            9,
+            "Radio Control Unit"
+          ],
+          [
+            5,
+            "Electromagnetic Control Rod"
+          ],
+          [
+            7,
+            "Rotor"
+          ]
+        ],
+        [
+          [
+            3,
+            "Turbo Motor"
+          ]
+        ],
+        true
+      ],
+      "Turbo Motor": [
+        32,
+        [
+          [
+            4,
+            "Cooling System"
+          ],
+          [
+            2,
+            "Radio Control Unit"
+          ],
+          [
+            4,
+            "Motor"
+          ],
+          [
+            24,
+            "Rubber"
+          ]
+        ],
+        [
+          [
+            1,
+            "Turbo Motor"
+          ]
+        ],
+        false
+      ],
+      "Thermal Propulsion Rocket": [
+        120,
+        [
+          [
+            5,
+            "Modular Engine"
+          ],
+          [
+            2,
+            "Turbo Motor"
+          ],
+          [
+            6,
+            "Cooling System"
+          ],
+          [
+            2,
+            "Fused Modular Frame"
+          ]
+        ],
+        [
+          [
+            2,
+            "Thermal Propulsion Rocket"
+          ]
+        ],
+        false
+      ],
+      "Radio Connection Unit": [
+        16,
+        [
+          [
+            4,
+            "Heat Sink"
+          ],
+          [
+            2,
+            "High-Speed Connector"
+          ],
+          [
+            12,
+            "Quartz Crystal"
+          ]
+        ],
+        [
+          [
+            1,
+            "Radio Control Unit"
+          ]
+        ],
+        true
+      ],
+      "Uranium Fuel Unit": [
+        300,
+        [
+          [
+            100,
+            "Encased Uranium Cell"
+          ],
+          [
+            10,
+            "Electromagnetic Control Rod"
+          ],
+          [
+            3,
+            "Crystal Oscillator"
+          ],
+          [
+            10,
+            "Rotor"
+          ]
+        ],
+        [
+          [
+            3,
+            "Uranium Fuel Rod"
+          ]
+        ],
+        true
+      ],
+      "Rigor Motor": [
+        48,
+        [
+          [
+            3,
+            "Rotor"
+          ],
+          [
+            3,
+            "Stator"
+          ],
+          [
+            1,
+            "Crystal Oscillator"
+          ]
+        ],
+        [
+          [
+            6,
+            "Motor"
+          ]
+        ],
+        true
+      ],
+      "Silicon High-Speed Connector": [
+        40,
+        [
+          [
+            60,
+            "Quickwire"
+          ],
+          [
+            25,
+            "Silica"
+          ],
+          [
+            2,
+            "Circuit Board"
+          ]
+        ],
+        [
+          [
+            2,
+            "High-Speed Connector"
+          ]
+        ],
+        true
+      ],
+      "Heavy Encased Frame": [
+        64,
+        [
+          [
+            8,
+            "Modular Frame"
+          ],
+          [
+            10,
+            "Encased Industrial Beam"
+          ],
+          [
+            36,
+            "Steel Pipe"
+          ],
+          [
+            22,
+            "Concrete"
+          ]
+        ],
+        [
+          [
+            3,
+            "Heavy Modular Frame"
+          ]
+        ],
+        true
+      ],
+      "Insulated Crystal Oscillator": [
+        32,
+        [
+          [
+            10,
+            "Quartz Crystal"
+          ],
+          [
+            7,
+            "Rubber"
+          ],
+          [
+            1,
+            "AI Limiter"
+          ]
+        ],
+        [
+          [
+            1,
+            "Crystal Oscillator"
+          ]
+        ],
+        true
+      ],
+      "Caterium Computer": [
+        16,
+        [
+          [
+            4,
+            "Circuit Board"
+          ],
+          [
+            14,
+            "Quickwire"
+          ],
+          [
+            6,
+            "Rubber"
+          ]
+        ],
+        [
+          [
+            1,
+            "Computer"
+          ]
+        ],
+        true
+      ],
+      "Singularity Cell": [
+        60,
+        [
+          [
+            1,
+            "Nuclear Pasta"
+          ],
+          [
+            20,
+            "Dark Matter Crystal"
+          ],
+          [
+            100,
+            "Iron Plate"
+          ],
+          [
+            200,
+            "Concrete"
+          ]
+        ],
+        [
+          [
+            10,
+            "Singularity Cell"
+          ]
+        ],
+        false
+      ],
+      "Ballistic Warp Drive": [
+        60,
+        [
+          [
+            1,
+            "Thermal Propulsion Rocket"
+          ],
+          [
+            5,
+            "Singularity Cell"
+          ],
+          [
+            2,
+            "Superposition Oscillator"
+          ],
+          [
+            40,
+            "Dark Matter Crystal"
+          ]
+        ],
+        [
+          [
+            1,
+            "Ballistic Warp Drive"
+          ]
+        ],
+        false
+      ],
+      "Iodine-Infused Filter": [
+        16,
+        [
+          [
+            1,
+            "Gas Filter"
+          ],
+          [
+            8,
+            "Quickwire"
+          ],
+          [
+            1,
+            "Aluminum Casing"
+          ]
+        ],
+        [
+          [
+            1,
+            "Iodine-Infused Filter"
+          ]
+        ],
+        false
+      ],
+      "Gas Filter": [
+        8,
+        [
+          [
+            2,
+            "Fabric"
+          ],
+          [
+            4,
+            "Coal"
+          ],
+          [
+            2,
+            "Iron Plate"
+          ]
+        ],
+        [
+          [
+            1,
+            "Gas Filter"
+          ]
+        ],
+        false
+      ],
+      "Turbo Rifle Ammo": [
+        12,
+        [
+          [
+            25,
+            "Rifle Ammo"
+          ],
+          [
+            3,
+            "Aluminum Casing"
+          ],
+          [
+            3,
+            "Packaged Turbofuel"
+          ]
+        ],
+        [
+          [
+            50,
+            "Turbo Rifle Ammo"
+          ]
+        ],
+        false
+      ],
+      "Nuke Nobelisk": [
+        120,
+        [
+          [
+            5,
+            "Nobelisk"
+          ],
+          [
+            20,
+            "Encased Uranium Cell"
+          ],
+          [
+            10,
+            "Smokeless Powder"
+          ],
+          [
+            6,
+            "AI Limiter"
+          ]
+        ],
+        [
+          [
+            1,
+            "Nuke Nobelisk"
+          ]
+        ],
+        false
+      ],
+      "Explosive Rebar": [
+        12,
+        [
+          [
+            2,
+            "Iron Rebar"
+          ],
+          [
+            2,
+            "Smokeless Powder"
+          ],
+          [
+            2,
+            "Steel Pipe"
+          ]
+        ],
+        [
+          [
+            1,
+            "Explosive Rebar"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Packager": {
+    "description": "Packages and unpackages fluids.\r\nHead Lift: 10\u202fm\r\n(Allows fluids to be transported 10\u00a0meters upwards.)\r\n\r\nContains both Conveyor Belt and Pipeline input and output ports so that a wide range of recipes can be automated.",
+    "is_miner": false,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 10.0,
+    "recipes": {
+      "Packaged Rocket Fuel": [
+        1,
+        [
+          [
+            2.0,
+            "Rocket Fuel"
+          ],
+          [
+            1,
+            "Empty Fluid Tank"
+          ]
+        ],
+        [
+          [
+            1,
+            "Packaged Rocket Fuel"
+          ]
+        ],
+        false
+      ],
+      "Unpackage Rocket Fuel": [
+        1,
+        [
+          [
+            1,
+            "Packaged Rocket Fuel"
+          ]
+        ],
+        [
+          [
+            2.0,
+            "Rocket Fuel"
+          ],
+          [
+            1,
+            "Empty Fluid Tank"
+          ]
+        ],
+        false
+      ],
+      "Packaged Ionized Fuel": [
+        3,
+        [
+          [
+            4.0,
+            "Ionized Fuel"
+          ],
+          [
+            2,
+            "Empty Fluid Tank"
+          ]
+        ],
+        [
+          [
+            2,
+            "Packaged Ionized Fuel"
+          ]
+        ],
+        false
+      ],
+      "Unpackage Ionized Fuel": [
+        3,
+        [
+          [
+            2,
+            "Packaged Ionized Fuel"
+          ]
+        ],
+        [
+          [
+            4.0,
+            "Ionized Fuel"
+          ],
+          [
+            2,
+            "Empty Fluid Tank"
+          ]
+        ],
+        false
+      ],
+      "Packaged Turbofuel": [
+        6,
+        [
+          [
+            2.0,
+            "Turbofuel"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        [
+          [
+            2,
+            "Packaged Turbofuel"
+          ]
+        ],
+        false
+      ],
+      "Unpackage Turbofuel": [
+        6,
+        [
+          [
+            2,
+            "Packaged Turbofuel"
+          ]
+        ],
+        [
+          [
+            2.0,
+            "Turbofuel"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        false
+      ],
+      "Packaged Fuel": [
+        3,
+        [
+          [
+            2.0,
+            "Fuel"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        [
+          [
+            2,
+            "Packaged Fuel"
+          ]
+        ],
+        false
+      ],
+      "Packaged Liquid Biofuel": [
+        3,
+        [
+          [
+            2.0,
+            "Liquid Biofuel"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        [
+          [
+            2,
+            "Packaged Liquid Biofuel"
+          ]
+        ],
+        false
+      ],
+      "Packaged Oil": [
+        4,
+        [
+          [
+            2.0,
+            "Crude Oil"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        [
+          [
+            2,
+            "Packaged Oil"
+          ]
+        ],
+        false
+      ],
+      "Packaged Heavy Oil Residue": [
+        4,
+        [
+          [
+            2.0,
+            "Heavy Oil Residue"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        [
+          [
+            2,
+            "Packaged Heavy Oil Residue"
+          ]
+        ],
+        false
+      ],
+      "Packaged Water": [
+        2,
+        [
+          [
+            2.0,
+            "Water"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        [
+          [
+            2,
+            "Packaged Water"
+          ]
+        ],
+        false
+      ],
+      "Unpackage Liquid Biofuel": [
+        2,
+        [
+          [
+            2,
+            "Packaged Liquid Biofuel"
+          ]
+        ],
+        [
+          [
+            2.0,
+            "Liquid Biofuel"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        false
+      ],
+      "Unpackage Fuel": [
+        2,
+        [
+          [
+            2,
+            "Packaged Fuel"
+          ]
+        ],
+        [
+          [
+            2.0,
+            "Fuel"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        false
+      ],
+      "Unpackage Oil": [
+        2,
+        [
+          [
+            2,
+            "Packaged Oil"
+          ]
+        ],
+        [
+          [
+            2.0,
+            "Crude Oil"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        false
+      ],
+      "Unpackage Heavy Oil Residue": [
+        6,
+        [
+          [
+            2,
+            "Packaged Heavy Oil Residue"
+          ]
+        ],
+        [
+          [
+            2.0,
+            "Heavy Oil Residue"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        false
+      ],
+      "Unpackage Water": [
+        1,
+        [
+          [
+            2,
+            "Packaged Water"
+          ]
+        ],
+        [
+          [
+            2.0,
+            "Water"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        false
+      ],
+      "Packaged Alumina Solution": [
+        1,
+        [
+          [
+            2.0,
+            "Alumina Solution"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        [
+          [
+            2,
+            "Packaged Alumina Solution"
+          ]
+        ],
+        false
+      ],
+      "Unpackage Alumina Solution": [
+        1,
+        [
+          [
+            2,
+            "Packaged Alumina Solution"
+          ]
+        ],
+        [
+          [
+            2.0,
+            "Alumina Solution"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        false
+      ],
+      "Packaged Nitric Acid": [
+        2,
+        [
+          [
+            1.0,
+            "Nitric Acid"
+          ],
+          [
+            1,
+            "Empty Fluid Tank"
+          ]
+        ],
+        [
+          [
+            1,
+            "Packaged Nitric Acid"
+          ]
+        ],
+        false
+      ],
+      "Unpackage Nitric Acid": [
+        3,
+        [
+          [
+            1,
+            "Packaged Nitric Acid"
+          ]
+        ],
+        [
+          [
+            1.0,
+            "Nitric Acid"
+          ],
+          [
+            1,
+            "Empty Fluid Tank"
+          ]
+        ],
+        false
+      ],
+      "Packaged Sulfuric Acid": [
+        3,
+        [
+          [
+            2.0,
+            "Sulfuric Acid"
+          ],
+          [
+            2,
+            "Empty Canister"
+          ]
+        ],
+        [
+          [
+            2,
+            "Packaged Sulfuric Acid"
+          ]
+        ],
+        false
+      ],
+      "Unpackage Sulfuric Acid": [
+        1,
+        [
+          [
+            1,
+            "Packaged Sulfuric Acid"
+          ]
+        ],
+        [
+          [
+            1.0,
+            "Sulfuric Acid"
+          ],
+          [
+            1,
+            "Empty Canister"
+          ]
+        ],
+        false
+      ],
+      "Packaged Nitrogen Gas": [
+        1,
+        [
+          [
+            4.0,
+            "Nitrogen Gas"
+          ],
+          [
+            1,
+            "Empty Fluid Tank"
+          ]
+        ],
+        [
+          [
+            1,
+            "Packaged Nitrogen Gas"
+          ]
+        ],
+        false
+      ],
+      "Unpackage Nitrogen Gas": [
+        1,
+        [
+          [
+            1,
+            "Packaged Nitrogen Gas"
+          ]
+        ],
+        [
+          [
+            4.0,
+            "Nitrogen Gas"
+          ],
+          [
+            1,
+            "Empty Fluid Tank"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Blender": {
+    "description": "Blends fluids together or combines them with solid parts in a wide variety of processes.\r\nHead Lift: 10\u202fm\r\n(Allows fluids to be transported 10 meters upwards.)\r\n\r\nHas both Conveyor Belt and Pipeline input and output ports.",
+    "is_miner": false,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 75.0,
+    "recipes": {
+      "Nitro Rocket Fuel": [
+        2,
+        [
+          [
+            4.0,
+            "Fuel"
+          ],
+          [
+            3.0,
+            "Nitrogen Gas"
+          ],
+          [
+            4,
+            "Sulfur"
+          ],
+          [
+            2,
+            "Coal"
+          ]
+        ],
+        [
+          [
+            6.0,
+            "Rocket Fuel"
+          ],
+          [
+            1,
+            "Compacted Coal"
+          ]
+        ],
+        true
+      ],
+      "Rocket Fuel": [
+        6,
+        [
+          [
+            6.0,
+            "Turbofuel"
+          ],
+          [
+            1.0,
+            "Nitric Acid"
+          ]
+        ],
+        [
+          [
+            10.0,
+            "Rocket Fuel"
+          ],
+          [
+            1,
+            "Compacted Coal"
+          ]
+        ],
+        false
+      ],
+      "Biochemical Sculptor": [
+        120,
+        [
+          [
+            1,
+            "Assembly Director System"
+          ],
+          [
+            80,
+            "Ficsite Trigon"
+          ],
+          [
+            20.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            4,
+            "Biochemical Sculptor"
+          ]
+        ],
+        false
+      ],
+      "Nitric Acid": [
+        6,
+        [
+          [
+            12.0,
+            "Nitrogen Gas"
+          ],
+          [
+            3.0,
+            "Water"
+          ],
+          [
+            1,
+            "Iron Plate"
+          ]
+        ],
+        [
+          [
+            3.0,
+            "Nitric Acid"
+          ]
+        ],
+        false
+      ],
+      "Non-Fissile Uranium": [
+        24,
+        [
+          [
+            15,
+            "Uranium Waste"
+          ],
+          [
+            10,
+            "Silica"
+          ],
+          [
+            6.0,
+            "Nitric Acid"
+          ],
+          [
+            6.0,
+            "Sulfuric Acid"
+          ]
+        ],
+        [
+          [
+            20,
+            "Non-Fissile Uranium"
+          ],
+          [
+            6.0,
+            "Water"
+          ]
+        ],
+        false
+      ],
+      "Turbo Blend Fuel": [
+        8,
+        [
+          [
+            2.0,
+            "Fuel"
+          ],
+          [
+            4.0,
+            "Heavy Oil Residue"
+          ],
+          [
+            3,
+            "Sulfur"
+          ],
+          [
+            3,
+            "Petroleum Coke"
+          ]
+        ],
+        [
+          [
+            6.0,
+            "Turbofuel"
+          ]
+        ],
+        true
+      ],
+      "Encased Uranium Cell": [
+        12,
+        [
+          [
+            10,
+            "Uranium"
+          ],
+          [
+            3,
+            "Concrete"
+          ],
+          [
+            8.0,
+            "Sulfuric Acid"
+          ]
+        ],
+        [
+          [
+            5,
+            "Encased Uranium Cell"
+          ],
+          [
+            2.0,
+            "Sulfuric Acid"
+          ]
+        ],
+        false
+      ],
+      "Cooling System": [
+        10,
+        [
+          [
+            2,
+            "Heat Sink"
+          ],
+          [
+            2,
+            "Rubber"
+          ],
+          [
+            5.0,
+            "Water"
+          ],
+          [
+            25.0,
+            "Nitrogen Gas"
+          ]
+        ],
+        [
+          [
+            1,
+            "Cooling System"
+          ]
+        ],
+        false
+      ],
+      "Battery": [
+        3,
+        [
+          [
+            2.5,
+            "Sulfuric Acid"
+          ],
+          [
+            2.0,
+            "Alumina Solution"
+          ],
+          [
+            1,
+            "Aluminum Casing"
+          ]
+        ],
+        [
+          [
+            1,
+            "Battery"
+          ],
+          [
+            1.5,
+            "Water"
+          ]
+        ],
+        false
+      ],
+      "Fused Modular Frame": [
+        40,
+        [
+          [
+            1,
+            "Heavy Modular Frame"
+          ],
+          [
+            50,
+            "Aluminum Casing"
+          ],
+          [
+            25.0,
+            "Nitrogen Gas"
+          ]
+        ],
+        [
+          [
+            1,
+            "Fused Modular Frame"
+          ]
+        ],
+        false
+      ],
+      "Instant Scrap": [
+        6,
+        [
+          [
+            15,
+            "Bauxite"
+          ],
+          [
+            10,
+            "Coal"
+          ],
+          [
+            5.0,
+            "Sulfuric Acid"
+          ],
+          [
+            6.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            30,
+            "Aluminum Scrap"
+          ],
+          [
+            5.0,
+            "Water"
+          ]
+        ],
+        true
+      ],
+      "Heat-Fused Frame": [
+        20,
+        [
+          [
+            1,
+            "Heavy Modular Frame"
+          ],
+          [
+            50,
+            "Aluminum Ingot"
+          ],
+          [
+            8.0,
+            "Nitric Acid"
+          ],
+          [
+            10.0,
+            "Fuel"
+          ]
+        ],
+        [
+          [
+            1,
+            "Fused Modular Frame"
+          ]
+        ],
+        true
+      ],
+      "Fertile Uranium": [
+        12,
+        [
+          [
+            5,
+            "Uranium"
+          ],
+          [
+            5,
+            "Uranium Waste"
+          ],
+          [
+            3.0,
+            "Nitric Acid"
+          ],
+          [
+            5.0,
+            "Sulfuric Acid"
+          ]
+        ],
+        [
+          [
+            20,
+            "Non-Fissile Uranium"
+          ],
+          [
+            8.0,
+            "Water"
+          ]
+        ],
+        true
+      ],
+      "Diluted Fuel": [
+        6,
+        [
+          [
+            5.0,
+            "Heavy Oil Residue"
+          ],
+          [
+            10.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            10.0,
+            "Fuel"
+          ]
+        ],
+        true
+      ],
+      "Cooling Device": [
+        24,
+        [
+          [
+            4,
+            "Heat Sink"
+          ],
+          [
+            1,
+            "Motor"
+          ],
+          [
+            24.0,
+            "Nitrogen Gas"
+          ]
+        ],
+        [
+          [
+            2,
+            "Cooling System"
+          ]
+        ],
+        true
+      ],
+      "Distilled Silica": [
+        6,
+        [
+          [
+            12.0,
+            "Dissolved Silica"
+          ],
+          [
+            5,
+            "Limestone"
+          ],
+          [
+            10.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            27,
+            "Silica"
+          ],
+          [
+            8.0,
+            "Water"
+          ]
+        ],
+        true
+      ],
+      "Turbo Rifle Ammo": [
+        12,
+        [
+          [
+            25,
+            "Rifle Ammo"
+          ],
+          [
+            3,
+            "Aluminum Casing"
+          ],
+          [
+            3.0,
+            "Turbofuel"
+          ]
+        ],
+        [
+          [
+            50,
+            "Turbo Rifle Ammo"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Refinery": {
+    "description": "Refines fluid and/or solid parts into other parts.\r\nHead Lift: 10\u202fm\r\n(Allows fluids to be transported 10 meters upwards.)\r\n\r\nContains both Conveyor Belt and Pipeline input and output ports so that a wide range of recipes can be automated.",
+    "is_miner": false,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 30.0,
+    "recipes": {
+      "Ionized Fuel": [
+        24,
+        [
+          [
+            16.0,
+            "Rocket Fuel"
+          ],
+          [
+            1,
+            "Power Shard"
+          ]
+        ],
+        [
+          [
+            16.0,
+            "Ionized Fuel"
+          ],
+          [
+            2,
+            "Compacted Coal"
+          ]
+        ],
+        false
+      ],
+      "Turbofuel": [
+        16,
+        [
+          [
+            6.0,
+            "Fuel"
+          ],
+          [
+            4,
+            "Compacted Coal"
+          ]
+        ],
+        [
+          [
+            5.0,
+            "Turbofuel"
+          ]
+        ],
+        false
+      ],
+      "Fuel": [
+        6,
+        [
+          [
+            6.0,
+            "Crude Oil"
+          ]
+        ],
+        [
+          [
+            4.0,
+            "Fuel"
+          ],
+          [
+            3,
+            "Polymer Resin"
+          ]
+        ],
+        false
+      ],
+      "Petroleum Coke": [
+        6,
+        [
+          [
+            4.0,
+            "Heavy Oil Residue"
+          ]
+        ],
+        [
+          [
+            12,
+            "Petroleum Coke"
+          ]
+        ],
+        false
+      ],
+      "Plastic": [
+        6,
+        [
+          [
+            3.0,
+            "Crude Oil"
+          ]
+        ],
+        [
+          [
+            2,
+            "Plastic"
+          ],
+          [
+            1.0,
+            "Heavy Oil Residue"
+          ]
+        ],
+        false
+      ],
+      "Rubber": [
+        6,
+        [
+          [
+            3.0,
+            "Crude Oil"
+          ]
+        ],
+        [
+          [
+            2,
+            "Rubber"
+          ],
+          [
+            2.0,
+            "Heavy Oil Residue"
+          ]
+        ],
+        false
+      ],
+      "Residual Fuel": [
+        6,
+        [
+          [
+            6.0,
+            "Heavy Oil Residue"
+          ]
+        ],
+        [
+          [
+            4.0,
+            "Fuel"
+          ]
+        ],
+        false
+      ],
+      "Residual Plastic": [
+        6,
+        [
+          [
+            6,
+            "Polymer Resin"
+          ],
+          [
+            2.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            2,
+            "Plastic"
+          ]
+        ],
+        false
+      ],
+      "Residual Rubber": [
+        6,
+        [
+          [
+            4,
+            "Polymer Resin"
+          ],
+          [
+            4.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            2,
+            "Rubber"
+          ]
+        ],
+        false
+      ],
+      "Wet Concrete": [
+        3,
+        [
+          [
+            6,
+            "Limestone"
+          ],
+          [
+            5.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            4,
+            "Concrete"
+          ]
+        ],
+        true
+      ],
+      "Turbo Heavy Fuel": [
+        8,
+        [
+          [
+            5.0,
+            "Heavy Oil Residue"
+          ],
+          [
+            4,
+            "Compacted Coal"
+          ]
+        ],
+        [
+          [
+            4.0,
+            "Turbofuel"
+          ]
+        ],
+        true
+      ],
+      "Liquid Biofuel": [
+        4,
+        [
+          [
+            6,
+            "Solid Biofuel"
+          ],
+          [
+            3.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            4.0,
+            "Liquid Biofuel"
+          ]
+        ],
+        false
+      ],
+      "Steamed Copper Sheet": [
+        8,
+        [
+          [
+            3,
+            "Copper Ingot"
+          ],
+          [
+            3.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            3,
+            "Copper Sheet"
+          ]
+        ],
+        true
+      ],
+      "Recycled Rubber": [
+        12,
+        [
+          [
+            6,
+            "Plastic"
+          ],
+          [
+            6.0,
+            "Fuel"
+          ]
+        ],
+        [
+          [
+            12,
+            "Rubber"
+          ]
+        ],
+        true
+      ],
+      "Pure Quartz Crystal": [
+        8,
+        [
+          [
+            9,
+            "Raw Quartz"
+          ],
+          [
+            5.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            7,
+            "Quartz Crystal"
+          ]
+        ],
+        true
+      ],
+      "Pure Iron Ingot": [
+        12,
+        [
+          [
+            7,
+            "Iron Ore"
+          ],
+          [
+            4.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            13,
+            "Iron Ingot"
+          ]
+        ],
+        true
+      ],
+      "Pure Copper Ingot": [
+        24,
+        [
+          [
+            6,
+            "Copper Ore"
+          ],
+          [
+            4.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            15,
+            "Copper Ingot"
+          ]
+        ],
+        true
+      ],
+      "Pure Caterium Ingot": [
+        5,
+        [
+          [
+            2,
+            "Caterium Ore"
+          ],
+          [
+            2.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            1,
+            "Caterium Ingot"
+          ]
+        ],
+        true
+      ],
+      "Alumina Solution": [
+        6,
+        [
+          [
+            12,
+            "Bauxite"
+          ],
+          [
+            18.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            12.0,
+            "Alumina Solution"
+          ],
+          [
+            5,
+            "Silica"
+          ]
+        ],
+        false
+      ],
+      "Aluminum Scrap": [
+        1,
+        [
+          [
+            4.0,
+            "Alumina Solution"
+          ],
+          [
+            2,
+            "Coal"
+          ]
+        ],
+        [
+          [
+            6,
+            "Aluminum Scrap"
+          ],
+          [
+            2.0,
+            "Water"
+          ]
+        ],
+        false
+      ],
+      "Polymer Resin": [
+        6,
+        [
+          [
+            6.0,
+            "Crude Oil"
+          ]
+        ],
+        [
+          [
+            13,
+            "Polymer Resin"
+          ],
+          [
+            2.0,
+            "Heavy Oil Residue"
+          ]
+        ],
+        true
+      ],
+      "Heavy Oil Residue": [
+        6,
+        [
+          [
+            3.0,
+            "Crude Oil"
+          ]
+        ],
+        [
+          [
+            4.0,
+            "Heavy Oil Residue"
+          ],
+          [
+            2,
+            "Polymer Resin"
+          ]
+        ],
+        true
+      ],
+      "Electrode Aluminum Scrap": [
+        4,
+        [
+          [
+            12.0,
+            "Alumina Solution"
+          ],
+          [
+            4,
+            "Petroleum Coke"
+          ]
+        ],
+        [
+          [
+            20,
+            "Aluminum Scrap"
+          ],
+          [
+            7.0,
+            "Water"
+          ]
+        ],
+        true
+      ],
+      "Diluted Packaged Fuel": [
+        2,
+        [
+          [
+            1.0,
+            "Heavy Oil Residue"
+          ],
+          [
+            2,
+            "Packaged Water"
+          ]
+        ],
+        [
+          [
+            2,
+            "Packaged Fuel"
+          ]
+        ],
+        true
+      ],
+      "Coated Cable": [
+        8,
+        [
+          [
+            5,
+            "Wire"
+          ],
+          [
+            2.0,
+            "Heavy Oil Residue"
+          ]
+        ],
+        [
+          [
+            9,
+            "Cable"
+          ]
+        ],
+        true
+      ],
+      "Sulfuric Acid": [
+        6,
+        [
+          [
+            5,
+            "Sulfur"
+          ],
+          [
+            5.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            5.0,
+            "Sulfuric Acid"
+          ]
+        ],
+        false
+      ],
+      "Sloppy Alumina": [
+        3,
+        [
+          [
+            10,
+            "Bauxite"
+          ],
+          [
+            10.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            12.0,
+            "Alumina Solution"
+          ]
+        ],
+        true
+      ],
+      "Quartz Purification": [
+        12,
+        [
+          [
+            24,
+            "Raw Quartz"
+          ],
+          [
+            2.0,
+            "Nitric Acid"
+          ]
+        ],
+        [
+          [
+            15,
+            "Quartz Crystal"
+          ],
+          [
+            12.0,
+            "Dissolved Silica"
+          ]
+        ],
+        true
+      ],
+      "Leached Iron ingot": [
+        6,
+        [
+          [
+            5,
+            "Iron Ore"
+          ],
+          [
+            1.0,
+            "Sulfuric Acid"
+          ]
+        ],
+        [
+          [
+            10,
+            "Iron Ingot"
+          ]
+        ],
+        true
+      ],
+      "Leached Copper Ingot": [
+        12,
+        [
+          [
+            9,
+            "Copper Ore"
+          ],
+          [
+            5.0,
+            "Sulfuric Acid"
+          ]
+        ],
+        [
+          [
+            22,
+            "Copper Ingot"
+          ]
+        ],
+        true
+      ],
+      "Leached Caterium Ingot": [
+        10,
+        [
+          [
+            9,
+            "Caterium Ore"
+          ],
+          [
+            5.0,
+            "Sulfuric Acid"
+          ]
+        ],
+        [
+          [
+            6,
+            "Caterium Ingot"
+          ]
+        ],
+        true
+      ],
+      "Recycled Plastic": [
+        12,
+        [
+          [
+            6,
+            "Rubber"
+          ],
+          [
+            6.0,
+            "Fuel"
+          ]
+        ],
+        [
+          [
+            12,
+            "Plastic"
+          ]
+        ],
+        true
+      ],
+      "Polyester Fabric": [
+        2,
+        [
+          [
+            1,
+            "Polymer Resin"
+          ],
+          [
+            1.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            1,
+            "Fabric"
+          ]
+        ],
+        true
+      ],
+      "Smokeless Powder": [
+        6,
+        [
+          [
+            2,
+            "Black Powder"
+          ],
+          [
+            1.0,
+            "Heavy Oil Residue"
+          ]
+        ],
+        [
+          [
+            2,
+            "Smokeless Powder"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Particle Accelerator": {
+    "description": "Uses electromagnetic fields to propel particles to very high speeds and energies. The specific design allows for a variety of processes, including matter generation and conversion.\r\n\r\nWarning: Power usage is extremely high and unstable, and varies per recipe.",
+    "is_miner": false,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 1500.0,
+    "recipes": {
+      "Dark Matter Crystal": [
+        2,
+        [
+          [
+            1,
+            "Diamonds"
+          ],
+          [
+            5.0,
+            "Dark Matter Residue"
+          ]
+        ],
+        [
+          [
+            1,
+            "Dark Matter Crystal"
+          ]
+        ],
+        false
+      ],
+      "Turbo Diamonds": [
+        3,
+        [
+          [
+            30,
+            "Coal"
+          ],
+          [
+            2,
+            "Packaged Turbofuel"
+          ]
+        ],
+        [
+          [
+            3,
+            "Diamonds"
+          ]
+        ],
+        true
+      ],
+      "Diamonds": [
+        2,
+        [
+          [
+            20,
+            "Coal"
+          ]
+        ],
+        [
+          [
+            1,
+            "Diamonds"
+          ]
+        ],
+        false
+      ],
+      "Petroleum Diamonds": [
+        2,
+        [
+          [
+            24,
+            "Petroleum Coke"
+          ]
+        ],
+        [
+          [
+            1,
+            "Diamonds"
+          ]
+        ],
+        true
+      ],
+      "Oil-Based Diamonds": [
+        3,
+        [
+          [
+            10.0,
+            "Crude Oil"
+          ]
+        ],
+        [
+          [
+            2,
+            "Diamonds"
+          ]
+        ],
+        true
+      ],
+      "Cloudy Diamonds": [
+        3,
+        [
+          [
+            12,
+            "Coal"
+          ],
+          [
+            24,
+            "Limestone"
+          ]
+        ],
+        [
+          [
+            1,
+            "Diamonds"
+          ]
+        ],
+        true
+      ],
+      "Dark Matter Trap": [
+        2,
+        [
+          [
+            1,
+            "Time Crystal"
+          ],
+          [
+            5.0,
+            "Dark Matter Residue"
+          ]
+        ],
+        [
+          [
+            2,
+            "Dark Matter Crystal"
+          ]
+        ],
+        true
+      ],
+      "Dark Matter Crystallization": [
+        3,
+        [
+          [
+            10.0,
+            "Dark Matter Residue"
+          ]
+        ],
+        [
+          [
+            1,
+            "Dark Matter Crystal"
+          ]
+        ],
+        true
+      ],
+      "Plutonium Pellet": [
+        60,
+        [
+          [
+            100,
+            "Non-Fissile Uranium"
+          ],
+          [
+            25,
+            "Uranium Waste"
+          ]
+        ],
+        [
+          [
+            30,
+            "Plutonium Pellet"
+          ]
+        ],
+        false
+      ],
+      "Nuclear Pasta": [
+        120,
+        [
+          [
+            200,
+            "Copper Powder"
+          ],
+          [
+            1,
+            "Pressure Conversion Cube"
+          ]
+        ],
+        [
+          [
+            1,
+            "Nuclear Pasta"
+          ]
+        ],
+        false
+      ],
+      "Instant Plutonium Cell": [
+        120,
+        [
+          [
+            150,
+            "Non-Fissile Uranium"
+          ],
+          [
+            20,
+            "Aluminum Casing"
+          ]
+        ],
+        [
+          [
+            20,
+            "Encased Plutonium Cell"
+          ]
+        ],
+        true
+      ],
+      "Ficsonium": [
+        6,
+        [
+          [
+            1,
+            "Plutonium Waste"
+          ],
+          [
+            1,
+            "Singularity Cell"
+          ],
+          [
+            20.0,
+            "Dark Matter Residue"
+          ]
+        ],
+        [
+          [
+            1,
+            "Ficsonium"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Quantum Encoder": {
+    "description": "The Quantum Encoder uses Excited Photonic Matter to produce the most complex of parts, controlling development up to the quantum level.\r\n\r\nWarning: Power usage is extremely high and unstable.",
+    "is_miner": false,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 2000.0,
+    "recipes": {
+      "Superposition Oscillator": [
+        12,
+        [
+          [
+            6,
+            "Dark Matter Crystal"
+          ],
+          [
+            1,
+            "Crystal Oscillator"
+          ],
+          [
+            9,
+            "Alclad Aluminum Sheet"
+          ],
+          [
+            25.0,
+            "Excited Photonic Matter"
+          ]
+        ],
+        [
+          [
+            1,
+            "Superposition Oscillator"
+          ],
+          [
+            25.0,
+            "Dark Matter Residue"
+          ]
+        ],
+        false
+      ],
+      "Neural-Quantum Processor": [
+        20,
+        [
+          [
+            5,
+            "Time Crystal"
+          ],
+          [
+            1,
+            "Supercomputer"
+          ],
+          [
+            15,
+            "Ficsite Trigon"
+          ],
+          [
+            25.0,
+            "Excited Photonic Matter"
+          ]
+        ],
+        [
+          [
+            1,
+            "Neural-Quantum Processor"
+          ],
+          [
+            25.0,
+            "Dark Matter Residue"
+          ]
+        ],
+        false
+      ],
+      "AI Expansion Server": [
+        15,
+        [
+          [
+            1,
+            "Magnetic Field Generator"
+          ],
+          [
+            1,
+            "Neural-Quantum Processor"
+          ],
+          [
+            1,
+            "Superposition Oscillator"
+          ],
+          [
+            25.0,
+            "Excited Photonic Matter"
+          ]
+        ],
+        [
+          [
+            1,
+            "AI Expansion Server"
+          ],
+          [
+            25.0,
+            "Dark Matter Residue"
+          ]
+        ],
+        false
+      ],
+      "Ficsonium Fuel Rod": [
+        24,
+        [
+          [
+            2,
+            "Ficsonium"
+          ],
+          [
+            2,
+            "Electromagnetic Control Rod"
+          ],
+          [
+            40,
+            "Ficsite Trigon"
+          ],
+          [
+            20.0,
+            "Excited Photonic Matter"
+          ]
+        ],
+        [
+          [
+            1,
+            "Ficsonium Fuel Rod"
+          ],
+          [
+            20.0,
+            "Dark Matter Residue"
+          ]
+        ],
+        false
+      ],
+      "Alien Power Matrix": [
+        24,
+        [
+          [
+            5,
+            "SAM Fluctuator"
+          ],
+          [
+            3,
+            "Power Shard"
+          ],
+          [
+            3,
+            "Superposition Oscillator"
+          ],
+          [
+            24.0,
+            "Excited Photonic Matter"
+          ]
+        ],
+        [
+          [
+            1,
+            "Alien Power Matrix"
+          ],
+          [
+            24.0,
+            "Dark Matter Residue"
+          ]
+        ],
+        false
+      ],
+      "Synthetic Power Shard": [
+        12,
+        [
+          [
+            2,
+            "Time Crystal"
+          ],
+          [
+            2,
+            "Dark Matter Crystal"
+          ],
+          [
+            12,
+            "Quartz Crystal"
+          ],
+          [
+            12.0,
+            "Excited Photonic Matter"
+          ]
+        ],
+        [
+          [
+            1,
+            "Power Shard"
+          ],
+          [
+            12.0,
+            "Dark Matter Residue"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Converter": {
+    "description": "The Converter harnesses Reanimated SAM to enable precise matter and energy transmutation.\r\n\r\nWarning: Power usage is very high and unstable.",
+    "is_miner": false,
+    "is_pow_gen": false,
+    "max_mk": 1,
+    "base_power": 400.0,
+    "recipes": {
+      "Dark-Ion Fuel": [
+        3,
+        [
+          [
+            12,
+            "Packaged Rocket Fuel"
+          ],
+          [
+            4,
+            "Dark Matter Crystal"
+          ]
+        ],
+        [
+          [
+            10.0,
+            "Ionized Fuel"
+          ],
+          [
+            2,
+            "Compacted Coal"
+          ]
+        ],
+        true
+      ],
+      "Dark Matter Residue": [
+        6,
+        [
+          [
+            5,
+            "Reanimated SAM"
+          ]
+        ],
+        [
+          [
+            10.0,
+            "Dark Matter Residue"
+          ]
+        ],
+        false
+      ],
+      "Excited Photonic Matter": [
+        3,
+        [],
+        [
+          [
+            10.0,
+            "Excited Photonic Matter"
+          ]
+        ],
+        false
+      ],
+      "Ficsite Ingot (Iron)": [
+        6,
+        [
+          [
+            4,
+            "Reanimated SAM"
+          ],
+          [
+            24,
+            "Iron Ingot"
+          ]
+        ],
+        [
+          [
+            1,
+            "Ficsite Ingot"
+          ]
+        ],
+        false
+      ],
+      "Time Crystal": [
+        10,
+        [
+          [
+            2,
+            "Diamonds"
+          ]
+        ],
+        [
+          [
+            1,
+            "Time Crystal"
+          ]
+        ],
+        false
+      ],
+      "Ficsite Ingot (Aluminum)": [
+        2,
+        [
+          [
+            2,
+            "Reanimated SAM"
+          ],
+          [
+            4,
+            "Aluminum Ingot"
+          ]
+        ],
+        [
+          [
+            1,
+            "Ficsite Ingot"
+          ]
+        ],
+        false
+      ],
+      "Ficsite Ingot (Caterium)": [
+        4,
+        [
+          [
+            3,
+            "Reanimated SAM"
+          ],
+          [
+            4,
+            "Caterium Ingot"
+          ]
+        ],
+        [
+          [
+            1,
+            "Ficsite Ingot"
+          ]
+        ],
+        false
+      ],
+      "Bauxite (Caterium)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            15,
+            "Caterium Ore"
+          ]
+        ],
+        [
+          [
+            12,
+            "Bauxite"
+          ]
+        ],
+        false
+      ],
+      "Bauxite (Copper)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            18,
+            "Copper Ore"
+          ]
+        ],
+        [
+          [
+            12,
+            "Bauxite"
+          ]
+        ],
+        false
+      ],
+      "Caterium Ore (Copper)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            15,
+            "Copper Ore"
+          ]
+        ],
+        [
+          [
+            12,
+            "Caterium Ore"
+          ]
+        ],
+        false
+      ],
+      "Caterium Ore (Quartz)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            12,
+            "Raw Quartz"
+          ]
+        ],
+        [
+          [
+            12,
+            "Caterium Ore"
+          ]
+        ],
+        false
+      ],
+      "Coal (Iron)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            18,
+            "Iron Ore"
+          ]
+        ],
+        [
+          [
+            12,
+            "Coal"
+          ]
+        ],
+        false
+      ],
+      "Coal (Limestone)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            36,
+            "Limestone"
+          ]
+        ],
+        [
+          [
+            12,
+            "Coal"
+          ]
+        ],
+        false
+      ],
+      "Copper Ore (Quartz)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            10,
+            "Raw Quartz"
+          ]
+        ],
+        [
+          [
+            12,
+            "Copper Ore"
+          ]
+        ],
+        false
+      ],
+      "Copper Ore (Sulfur)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            12,
+            "Sulfur"
+          ]
+        ],
+        [
+          [
+            12,
+            "Copper Ore"
+          ]
+        ],
+        false
+      ],
+      "Iron Ore (Limestone)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            24,
+            "Limestone"
+          ]
+        ],
+        [
+          [
+            12,
+            "Iron Ore"
+          ]
+        ],
+        false
+      ],
+      "Limestone (Sulfur)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            2,
+            "Sulfur"
+          ]
+        ],
+        [
+          [
+            12,
+            "Limestone"
+          ]
+        ],
+        false
+      ],
+      "Nitrogen Gas (Bauxite)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            10,
+            "Bauxite"
+          ]
+        ],
+        [
+          [
+            12.0,
+            "Nitrogen Gas"
+          ]
+        ],
+        false
+      ],
+      "Nitrogen Gas (Caterium)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            12,
+            "Caterium Ore"
+          ]
+        ],
+        [
+          [
+            12.0,
+            "Nitrogen Gas"
+          ]
+        ],
+        false
+      ],
+      "Raw Quartz (Bauxite)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            10,
+            "Bauxite"
+          ]
+        ],
+        [
+          [
+            12,
+            "Raw Quartz"
+          ]
+        ],
+        false
+      ],
+      "Raw Quartz (Coal)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            24,
+            "Coal"
+          ]
+        ],
+        [
+          [
+            12,
+            "Raw Quartz"
+          ]
+        ],
+        false
+      ],
+      "Sulfur (Coal)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            20,
+            "Coal"
+          ]
+        ],
+        [
+          [
+            12,
+            "Sulfur"
+          ]
+        ],
+        false
+      ],
+      "Sulfur (Iron)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            30,
+            "Iron Ore"
+          ]
+        ],
+        [
+          [
+            12,
+            "Sulfur"
+          ]
+        ],
+        false
+      ],
+      "Uranium Ore (Bauxite)": [
+        6,
+        [
+          [
+            1,
+            "Reanimated SAM"
+          ],
+          [
+            48,
+            "Bauxite"
+          ]
+        ],
+        [
+          [
+            12,
+            "Uranium"
+          ]
+        ],
+        false
+      ],
+      "Pink Diamonds": [
+        4,
+        [
+          [
+            8,
+            "Coal"
+          ],
+          [
+            3,
+            "Quartz Crystal"
+          ]
+        ],
+        [
+          [
+            1,
+            "Diamonds"
+          ]
+        ],
+        true
+      ]
+    }
+  },
+  "Biomass Burner": {
+    "description": "Burns various forms of Biomass to generate electricity for the power grid.\r\nHas a Conveyor Belt input port that allows the Biomass supply to be automated.\r\n\r\nResource consumption will automatically be lowered to meet power demands.",
+    "is_miner": false,
+    "is_pow_gen": true,
+    "max_mk": 1,
+    "base_power": 0.0,
+    "recipes": {
+      "Leaves": [
+        60,
+        [
+          [
+            120.0,
+            "Leaves"
+          ]
+        ],
+        [
+          [
+            1800.0,
+            "Energy"
+          ]
+        ],
+        false
+      ],
+      "Wood": [
+        60,
+        [
+          [
+            18.0,
+            "Wood"
+          ]
+        ],
+        [
+          [
+            1800.0,
+            "Energy"
+          ]
+        ],
+        false
+      ],
+      "Mycelia": [
+        60,
+        [
+          [
+            90.0,
+            "Mycelia"
+          ]
+        ],
+        [
+          [
+            1800.0,
+            "Energy"
+          ]
+        ],
+        false
+      ],
+      "Biomass": [
+        60,
+        [
+          [
+            10.0,
+            "Biomass"
+          ]
+        ],
+        [
+          [
+            1800.0,
+            "Energy"
+          ]
+        ],
+        false
+      ],
+      "Solid Biofuel": [
+        60,
+        [
+          [
+            4.0,
+            "Solid Biofuel"
+          ]
+        ],
+        [
+          [
+            1800.0,
+            "Energy"
+          ]
+        ],
+        false
+      ],
+      "Packaged Liquid Biofuel": [
+        60,
+        [
+          [
+            2.4,
+            "Packaged Liquid Biofuel"
+          ]
+        ],
+        [
+          [
+            1800.0,
+            "Energy"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Coal-Powered Generator": {
+    "description": "Burns Coal to boil Water. The steam produced rotates turbines that generate electricity for the power grid.\r\nHas Conveyor Belt and Pipeline input ports that allow the Coal and Water supply to be automated.\r\n\r\nCaution: Always generates power at the set clock speed. Shuts down if fuel requirements are not met.",
+    "is_miner": false,
+    "is_pow_gen": true,
+    "max_mk": 1,
+    "base_power": 0.0,
+    "recipes": {
+      "Coal": [
+        60,
+        [
+          [
+            15.0,
+            "Coal"
+          ],
+          [
+            45.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            4500.0,
+            "Energy"
+          ]
+        ],
+        false
+      ],
+      "Compacted Coal": [
+        60,
+        [
+          [
+            7.142857142857142,
+            "Compacted Coal"
+          ],
+          [
+            45.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            4500.0,
+            "Energy"
+          ]
+        ],
+        false
+      ],
+      "Petroleum Coke": [
+        60,
+        [
+          [
+            25.0,
+            "Petroleum Coke"
+          ],
+          [
+            45.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            4500.0,
+            "Energy"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Fuel-Powered Generator": {
+    "description": "Consumes Fuel to generate electricity for the power grid.\r\nHas a Pipeline input port that allows the Fuel supply to be automated.\r\n\r\nCaution: Always generates power at the set clock speed. Shuts down if fuel requirements are not met.",
+    "is_miner": false,
+    "is_pow_gen": true,
+    "max_mk": 1,
+    "base_power": 0.0,
+    "recipes": {
+      "Fuel": [
+        60,
+        [
+          [
+            20.0,
+            "Fuel"
+          ]
+        ],
+        [
+          [
+            15.0,
+            "Energy"
+          ]
+        ],
+        false
+      ],
+      "Turbofuel": [
+        60,
+        [
+          [
+            7.5,
+            "Turbofuel"
+          ]
+        ],
+        [
+          [
+            15.0,
+            "Energy"
+          ]
+        ],
+        false
+      ],
+      "Liquid Biofuel": [
+        60,
+        [
+          [
+            20.0,
+            "Liquid Biofuel"
+          ]
+        ],
+        [
+          [
+            15.0,
+            "Energy"
+          ]
+        ],
+        false
+      ],
+      "Rocket Fuel": [
+        60,
+        [
+          [
+            4.166666666666667,
+            "Rocket Fuel"
+          ]
+        ],
+        [
+          [
+            15.000000000000002,
+            "Energy"
+          ]
+        ],
+        false
+      ],
+      "Ionized Fuel": [
+        60,
+        [
+          [
+            3.0,
+            "Ionized Fuel"
+          ]
+        ],
+        [
+          [
+            15.0,
+            "Energy"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Geothermal Generator": {
+    "description": "Harnesses geothermal energy to generate power. Must be built on a Geyser.\r\n\r\nCaution: Power production fluctuates.\r\n\r\nPower Production:\r\nImpure Geyser: 50-150\u202fMW (100\u202fMW average)\r\nNormal Geyser: 100-300\u202fMW (200\u202fMW average)\r\nPure Geyser: 200-600\u202fMW (400\u202fMW average)",
+    "is_miner": true,
+    "is_pow_gen": true,
+    "max_mk": 1,
+    "base_power": 0.0,
+    "recipes": {
+      "Geothermal Power": [
+        60,
+        [],
+        [
+          [
+            18000,
+            "Energy"
+          ]
+        ],
+        false
+      ]
+    }
+  },
+  "Nuclear Power Plant": {
+    "description": "Consumes Nuclear Fuel Rods and Water to produce electricity for the power grid.\r\n\r\nProduces Nuclear Waste, which is extracted via the Conveyor Belt output.\r\n\r\nCaution: Always generates power at the set clock speed. Shuts down if fuel requirements are not met.",
+    "is_miner": false,
+    "is_pow_gen": true,
+    "max_mk": 1,
+    "base_power": 0.0,
+    "recipes": {
+      "Uranium Fuel Rod": [
+        60,
+        [
+          [
+            0.2,
+            "Uranium Fuel Rod"
+          ],
+          [
+            24.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            150000.0,
+            "Energy"
+          ],
+          [
+            50.0,
+            "Uranium Waste"
+          ]
+        ],
+        false
+      ],
+      "Plutonium Fuel Rod": [
+        60,
+        [
+          [
+            0.1,
+            "Plutonium Fuel Rod"
+          ],
+          [
+            24.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            150000.0,
+            "Energy"
+          ],
+          [
+            10.0,
+            "Plutonium Waste"
+          ]
+        ],
+        false
+      ],
+      "Ficsonium Fuel Rod": [
+        60,
+        [
+          [
+            1.0,
+            "Ficsonium Fuel Rod"
+          ],
+          [
+            24.0,
+            "Water"
+          ]
+        ],
+        [
+          [
+            150000.0,
+            "Energy"
+          ]
+        ],
+        false
+      ]
+    }
+  }
+}
