@@ -653,8 +653,11 @@ def node_constructor(loader, node):
         if data["recipe"] in prod.recipe_map:
             node.recipe = prod.recipe_map[data["recipe"]]
         else:
-            node.recipe = prod.recipe_map["Alternate: " + data["recipe"]]
-            # TODO: do not fail on unrecognized recipe
+            alternate = "Alternate: " + data["recipe"]
+            if alternate in prod.recipe_map:
+                node.recipe = prod.recipe_map["Alternate: " + data["recipe"]]
+            else:
+                node.recipe = Recipe(f"! { data['recipe'] }", 60, [], [], False)
     node.update()
     return node
 
