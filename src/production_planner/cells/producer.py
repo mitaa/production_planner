@@ -50,7 +50,7 @@ class ProducerCell(EditableCell):
                 rows = []
                 for p in self.data_filtered:
                     rows += [[ProducerCell(NodeInstance(Node(p, Recipe.empty()))).get_styled(),
-                              Text(str(p.base_power), justify="right"),
+                              Text(str(int(p.base_power)), justify="right"),
                               bool_to_mark(p.is_miner),
                               bool_to_mark(p.is_pow_gen)]]
                 table.add_rows(rows)

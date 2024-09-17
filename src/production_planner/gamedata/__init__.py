@@ -15,8 +15,6 @@ Options:
 
 from docopt import docopt
 
-from . import parse
-
 import os
 import re
 import json
@@ -123,6 +121,7 @@ def get(major=None, minor=None, patch=None, postfix=None, build=None) -> Path:
 
 
 def main():
+    import parse
     from production_planner.core import ProducerEncoder
 
     arguments = docopt(__doc__)

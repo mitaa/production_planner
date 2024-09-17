@@ -3,7 +3,7 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from .. import core
+from production_planner import core
 
 import re
 from typing import Optional, Self
@@ -225,11 +225,11 @@ class Fueled(Powered):
             fuel_energy = float(fuel_class.energy_value)
             burn_time = fuel_energy / self.power_production
             items_per_minute = 60 / burn_time
-            items_per_minute = _convert_units(fuel_class, items_per_minute)
+            outputs += [[fuel_energy * items_per_minute, "Energy"]]
 
+            items_per_minute = _convert_units(fuel_class, items_per_minute)
             inputs += [[items_per_minute, fuel_class.display_name]]
             # FIXME ?
-            outputs += [[fuel_energy * items_per_minute, "Energy"]]
 
             if self.requires_supplemental_resource:
                 supplemental_resource = fuel["mSupplementalResourceClass"]

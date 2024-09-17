@@ -193,6 +193,11 @@ class Ingredient:
     name: str
     count: int
 
+    def __post_init__(self):
+        if self.name == "Energy":
+            self.name = "+Power"
+            self.count /= 60
+
     def __str__(self):
         return f"({self.count}x {self.name})"
 

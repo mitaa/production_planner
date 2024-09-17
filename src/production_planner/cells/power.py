@@ -10,7 +10,7 @@ import math
 
 
 class PowerCell(Cell):
-    name = "Power"
+    name = "-Power"
     vispath = "node_main.energy"
     read_only = True
     justify = "right"
