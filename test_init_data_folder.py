@@ -3,16 +3,16 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from . import press_before
+
 from production_planner import Planner
 
 import pytest
 
 
+@pytest.mark.parametrize("keys", ([],
+                                  ["escape"],
+                                  ["escape", "+"]))
 @pytest.mark.empty_data_folder
-def test_init_data(snap_compare):
-    app = Planner()
-
-    async def run_before(pilot):
-        for k in ["+"]:
-            await pilot.press(k)
-    assert snap_compare(app, terminal_size=(150, 30), run_before=run_before)
+def test_init_data(snap_compare, keys):
+    assert snap_compare(Planner(), terminal_size=(150, 30), run_before=press_before(keys))
