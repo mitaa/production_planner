@@ -24,7 +24,7 @@ BASIC_CONTROLS = r"""
 # BASIC CONTROLS
 
 ## Keys
-To exit this help screen press `<Esc>`.
+To exit this help screen press `<Esc>`{}.
 
 Note the hotkeys shown at the bottom of the terminal:
 - ^: indicates the `<Ctrl>` key
@@ -168,7 +168,13 @@ class HelpScreen(Screen):
 
     CSS_PATH = "help.tcss"
 
+    def __init__(self, startup_help=False, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.startup_help = startup_help
+
     def compose(self) -> ComposeResult:
+        basic_controls = BASIC_CONTROLS.format(" (won't be shown at the next startup)" if self.startup_help else "")
+
         yield Header()
         yield Body(
             QuickAccess(
@@ -180,7 +186,7 @@ class HelpScreen(Screen):
                 # LocationLink("Modules", ".location-modules"),
             ),
             Section(
-                TextContent(Markdown(BASIC_CONTROLS)),
+                TextContent(Markdown(basic_controls)),
                 classes="location-controls"
             ),
             Section(

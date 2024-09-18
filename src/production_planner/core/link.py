@@ -67,6 +67,9 @@ def CONFIG():
             self._fpath_config = Path(value)
             self.store = json_store.open(self.fpath_config, json_kw={ "indent": 4 })
             ensure_keys(self.store, {
+                "app": {
+                    "startup_help": True,
+                },
                 "select_producer": {
                     "show_sidebar": True,
                 }

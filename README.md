@@ -33,3 +33,5 @@ And then run
 ```
 production_planner
 ```
+
+On the first startup a help screen will be shown by default.

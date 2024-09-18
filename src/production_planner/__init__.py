@@ -68,6 +68,9 @@ class Planner(App):
         self.app.focused_table = self.query_one(PlannerTable)
         self.manager = PlannerManager(self, iid_name="main")
         self.manager.load()
+        if core.CONFIG.store["app"]["startup_help"]:
+            core.CONFIG.store["app"]["startup_help"] = False
+            self.action_help(True)
 
     def swap_active_table(self, new_table):
         # FIXME: fix when implementing tabbed content ...
@@ -84,13 +87,13 @@ class Planner(App):
         CONFIG.store.sync()
         super().exit(*args)
 
-    def action_help(self) -> None:
+    def action_help(self, startup_help=False) -> None:
         table = self.focused_table
 
         def set_focused_table(*_):
             self.focused_table = table
 
-        self.push_screen(HelpScreen(), set_focused_table)
+        self.push_screen(HelpScreen(startup_help=startup_help), set_focused_table)
 
     def check_action(self, action: str, parameters: tuple[object, ...]):
         is_main_screen = len(self.app.screen_stack) == 1
