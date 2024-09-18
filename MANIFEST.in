@@ -1,3 +1,10 @@
 include src/production_planner/gamedata/*.json
 include src/production_planner/*.tcss
 include src/production_planner/cells/*.tcss
+include src/production_planner/help/*.tcss
+include src/production_planner/help/__data_folder__/*.json
+include src/production_planner/help/__data_folder__/empty.yaml
+include src/production_planner/help/__data_folder__/iron_plate.yaml
+include src/production_planner/help/__data_folder__/iron_plate2.yaml
+include src/production_planner/help/__data_folder__/m_cable_wire.yaml
+include src/production_planner/help/__data_folder__/wire-cable_factory.yaml
