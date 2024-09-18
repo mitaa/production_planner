@@ -40,12 +40,7 @@ class SummaryNode(Node):
 
 
 class NodeInstance:
-    # FIXME: this is shared between all instances but this must not be true for unrelated NodeTrees
-    row_to_node_index = []
-
     def __init__(self, node: Node, children: [Self] = None, parent: [Self] = None, shown=True, expanded=True, row_idx=None, level=0):
-        self.tree_modules = set()
-
         self.parent = parent
         self.node_main = node
 
@@ -57,10 +52,12 @@ class NodeInstance:
         self.node_children = children
         self.shown = shown
         self.expanded = expanded
+        self.from_module = False
+        # FIXME: these are different for each place a module is used,
+        #        but are overwritten on each `PlannerTable.update` call - so it might work as intended right now?
         self.indent_str = " " * max(0, level - 2)
         self.row_idx = row_idx
         self.level = level
-        self.from_module = False
 
     def show_hide(self, shown=None):
         # Note: always show the top row (summary balance)
@@ -93,12 +90,6 @@ class NodeInstance:
             root.node_children.insert(at_idx, instance)
             at_idx += 1
 
-    def get_node(self, row_idx: int) -> None | Self:
-        # Force row index to be in bounds
-        row_idx = min(max(0, row_idx), len(self.row_to_node_index) - 1)
-        node = self.row_to_node_index[row_idx] if self.row_to_node_index else None
-        return node  # None if isinstance(node, NodeTree) else node
-
     def shift_child(self, child: Self, offset: int) -> bool:
         if offset == 0:
             return True
@@ -109,34 +100,25 @@ class NodeInstance:
         del self.node_children[idx]
         self.node_children.insert(max(0, idx + offset), child)
 
-    def remove_node(self, row_idx: int):
-        node = self.get_node(row_idx)
-        if node is None:
-            return
-        if node is self:
-            self.node_children = []
-        else:
-            self.node_children.remove(node)
-
-    def get_nodes(self, level=0) -> [Self]:
+    def get_nodes(self, level=0, tree_root=None) -> [Self]:
         self.indent_str = " " * max(0, level - 2)
         if level == 0:
-            NodeInstance.row_to_node_index = []
+            tree_root.row_to_node_index = []
 
         if not self.shown:
-            self.row_idx = NodeInstance.row_to_node_index[-1].row_idx if NodeInstance.row_to_node_index else 0
+            self.row_idx = tree_root.row_to_node_index[-1].row_idx if tree_root.row_to_node_index else 0
             return []
         else:
             self.level = level
             nodes = [self]
-            self.row_idx = len(NodeInstance.row_to_node_index)
+            self.row_idx = len(tree_root.row_to_node_index)
 
         if level < 1:
-            NodeInstance.row_to_node_index += [self]
+            tree_root.row_to_node_index += [self]
 
         if self.expanded:
             for cnode in self.node_children:
-                cnodes = cnode.get_nodes(level=level + 1)
+                cnodes = cnode.get_nodes(level=level + 1, tree_root=tree_root)
                 nodes += cnodes
 
         if isinstance(self.node_main, SummaryNode):
@@ -145,7 +127,7 @@ class NodeInstance:
             self.node_main.update_summary([cinstance.node_main for cinstance in self.node_children])
 
         if level < 2:
-            NodeInstance.row_to_node_index += [self] * len(nodes)
+            tree_root.row_to_node_index += [self] * len(nodes)
 
         return nodes
 
@@ -180,26 +162,21 @@ class NodeInstance:
                 # FIXME: sum with nested modules isn't always correct
                 self.node_main.energy_module = self.node_children[0].node_main.energy
 
-    def collect_modules(self, level=0):
-        if level == 0:
+    def collect_modules(self, level=0, tree_roots=[]):
+        if tree_roots[-1] is self:
             self.tree_modules.clear()
 
         if self.node_main.is_module:
-            self.tree_modules.add(self.node_main.recipe.name)
+            for root in tree_roots:
+                root.tree_modules.add(self.node_main.recipe.name)
 
         for child in self.node_children:
-            child.collect_modules(level + 1)
+            child.collect_modules(level + 1, tree_roots=tree_roots)
 
     def mark_from_module(self):
         self.from_module = True
         for child in self.node_children:
             child.mark_from_module()
-
-    def __getitem__(self, row_idx):
-        self.get_node(row_idx)
-
-    def __delitem__(self, row_idx):
-        self.remove_node(row_idx)
 
     def __str__(self) -> str:
         # FIXME
@@ -214,7 +191,30 @@ class NodeInstance:
 
 class NodeTree(NodeInstance):
     def __init__(self, *args, **kwargs):
+        self.tree_modules = set()
+        self.row_to_node_index = []
         super().__init__(*args, **kwargs)
+
+    def get_node(self, row_idx: int) -> None | NodeInstance:
+        # Force row index to be in bounds
+        row_idx = min(max(0, row_idx), len(self.row_to_node_index) - 1)
+        node = self.row_to_node_index[row_idx] if self.row_to_node_index else None
+        return node  # None if isinstance(node, NodeTree) else node
+
+    def get_nodes(self, level=0, tree_root=None) -> [NodeInstance]:
+        # Note: this isn't only called when self is the root of the DataTable,
+        #       but also when the root contains a module, which itself has a NodeTree
+        root = tree_root if tree_root else self
+        return super().get_nodes(level=level, tree_root=root)
+
+    def remove_node(self, row_idx: int):
+        node = self.get_node(row_idx)
+        if node is None:
+            return
+        if node is self:
+            self.node_children = []
+        else:
+            self.node_children.remove(node)
 
     @property
     def recipe(self) -> Recipe:
@@ -232,6 +232,18 @@ class NodeTree(NodeInstance):
 
     def __hash__(self):
         return hash(yaml.dump(self))
+
+    def __getitem__(self, row_idx):
+        self.get_node(row_idx)
+
+    def __delitem__(self, row_idx):
+        self.remove_node(row_idx)
+
+    def collect_modules(self, level=0, tree_roots=[]):
+        # Note: this isn't only called when self is the root of the DataTable,
+        #       but also when the root contains a module, which itself has a NodeTree
+        roots = tree_roots + [self]
+        super().collect_modules(level=level, tree_roots=roots)
 
     def reload_modules(self, instances=None, module_stack=None):
         from . import APP
