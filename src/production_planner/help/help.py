@@ -110,12 +110,12 @@ The `expand` and `collapse` hotkeys currently only apply to module rows.
 """
 
 
-summary_table_fpath = Path(__file__).parent / Path(r"__data_folder__\iron_plate.yaml")
-table_controls_fpath = Path(__file__).parent / Path(r"__data_folder__\empty.yaml")
-power_table_fpath = Path(__file__).parent / Path(r"__data_folder__\iron_plate2.yaml")
+summary_table_fpath = Path(__file__).parent / Path(r"__data_folder__/iron_plate.yaml")
+table_controls_fpath = Path(__file__).parent / Path(r"__data_folder__/empty.yaml")
+power_table_fpath = Path(__file__).parent / Path(r"__data_folder__/iron_plate2.yaml")
 modules_table_fpaths = [
-    Path(__file__).parent / Path(r"__data_folder__\wire-cable_factory.yaml"),
-    Path(__file__).parent / Path(r"__data_folder__\m_cable_wire.yaml"),
+    Path(__file__).parent / Path(r"__data_folder__/wire-cable_factory.yaml"),
+    Path(__file__).parent / Path(r"__data_folder__/m_cable_wire.yaml"),
 ]
 
 
