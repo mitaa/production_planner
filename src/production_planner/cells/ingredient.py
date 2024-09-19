@@ -4,6 +4,7 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from ._cells import Cell
+from ..core import smartround
 
 from rich.style import Style
 
@@ -27,10 +28,6 @@ class IngredientCell(Cell):
     def get(self):
         if self.access_guard():
             value = self.data.node_main.ingredients[self.vispath]
-            truncated_value = int(value)
-            if value - truncated_value < 0.01:
-                return truncated_value
-            else:
-                return round(value, 2)
+            return smartround(value)
         else:
             return self.default_na

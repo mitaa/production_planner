@@ -17,6 +17,16 @@ import json
 APP = None
 
 
+# TODO: add some ~IGNORED_AMOUNT variable to CONFIG and use that instead of hardcoded 0.01
+#       use this also for column highlighting ...
+def smartround(value: float | int):
+    truncated_value = int(value)
+    if abs(value - truncated_value) < 0.01:
+        return truncated_value
+    else:
+        return round(value, 2)
+
+
 def get_path(obj, path):
     paths = path.split(".", maxsplit=1)
     primpath = paths[0]

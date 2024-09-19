@@ -9,7 +9,8 @@ from .producer import ProducerCell
 from .. import core
 from .. core import ModuleFile
 from ..core import CONFIG, PRODUCER_NAMES, PRODUCER_MAP, Recipe, Ingredient, all_recipes_producer, Node, NodeInstance
-from .. core import MODULE_PRODUCER
+from ..core import MODULE_PRODUCER
+from ..core import smartround
 
 import os
 from enum import Enum
@@ -193,8 +194,8 @@ class RecipeCell(EditableCell):
                         row += [ProducerCell(NodeInstance(Node(producer, Recipe.empty()))).get_styled() if producer else ""]
                     row += [recipe.name]
                     # FIXME: production per minute should somehow be included in `str(Ingredient)`, otherwise we can't filter for that
-                    inputs  = [Text(f"({round(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="red") for ingr in recipe.inputs]
-                    outputs = [Text(f"({round(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="green") for ingr in recipe.outputs]
+                    inputs  = [Text(f"({smartround(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="red") for ingr in recipe.inputs]
+                    outputs = [Text(f"({smartround(ingr.count*rate_mult): >3}/min) {ingr.count: >3}x{ingr.name}", style="green") for ingr in recipe.outputs]
                     inputs += [""] * (max_input_count - len(inputs))
                     outputs += [""] * (max_output_count - len(outputs))
                     row += outputs

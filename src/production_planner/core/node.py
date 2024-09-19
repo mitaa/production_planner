@@ -94,7 +94,6 @@ class Node:
         rate_mult = 60 / self.recipe.cycle_rate
 
         ingredient_mult = rate_mult * (self.clock_rate * self.count) / 100
-        # FIXME: use floats to improve accuracy and modify number formatting display elsewhere
         for inp in self.recipe.inputs:
             self.ingredients[inp.name] = inp.count * ingredient_mult * -1
 
