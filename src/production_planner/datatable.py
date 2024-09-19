@@ -77,6 +77,7 @@ class PlannerTable(DataTable):
 
     BINDINGS = [
         ("+", "row_add", "Add"),
+        ("insert", "row_add", "Add"),
         ("-", "row_remove", "Remove"),
         ("ctrl+up", "move_up", "Move Up"),
         ("ctrl+down", "move_down", "Move Down"),

@@ -29,19 +29,25 @@ from .header import Header
 from pathlib import Path
 import importlib.metadata
 import traceback
+from typing import Iterable
 
 from docopt import docopt
 
-from textual.app import App, ComposeResult
+from textual.app import App, SystemCommand, ComposeResult
+from textual.screen import Screen
 from textual.widgets import Footer
 from textual.reactive import reactive
-
 
 __version__ = importlib.metadata.version("production_planner")
 
 
 # The Fuel Generator, like all power generation buildings, behaves differently to power consumer buildings when overclocked. A generator overclocked to 250% only operates 202.4% faster[EA] (operates 250% faster[EX]).
 # As the fuel consumption rate is directly proportional to generator power production, verify that demand matches the production capacity to ensure that Power Shards are used to their full potential. Fuel efficiency is unchanged, but consumption and power generation rates may be unexpectedly uneven[EA].
+
+
+def planner_command(title, help, callback, discover=True) -> SystemCommand:
+    help = "   " + help
+    return SystemCommand(title, help, callback, discover)
 
 
 class Planner(App):
@@ -60,9 +66,34 @@ class Planner(App):
         super().__init__(*args, **kwargs)
 
     def compose(self) -> ComposeResult:
-        yield Header()
+        yield Header(icon="Menu")
         yield PlannerTable(header_control=True)
         yield Footer()
+
+    def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
+        for command in super().get_system_commands(screen):
+            if command.title.lower() == "light mode":
+                continue
+            yield planner_command(*command)
+        yield planner_command("Save As", "Save the currently active file with a new filename", self._save_as)
+        yield planner_command("Load", "Load a new file in the currently active table", self._load)
+        yield planner_command("Delete", "Delete a file from the filesystem", self._delete)
+
+    def _save_as(self):
+        if not self.focused_table:
+            return
+        self.call_next(self.focused_table.action_save)
+
+    def _load(self):
+        if not self.focused_table:
+            return
+        # NOTE: directly calling `action_load` somehow causes the Screen callback not to be invoked
+        self.call_next(self.focused_table.action_load)
+
+    def _delete(self):
+        if not self.focused_table:
+            return
+        self.call_next(self.focused_table.action_delete)
 
     def is_table_shown(self, table: PlannerTable) -> bool:
         raise NotImplemented
