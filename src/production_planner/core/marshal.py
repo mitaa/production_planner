@@ -14,14 +14,21 @@ import yaml
 
 
 def node_representer(dumper, data):
-    return dumper.represent_mapping(u"!node", {
+    buf = {
         "producer": data.producer.name,
         "recipe": data.recipe.name,
         "count": data.count,
         "clock_rate": data.clock_rate,
         "mk": data.mk,
-        "purity": data.purity.value
-    })
+        "purity": data.purity.value,
+    }
+    if data.clamp:
+        buf.update({
+            "clamp": {
+                data.clamp.name: data.clamp.count
+            }
+        })
+    return dumper.represent_mapping(u"!node", buf)
 
 
 SEEN_MODULES = set()
@@ -29,14 +36,21 @@ SEEN_MODULES = set()
 
 def node_constructor(loader, node):
     global SEEN_MODULES
-    data = loader.construct_mapping(node)
+    data = loader.construct_mapping(node, deep=True)
     prod = PRODUCER_MAP[data["producer"]]
+
+    clamp = None
+    if "clamp" in data:
+        _clamp = list(data["clamp"].items())
+        clamp = Ingredient(*_clamp[0])
+
     node = Node(producer   = prod,
                 recipe     = Recipe.empty(),
                 count      = data["count"],
                 clock_rate = data["clock_rate"],
                 mk         = data["mk"],
-                purity     = Purity(data["purity"]))
+                purity     = Purity(data["purity"]),
+                clamp      = clamp)
     if prod.is_module:
         if not data["recipe"] in SEEN_MODULES:
             SEEN_MODULES.add(data["recipe"])

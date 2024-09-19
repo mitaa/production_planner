@@ -311,7 +311,12 @@ class PlannerTable(DataTable):
             return
 
         sel_ctxt = SelectionContext(self)
-        col = self.edit_columns[sel_ctxt.col] if len(self.edit_columns) > sel_ctxt.col else None
+
+        if len(self.planner_columns) > sel_ctxt.col:
+            col = self.planner_columns[sel_ctxt.col]
+        else:
+            col = None
+
         instance = sel_ctxt.instance
         if instance is None:
             return
@@ -359,7 +364,7 @@ class PlannerTable(DataTable):
 
         ingredients = sorted(outputs_only) + sorted((inputs_mixed | outputs_mixed) - (inputs_only | outputs_only)) + sorted(inputs_only)
         for ingredient in ingredients:
-            IngredientColumn = type(ingredient, (IngredientCell,), {"name": ingredient, "path": ingredient})
+            IngredientColumn = type(ingredient, (IngredientCell,), {"name": ingredient, "vispath": ingredient})
             columns_ingredients += [IngredientColumn]
         self.planner_columns = (self.edit_columns + columns_ingredients)
         return (nodes, ingredients)

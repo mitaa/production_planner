@@ -3,11 +3,13 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from .recipe import Recipe
+from .recipe import Recipe, Ingredient
 from .producer import EMPTY_PRODUCER
 
 import math
 from enum import Enum
+
+from textual import log
 
 
 class Purity(Enum):
@@ -30,7 +32,7 @@ class Node:
     # defaults to be shadowed (avoiding AttributeError's)
     producer = EMPTY_PRODUCER
 
-    def __init__(self, producer, recipe, count=1, clock_rate=100, mk=1, purity=Purity.NORMAL, is_dummy=False):
+    def __init__(self, producer, recipe, count=1, clock_rate=100, mk=1, purity=Purity.NORMAL, clamp=None, is_dummy=False):
         # a dummy is a read-only, non-interactable, row - for example expanded from a module
         # (can't shift it, can't delete it)
         self.is_dummy = is_dummy
@@ -40,6 +42,7 @@ class Node:
         self.module_children = []
         self.producer = producer
         self.recipe = recipe
+        self.clamp = clamp
         self.count = count
         self.clock_rate = clock_rate
         self.mk = mk
@@ -92,6 +95,19 @@ class Node:
         self.energy = 0
         self.ingredients = {}
         rate_mult = 60 / self.recipe.cycle_rate
+
+        if self.clamp:
+            for ingredient in self.recipe.inputs:
+                if ingredient.name == self.clamp.name:
+                    # self.clock_rate = ((abs(int(clamped.count)) * 100) / (rate_mult / self.count)) / ingredient.count
+                    self.clock_rate = 5 * self.recipe.cycle_rate * abs(self.clamp.count) / (3 * ingredient.count * self.count)
+                    break
+            for ingredient in self.recipe.outputs:
+                if ingredient.name == self.clamp.name:
+                    if self.producer.is_miner:
+                        self.clock_rate = 5 * self.recipe.cycle_rate * self.purity.value * abs(self.clamp.count) / (3 * pow(2, self.mk) * ingredient.count * self.count)
+                    else:
+                        self.clock_rate = 5 * self.recipe.cycle_rate * abs(self.clamp.count) / (3 * ingredient.count * self.count)
 
         ingredient_mult = rate_mult * (self.clock_rate * self.count) / 100
         for inp in self.recipe.inputs:

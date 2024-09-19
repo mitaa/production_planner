@@ -28,6 +28,9 @@ class Ingredient:
     def to_json_schema(self):
         return [self.count, self.name]
 
+    def to_dict(self):
+        return { self.name: self.count }
+
 
 class Recipe(yaml.YAMLObject):
     yaml_tag = u"!recipe"

@@ -24,6 +24,13 @@ class SetCellValue:
     value: None
 
 
+@dataclass
+class CellValue:
+    value: float = 0
+    text = None
+    clamped: bool = False
+
+
 class Cell:
     name = ""
     default = ""
@@ -44,6 +51,7 @@ class Cell:
     fmt_module_children = Style(color=Color.from_rgb(150, 150, 150))
     fmt_balance_minus = Style(color="red")
     fmt_balance_plus = Style(color="green")
+    num_sign_is_pos = True
 
     def __init__(self, data, read_only=None):
         self.data = data
@@ -55,28 +63,35 @@ class Cell:
         cell = cls(data)
         return (cell, cell.get_styled())
 
-    def get(self):
+    def get(self) -> CellValue:
         if self.access_guard():
-            return get_path(self.data, self.vispath)
+            return CellValue(get_path(self.data, self.vispath))
         else:
-            return self.default_na
+            return CellValue(self.default_na)
 
     def get_num(self):
-        return self.get()
+        return self.get().value
 
     def get_styled(self):
-        value = self.get()
-        txt = str(value)
+        cell = self.get()
+        value = cell.value
+        txt = str(cell.text or cell.value)
         style = Style()
+
         if self.style_summary:
             style += self.fmt_summary
 
         if self.style_balance:
+            if isinstance(value, str):
+                value = float(value.strip("= "))
             if value < 0:
                 style += self.fmt_balance_minus
             elif value > 0:
                 style += self.fmt_balance_plus
                 txt = "+" + txt
+
+        if cell.clamped:
+            txt = f"= {txt}"
 
         if self.indent:
             txt = self.data.indent_str + txt
@@ -105,7 +120,7 @@ class Cell:
     def edit_push_numeral(self, num: str, write_mode) -> bool:
         if not self.is_numeric_editable:
             return
-        prev = str(self.get_num())
+        prev = str(self.get_num()).strip("+- ").split(".")[0]
         ccount_min = len(str(self.bounds.lower))
         ccount_max = len(str(self.bounds.upper))
 
@@ -120,9 +135,13 @@ class Cell:
             write_mode = True
 
         prev = int(prev)
+
         if not (self.bounds.lower <= prev <= self.bounds.upper):
             prev = max(min(prev, self.bounds.upper), self.bounds.lower)
             write_mode = False
+
+        if not self.num_sign_is_pos:
+            prev *= -1
 
         self.set_num(prev)
         self.data.node_main.update()
@@ -139,7 +158,7 @@ class Cell:
         if not self.is_numeric_editable:
             return
         prev = str(self.get_num())
-        new = prev[:-1]
+        new = prev[:-1].split(".")[0]
         if len(new) == 0:
             new = self.bounds.lower
         self.set_num(int(new))
@@ -157,8 +176,8 @@ class EmptyCell(Cell):
     def __init__(self, *args, **kwargs):
         super().__init__(None, **kwargs)
 
-    def get(self):
-        return ""
+    def get(self) -> CellValue:
+        return CellValue("")
 
 
 class EditableCell(Cell):

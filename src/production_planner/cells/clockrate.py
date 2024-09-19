@@ -4,7 +4,8 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-from ._cells import NumericEditaleCell, Bounds
+from ._cells import NumericEditaleCell, Bounds, CellValue
+from ..core import smartround
 
 
 class ClockRateCell(NumericEditaleCell):
@@ -14,3 +15,13 @@ class ClockRateCell(NumericEditaleCell):
 
     def access_guard(self):
         return not self.data.node_main.producer.is_module and super().access_guard()
+
+    def get(self) -> CellValue:
+        value = super().get()
+
+        if value.value:
+            value.value = smartround(value.value)
+
+        if self.data.node_main.clamp:
+            value.text = f"<{value.value}>"
+        return value

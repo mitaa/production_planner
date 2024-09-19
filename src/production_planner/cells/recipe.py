@@ -3,7 +3,7 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from ._cells import EditableCell, SetCellValue
+from ._cells import EditableCell, SetCellValue, CellValue
 from ._selector import StringifyFilter, FilteredListSelector, Sidebar
 from .producer import ProducerCell
 from .. import core
@@ -209,11 +209,11 @@ class RecipeCell(EditableCell):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def get(self):
+    def get(self) -> CellValue:
         if self.data.node_main.is_module:
-            return f"<{super().get()}>"
+            return CellValue(f"<{super().get().value}>")
         else:
-            return super().get()
+            return CellValue(super().get().value)
 
     def text_postprocess(self, text: str, style: Style) -> (str, Style):
         if self.data.node_main.is_module:
