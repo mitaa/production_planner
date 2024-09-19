@@ -136,12 +136,6 @@ class PlannerTable(DataTable):
     def on_focus(self):
         self.app.focused_table = self
 
-    def on_blur(self):
-        # TODO: - maybe handle `None` case
-        #       - check if switching focus directly beween two tables works correctly
-        #         (make sure the Focus event fires *after* the Blur event)
-        self.app.focused_table = None
-
     def save_data(self, subpath=None) -> Optional[Tuple[DataFile]]:
         result = self.sink.sink_commit(subpath)
         self.app.title = self.sink.title
