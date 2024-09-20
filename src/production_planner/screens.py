@@ -12,11 +12,12 @@ from typing import Iterable
 from functools import partial
 
 from textual import on
-from textual.containers import Grid
+from textual.containers import Container, Horizontal
 from textual.screen import Screen, ModalScreen
 from textual.app import ComposeResult
 from textual.widgets import DirectoryTree, Label, Button, Footer, Input, Pretty
 from textual.validation import Function
+from textual import events
 
 
 def filtered_directory_tree(show_files=True, show_directories=True, **init_kwargs):
@@ -161,12 +162,43 @@ class SaveDataFile(DataFileAction):
 
 
 class OverwriteScreen(ModalScreen[bool]):  # (1)!
+    CSS  = """
+    OverwriteScreen {
+        align: center middle;
+    }
+
+    OverwriteScreen > Container {
+        align: center middle;
+        width: auto;
+        height: auto;
+        border: thick $background 80%;
+        background: $surface;
+    }
+
+    Label {
+        width: 100%;
+        content-align-horizontal: center;
+        margin-top: 1;
+    }
+
+    Horizontal {
+        width: auto;
+        height: auto;
+    }
+
+    Button {
+        margin: 2 6;
+    }
+
+    """
+
     def compose(self) -> ComposeResult:
-        yield Grid(
+        yield Container(
             Label("Do you want to overwrite the existing file?", id="question"),
-            Button("Yes", variant="warning", id="overwrite"),
-            Button("No", variant="primary", id="cancel"),
-            id="dialog",
+            Horizontal(
+                Button("Yes", variant="warning", id="overwrite"),
+                Button("No", variant="primary", id="cancel"),
+            ),
         )
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -174,3 +206,10 @@ class OverwriteScreen(ModalScreen[bool]):  # (1)!
             self.dismiss(True)
         else:
             self.dismiss(False)
+
+    def on_key(self, event: events.Key):
+        match event.key:
+            case "right":
+                self.query_one("#cancel").focus()
+            case "left":
+                self.query_one("#overwrite").focus()
