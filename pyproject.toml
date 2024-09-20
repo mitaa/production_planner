@@ -1,6 +1,6 @@
 [project]
 name = "production_planner"
-version = "0.1.0"
+dynamic = ["version"]
 authors = [
     {name = "mitaa", email = "mitaa.ceb@gmail.com"}
     ]
@@ -37,8 +37,15 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 asyncio_default_fixture_loop_scope = "function"
 
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
 [tool.setuptools]
 include-package-data = true
+
+[tool.setuptools_scm]
+
 
 [tool.setuptools.packages.find]
 where = ["src"]
