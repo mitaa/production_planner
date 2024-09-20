@@ -67,3 +67,17 @@ def test_num_inputs_PURITY(snap_compare, keys):
 def test_num_inputs_CLOCKRATE(snap_compare, keys):
     nav = ["down"] + ["right"] * 5
     assert snap_compare(Planner(), terminal_size=(150, 30), run_before=press_before(nav + keys))
+
+
+@pytest.mark.parametrize("keys", (["7"],
+                                  ["7"] * 2,
+                                  ["7"] * 3,
+                                  ["7"] * 4,
+                                  ["7"] * 5,
+                                  ["delete"],
+                                  ["backspace"],
+                                  ["7"] * 3 + ["backspace", "delete"],
+                                  ["7"] * 3 + ["backspace"]))
+def test_num_inputs_CLAMP(snap_compare, keys):
+    nav = ["down"] + ["right"] * 9
+    assert snap_compare(Planner(), terminal_size=(150, 30), run_before=press_before(nav + keys))
