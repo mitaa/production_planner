@@ -17,18 +17,16 @@ Make sure that python has been added to the *PATH* environment variable (tick th
 
 And run the `install.bat` file
 
-Or open the terminal (e.g. PowerShell), cd into the folder, and install it.
+Or open the terminal (e.g. PowerShell) and run the following command
 
 ```
-cd .\production_planner-master\
-pip install .
+pip install git+https://github.com/mitaa/production_planner.git#egg=production_planner
 ```
 
 ## Usage
 Run the `run.bat` file
 
-Or open the terminal (the current directory doesn't matter as long as python has been added to *PATH*)\
-And then run
+Or open the terminal and run
 
 ```
 production_planner
