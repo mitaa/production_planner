@@ -9,8 +9,17 @@ from ..core import Producer
 from textual import on
 from textual.screen import Screen
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal
-from textual.widgets import DataTable, Header, Footer, Input, Static
+from textual.containers import (
+    Container,
+    Horizontal,
+)
+from textual.widgets import (
+    DataTable,
+    Header,
+    Footer,
+    Input,
+    Static,
+)
 from textual.coordinate import Coordinate
 from textual import events
 

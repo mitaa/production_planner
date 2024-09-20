@@ -3,13 +3,38 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from .link import CONFIG, DataFile, PortableFile, ModuleFile, ModuleFile, ensure_keys
-from .recipe import Ingredient, Recipe
+from .link import (
+    CONFIG,
+    DataFile,
+    PortableFile,
+    ModuleFile,
+    ModuleFile,
+    ensure_keys,
+)
+from .recipe import (
+    Ingredient,
+    Recipe,
+)
 from . import producer
-from .producer import Producer, ProducerEncoder, PRODUCERS, PRODUCER_NAMES, PRODUCER_MAP, PRODUCER_ALIASES, MODULE_PRODUCER
+from .producer import (
+    Producer,
+    ProducerEncoder,
+    PRODUCERS,
+    PRODUCER_NAMES,
+    PRODUCER_MAP,
+    PRODUCER_ALIASES,
+    MODULE_PRODUCER,
+)
 from .module import _ModuleProducer
-from .node import Purity, Node
-from .nodetree import NodeInstance, SummaryNode, NodeTree
+from .node import (
+    Purity,
+    Node,
+)
+from .nodetree import (
+    NodeInstance,
+    SummaryNode,
+    NodeTree,
+)
 from . import marshal
 
 import json

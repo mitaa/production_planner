@@ -3,7 +3,10 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from .recipe import Recipe, Ingredient
+from .recipe import (
+    Recipe,
+    Ingredient,
+)
 from .producer import EMPTY_PRODUCER
 
 import math

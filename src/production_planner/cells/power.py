@@ -3,7 +3,10 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from ._cells import Cell, CellValue
+from ._cells import (
+    Cell,
+    CellValue,
+)
 from ..core import get_path
 
 import math

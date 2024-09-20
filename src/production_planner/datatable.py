@@ -3,18 +3,45 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from . import core
-from .core import PRODUCERS, MODULE_PRODUCER
-from .core import DataFile, ModuleFile, Node, SummaryNode, NodeInstance, NodeTree
-from .cells import Cell, SetCellValue
-from .cells import ProducerCell, RecipeCell, CountCell, MkCell, PurityCell, ClockRateCell, PowerCell, IngredientCell
-from .screens import SelectDataFile, SaveDataFile
+from .core import (
+    PRODUCERS,
+    MODULE_PRODUCER
+)
+from .core import (
+    DataFile,
+    ModuleFile,
+    Node,
+    SummaryNode,
+    NodeInstance,
+    NodeTree
+)
+from .cells import (
+    Cell,
+    SetCellValue
+)
+from .cells import (
+    ProducerCell,
+    RecipeCell,
+    CountCell,
+    MkCell,
+    PurityCell,
+    ClockRateCell,
+    PowerCell,
+    IngredientCell
+)
+from .screens import (
+    SelectDataFile,
+    SaveDataFile
+)
 
 import os
 from dataclasses import dataclass
 from pathlib import Path
 from copy import copy
-from typing import Optional, Tuple
+from typing import (
+    Optional,
+    Tuple
+)
 
 from textual.widgets import DataTable
 from textual.coordinate import Coordinate
@@ -22,8 +49,6 @@ from textual import events
 
 from rich.style import Style
 from rich.color import Color
-
-import yaml
 
 
 @dataclass

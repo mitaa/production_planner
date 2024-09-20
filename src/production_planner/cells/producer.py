@@ -4,9 +4,17 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from ._cells import EditableCell
-from ._selector import Sidebar, FilteredListSelector
+from ._selector import (
+    Sidebar,
+    FilteredListSelector,
+)
 from .. import core
-from ..core import SummaryNode, NodeInstance, Node, Recipe
+from ..core import (
+    SummaryNode,
+    NodeInstance,
+    Node,
+    Recipe,
+)
 
 from textual.widgets import DataTable
 

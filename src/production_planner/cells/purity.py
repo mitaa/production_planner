@@ -3,13 +3,19 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from ._cells import NumericEditaleCell, Bounds, SetCellValue
+from ._cells import (
+    NumericEditaleCell,
+    Bounds,
+    SetCellValue,
+)
 from ..core import Purity
 
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.containers import Container
-from textual.widgets import DataTable, Footer
+from textual.widgets import (
+    DataTable,
+)
 from textual.coordinate import Coordinate
 
 
@@ -31,7 +37,6 @@ class PurityCell(NumericEditaleCell):
 
             def compose(self) -> ComposeResult:
                 yield Container(DataTable())
-                # yield Footer()
 
             def on_mount(self) -> None:
                 def bool_to_mark(a, mark="x"):

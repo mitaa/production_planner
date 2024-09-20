@@ -3,8 +3,11 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from ..core import get_path, set_path, SummaryNode
-
+from ..core import (
+    get_path,
+    set_path,
+    SummaryNode,
+)
 from dataclasses import dataclass
 
 from rich.text import Text

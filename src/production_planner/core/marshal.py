@@ -4,11 +4,21 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from .link import ModuleFile
-from .recipe import Ingredient, Recipe
+from .recipe import (
+    Ingredient,
+    Recipe,
+)
 from .producer import PRODUCER_MAP
 from .module import MODULE_PRODUCER
-from .node import Purity, Node
-from .nodetree import SummaryNode, NodeInstance, NodeTree
+from .node import (
+    Purity,
+    Node,
+)
+from .nodetree import (
+    SummaryNode,
+    NodeInstance,
+    NodeTree,
+)
 
 import yaml
 

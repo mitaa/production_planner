@@ -8,7 +8,10 @@ from textual.app import RenderResult
 from textual.events import Mount
 from textual import widgets
 from textual.widget import Widget
-from textual.widgets._header import HeaderClockSpace, HeaderIcon, HeaderTitle
+from textual.widgets._header import (
+    HeaderIcon,
+    HeaderTitle
+)
 
 from rich.text import Text
 

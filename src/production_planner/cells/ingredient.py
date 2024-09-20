@@ -4,7 +4,11 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from .. import core
-from ._cells import NumericEditaleCell, Bounds, CellValue
+from ._cells import (
+    NumericEditaleCell,
+    Bounds,
+    CellValue,
+)
 from ..core import smartround
 from ..core import SummaryNode
 from ..core import Ingredient

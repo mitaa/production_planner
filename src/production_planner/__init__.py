@@ -33,7 +33,11 @@ from typing import Iterable
 
 from docopt import docopt
 
-from textual.app import App, SystemCommand, ComposeResult
+from textual.app import (
+    App,
+    SystemCommand,
+    ComposeResult
+)
 from textual.screen import Screen
 from textual.widgets import Footer
 from textual.reactive import reactive

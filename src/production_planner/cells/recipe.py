@@ -3,12 +3,29 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from ._cells import EditableCell, SetCellValue, CellValue
-from ._selector import StringifyFilter, FilteredListSelector, Sidebar
+from ._cells import (
+    EditableCell,
+    SetCellValue,
+    CellValue,
+)
+from ._selector import (
+    StringifyFilter,
+    FilteredListSelector,
+    Sidebar,
+)
 from .producer import ProducerCell
 from .. import core
 from .. core import ModuleFile
-from ..core import CONFIG, PRODUCER_NAMES, PRODUCER_MAP, Recipe, Ingredient, all_recipes_producer, Node, NodeInstance
+from ..core import (
+    CONFIG,
+    PRODUCER_NAMES,
+    PRODUCER_MAP,
+    Recipe,
+    Ingredient,
+    all_recipes_producer,
+    Node,
+    NodeInstance,
+)
 from ..core import MODULE_PRODUCER
 from ..core import smartround
 
@@ -20,7 +37,14 @@ from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.widgets.selection_list import Selection
-from textual.widgets import SelectionList, DataTable, Header, Footer, Select, Input
+from textual.widgets import (
+    SelectionList,
+    DataTable,
+    Header,
+    Footer,
+    Select,
+    Input,
+)
 
 from rich.style import Style
 from rich.text import Text

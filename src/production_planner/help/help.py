@@ -13,8 +13,16 @@ import tempfile
 
 from textual.app import ComposeResult
 from textual.screen import Screen
-from textual.containers import Container, ScrollableContainer
-from textual.widgets import Header, Footer, Static, Input
+from textual.containers import (
+    Container,
+    ScrollableContainer,
+)
+from textual.widgets import (
+    Header,
+    Footer,
+    Static,
+    Input,
+)
 
 from rich.markdown import Markdown
 

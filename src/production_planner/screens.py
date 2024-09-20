@@ -4,7 +4,10 @@
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 from . import core
-from .core import CONFIG, DataFile
+from .core import (
+    CONFIG,
+    DataFile
+)
 
 import os
 from pathlib import Path
@@ -12,10 +15,23 @@ from typing import Iterable
 from functools import partial
 
 from textual import on
-from textual.containers import Container, Horizontal
-from textual.screen import Screen, ModalScreen
+from textual.containers import (
+    Container,
+    Horizontal,
+)
+from textual.screen import (
+    Screen,
+    ModalScreen
+)
 from textual.app import ComposeResult
-from textual.widgets import DirectoryTree, Label, Button, Footer, Input, Pretty
+from textual.widgets import (
+    DirectoryTree,
+    Label,
+    Button,
+    Footer,
+    Input,
+    Pretty,
+)
 from textual.validation import Function
 from textual import events
 

@@ -21,7 +21,10 @@ import json
 from pathlib import Path
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Optional, ClassVar
+from typing import (
+    Optional,
+    ClassVar,
+)
 
 
 @dataclass
