@@ -78,15 +78,15 @@ class PlannerTable(DataTable):
     BINDINGS = [
         ("+", "row_add", "Add"),
         ("-", "row_remove", "Remove"),
-        ("ctrl+up", "move_up", "Shift Up"),
-        ("ctrl+down", "move_down", "Shift Down"),
+        ("ctrl+up", "move_up", "Move Up"),
+        ("ctrl+down", "move_down", "Move Down"),
         ("ctrl+right", "expand", "Expand"),
         ("ctrl+left", "collapse", "Collapse"),
         ("s", "save", "Save"),
         ("l", "load", "Load"),
         ("d", "delete", "Delete"),
-        ("f2", "show_hide", "Show/Hide"),
-        ("f3", "swap_vis_space", "Swap Shown/Hidden"),
+        ("f2", "show_hide", "Hide"),
+        ("f3", "swap_vis_space", "Show Hidden"),
     ]
 
     # 1-Building Name, 2-Recipe Name, 3-QTY, 4-Mk, 5-Purity, 6-Clockrate        //, 7-Energy, 8*-Inputs, 9*-Outputs
