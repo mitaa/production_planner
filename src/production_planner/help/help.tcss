@@ -39,11 +39,12 @@ TextContent {
 
 
 
-PlannerTable#help_plannertable {
+PlannerTable.help_plannertable {
     width: auto;
     height: auto;
     margin: 2 2;
 }
+
 
 
 

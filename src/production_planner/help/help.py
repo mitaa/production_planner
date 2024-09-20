@@ -63,6 +63,19 @@ When the cursor is on the columns `QTY`, `Mk`, `Purity`, or `Clockrate`:
 When the cursor is on the columns `Building`, `Recipe`, or `Purity`:
 
 - you can press `<Enter>` or `left-click` to select a new producer, recipe, or purity
+
+## Clamping
+"""
+
+TABLE_CONTROLS_CLAMPING = r"""
+When you want to produce or consume an exact amount you can `clamp` the value,
+which automatically calculates and anchors the clockrate.
+
+To clamp put the cursor on the ingredient cell you want and type in your desired value.
+
+A clamp is signified with `=` followed by the clamped value. The clockrate is then wrapped in `<` `>`.
+
+To remove the clamp put the cursor on the clamped cell and press `<Del>`.
 """
 
 SUMMARY_UPPER = r"""
@@ -110,12 +123,14 @@ The `expand` and `collapse` hotkeys currently only apply to module rows.
 """
 
 
-summary_table_fpath = Path(__file__).parent / Path(r"__data_folder__/iron_plate.yaml")
-table_controls_fpath = Path(__file__).parent / Path(r"__data_folder__/empty.yaml")
-power_table_fpath = Path(__file__).parent / Path(r"__data_folder__/iron_plate2.yaml")
+summary_table_fpath = Path(__file__).parent / "__data_folder__" / "iron_plate.yaml"
+table_controls_fpath = Path(__file__).parent /"__data_folder__" / "empty.yaml"
+table_controls_clamp_fpath = Path(__file__).parent / "__data_folder__" / "iron_plate_clamped.yaml"
+
+power_table_fpath = Path(__file__).parent / "__data_folder__" / "iron_plate2.yaml"
 modules_table_fpaths = [
-    Path(__file__).parent / Path(r"__data_folder__/wire-cable_factory.yaml"),
-    Path(__file__).parent / Path(r"__data_folder__/m_cable_wire.yaml"),
+    Path(__file__).parent / "__data_folder__" / "wire-cable_factory.yaml",
+    Path(__file__).parent / "__data_folder__" / "m_cable_wire.yaml",
 ]
 
 
@@ -144,7 +159,7 @@ class Section(Container):
     pass
 
 
-def sandboxed_table(id=id, load_paths=[]):
+def sandboxed_table(id=id, load_paths=[], **kwargs):
     if not load_paths:
         return
     elif not isinstance(load_paths, list):
@@ -158,7 +173,7 @@ def sandboxed_table(id=id, load_paths=[]):
         fpaths_sandboxed += [dpath_sandboxed / load_path.name]
         shutil.copy2(load_path, fpaths_sandboxed[-1])
 
-    return PlannerTable(id=id, load_path=fpaths_sandboxed[0])
+    return PlannerTable(id=id, load_path=fpaths_sandboxed[0], **kwargs)
 
 
 class HelpScreen(Screen):
@@ -179,8 +194,8 @@ class HelpScreen(Screen):
         yield Body(
             QuickAccess(
                 LocationLink("Basic Controls", ".location-controls"),
-                LocationLink("Table Controls", ".location-controls"),
                 LocationLink("Summary Rows", ".location-summary"),
+                LocationLink("Table Controls", ".location-controls"),
                 LocationLink("Highlighting", ".location-highlighting"),
                 LocationLink("Power Columnns", ".location-power"),
                 # LocationLink("Modules", ".location-modules"),
@@ -190,26 +205,28 @@ class HelpScreen(Screen):
                 classes="location-controls"
             ),
             Section(
-                TextContent(Markdown(TABLE_CONTROLS_UPPER)),
-                sandboxed_table(id="help_plannertable", load_paths=table_controls_fpath),
-                TextContent(Markdown(TABLE_CONTROLS_LOWER)),
-                classes="location-table-controls"
-            ),
-            Section(
                 TextContent(Markdown(SUMMARY_UPPER)),
-                sandboxed_table(id="help_plannertable", load_paths=summary_table_fpath),
+                sandboxed_table(id="summary", classes="help_plannertable", load_paths=summary_table_fpath),
                 TextContent(Markdown(SUMMARY_LOWER)),
                 classes="location-summary"
             ),
             Section(
+                TextContent(Markdown(TABLE_CONTROLS_UPPER)),
+                sandboxed_table(id="controls", classes="help_plannertable", load_paths=table_controls_fpath),
+                TextContent(Markdown(TABLE_CONTROLS_LOWER)),
+                sandboxed_table(id="clamping", classes="help_plannertable", load_paths=table_controls_clamp_fpath),
+                TextContent(Markdown(TABLE_CONTROLS_CLAMPING)),
+                classes="location-table-controls"
+            ),
+            Section(
                 TextContent(Markdown(HIGHLIGHTING_UPPER)),
-                sandboxed_table(id="help_plannertable", load_paths=summary_table_fpath),
+                sandboxed_table(id="highlighting", classes="help_plannertable", load_paths=summary_table_fpath),
                 TextContent(Markdown(HIGHLIGHTING_LOWER)),
                 classes="location-highlighting"
             ),
             Section(
                 TextContent(Markdown(POWER_UPPER)),
-                sandboxed_table(id="help_plannertable", load_paths=power_table_fpath),
+                sandboxed_table(id="power", classes="help_plannertable", load_paths=power_table_fpath),
                 TextContent(Markdown(POWER_LOWER)),
                 classes="location-power"
             ),
