@@ -178,6 +178,14 @@ class NodeInstance:
         for child in self.node_children:
             child.mark_from_module()
 
+    def count_hidden_items(self) -> int:
+        ret = 0
+        for child in self.node_children:
+            if not child.shown:
+                ret += 1
+            ret += child.count_hidden_items()
+        return ret
+
     def __str__(self) -> str:
         # FIXME
         buf = "├ " if self.node_children else "└"

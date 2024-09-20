@@ -305,6 +305,7 @@ class PlannerTable(DataTable):
     def maybe_dirtied(self):
         if self.header_control:
             self.app.title = self.sink.title
+            self.app.hidden_item_count = self.nodetree.count_hidden_items()
 
     def on_key(self, event: events.Key) -> None:
         if not self.has_focus:

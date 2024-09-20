@@ -24,6 +24,7 @@ from .core import CONFIG
 from .datatable import PlannerTable
 from .io import PlannerManager
 from .help import HelpScreen
+from .header import Header
 
 from pathlib import Path
 import importlib.metadata
@@ -32,7 +33,8 @@ import traceback
 from docopt import docopt
 
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer
+from textual.widgets import Footer
+from textual.reactive import reactive
 
 
 __version__ = importlib.metadata.version("production_planner")
@@ -49,6 +51,8 @@ class Planner(App):
     BINDINGS = [
         ("h", "help", "Help")
     ]
+
+    hidden_item_count = reactive(0)
 
     def __init__(self, testrun=False, *args, **kwargs):
         # Suppresses toasts that differ based on test environment
