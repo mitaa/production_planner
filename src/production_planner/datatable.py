@@ -113,6 +113,8 @@ class PlannerTable(DataTable):
         ("d", "delete", "Delete"),
         ("f2", "show_hide", "Hide"),
         ("f3", "swap_vis_space", "Show Hidden"),
+        ("comma", "decrement", "-1"),
+        ("full_stop", "increment", "+1"),
     ]
 
     # 1-Building Name, 2-Recipe Name, 3-QTY, 4-Mk, 5-Purity, 6-Clockrate        //, 7-Energy, 8*-Inputs, 9*-Outputs
@@ -332,6 +334,32 @@ class PlannerTable(DataTable):
         if self.header_control:
             self.app.title = self.sink.title
             self.app.hidden_item_count = self.nodetree.count_hidden_items()
+
+    def _offset_cell(self, offset: int):
+        self.num_write_mode = False
+        sel_ctxt = SelectionContext(self)
+
+        if len(self.planner_columns) > sel_ctxt.col:
+            col = self.planner_columns[sel_ctxt.col]
+        else:
+            col = None
+
+        instance = sel_ctxt.instance
+        if instance is None:
+            return
+
+        if (col is None) or (not col(instance).access_guard() or col.read_only):
+            return
+
+        col = col(instance)
+        col.edit_offset(offset)
+        self.update(sel_ctxt)
+
+    def action_decrement(self):
+        self._offset_cell(-1)
+
+    def action_increment(self):
+        self._offset_cell(+1)
 
     def on_key(self, event: events.Key) -> None:
         if not self.has_focus:

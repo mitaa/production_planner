@@ -150,6 +150,16 @@ class Cell:
         self.data.node_main.update()
         return write_mode
 
+    def edit_offset(self, offset):
+        if not self.is_numeric_editable:
+            return
+        prev = str(self.get_num()).strip("+- ").split(".")[0]
+        prev = int(prev) + offset
+        if not (self.bounds.lower <= prev <= self.bounds.upper):
+            prev = max(min(prev, self.bounds.upper), self.bounds.lower)
+        self.set_num(prev)
+        self.data.node_main.update()
+
     def edit_delete(self) -> bool:
         if not self.is_numeric_editable:
             return
