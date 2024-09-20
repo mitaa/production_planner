@@ -15,7 +15,7 @@ classifiers = [
         "Operating System :: OS Independent",
     ]
 dependencies = [
-    "textual >= 0.79",
+    "textual[syntax] >= 0.79",
     "rich",
     "platformdirs",
     "pyaml",

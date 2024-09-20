@@ -82,6 +82,9 @@ class Planner(App):
         yield planner_command("Save As", "Save the currently active file with a new filename", self._save_as)
         yield planner_command("Load", "Load a new file in the currently active table", self._load)
         yield planner_command("Delete", "Delete a file from the filesystem", self._delete)
+        # 3, because the command-palette is the second screen
+        if len(self.screen_stack) < 3:
+            yield planner_command("Dataview", "Shows the corresponding yaml source of the open file", self._dataview)
 
     def _save_as(self):
         if not self.focused_table:
@@ -98,6 +101,11 @@ class Planner(App):
         if not self.focused_table:
             return
         self.call_next(self.focused_table.action_delete)
+
+    def _dataview(self):
+        if not self.focused_table or len(self.screen_stack) > 2:
+            return
+        self.call_next(self.focused_table.action_dataview)
 
     def is_table_shown(self, table: PlannerTable) -> bool:
         raise NotImplemented

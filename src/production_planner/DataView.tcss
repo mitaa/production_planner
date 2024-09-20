@@ -1,0 +1,4 @@
+DataView > Horizontal {
+    width: auto;
+    height: auto;
+}

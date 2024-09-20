@@ -34,6 +34,8 @@ from .screens import (
     SaveDataFile
 )
 
+from .dataview import DataView
+
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -163,6 +165,9 @@ class PlannerTable(DataTable):
 
     def on_focus(self):
         self.app.focused_table = self
+
+    def action_dataview(self):
+        self.app.push_screen(DataView(self))
 
     def save_data(self, subpath=None) -> Optional[Tuple[DataFile]]:
         result = self.sink.sink_commit(subpath)
