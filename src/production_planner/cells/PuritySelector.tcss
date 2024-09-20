@@ -1,0 +1,17 @@
+PuritySelector {
+    align: center middle;
+}
+
+PuritySelector > Container {
+    align: center middle;
+    width: auto;
+    height: 6;
+    border: thick $background 80%;
+}
+
+PuritySelector > Container > DataTable {
+    align: center middle;
+    width: auto;
+    height: auto;
+    margin: 0 0;
+}

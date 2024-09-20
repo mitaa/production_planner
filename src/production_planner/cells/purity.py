@@ -7,7 +7,8 @@ from ._cells import NumericEditaleCell, Bounds, SetCellValue
 from ..core import Purity
 
 from textual.app import ComposeResult
-from textual.screen import Screen
+from textual.screen import ModalScreen
+from textual.containers import Container
 from textual.widgets import DataTable, Footer
 from textual.coordinate import Coordinate
 
@@ -21,15 +22,16 @@ class PurityCell(NumericEditaleCell):
 
     @classmethod
     def Selector(cls, dst_table):
-        class PuritySelector(Screen[Purity]):
+        class PuritySelector(ModalScreen[Purity]):
             BINDINGS = [
                 ("escape", "cancel", "Cancel"),
             ]
+            CSS_PATH = "PuritySelector.tcss"
             data = []
 
             def compose(self) -> ComposeResult:
-                yield DataTable()
-                yield Footer()
+                yield Container(DataTable())
+                # yield Footer()
 
             def on_mount(self) -> None:
                 def bool_to_mark(a, mark="x"):
