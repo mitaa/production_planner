@@ -9,8 +9,6 @@ from .producer import EMPTY_PRODUCER
 import math
 from enum import Enum
 
-from textual import log
-
 
 class Purity(Enum):
     NA     = 0
@@ -109,15 +107,26 @@ class Node:
                     else:
                         self.clock_rate = 5 * self.recipe.cycle_rate * abs(self.clamp.count) / (3 * ingredient.count * self.count)
 
+                    if self.clock_rate > 250:
+                        self.clock_rate = 250
+
         ingredient_mult = rate_mult * (self.clock_rate * self.count) / 100
         for inp in self.recipe.inputs:
-            self.ingredients[inp.name] = inp.count * ingredient_mult * -1
+            total = inp.count * ingredient_mult * -1
+            self.ingredients[inp.name] = total
+            if self.clamp and self.clamp.name == inp.name and self.clamp.count != total:
+                self.clamp.count = total
 
         for out in self.recipe.outputs:
             if self.producer.is_miner:
-                self.ingredients[out.name] = (out.count / self.purity.value) * (pow(2, self.mk)) * ingredient_mult
+                total = (out.count / self.purity.value) * (pow(2, self.mk)) * ingredient_mult
+                self.ingredients[out.name] = total
             else:
-                self.ingredients[out.name] = out.count * ingredient_mult
+                total = out.count * ingredient_mult
+                self.ingredients[out.name] = total
+            if self.clamp and self.clamp.name == out.name and abs(self.clamp.count - total) > 0.01:
+                from ..core import smartround
+                self.clamp.count = smartround(total)
 
         if self.producer.is_pow_gen:
             pass  # TODO
