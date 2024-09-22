@@ -5,7 +5,8 @@
 
 from .core import (
     PRODUCERS,
-    MODULE_PRODUCER
+    MODULE_PRODUCER,
+    Node,
 )
 from .core import (
     DataFile,
@@ -323,7 +324,12 @@ class PlannerTable(DataTable):
     def action_row_add(self):
         selected = SelectionContext(self, reselection=Reselection(offset=1))
         current_node = selected.instance if selected else None
-        self.nodetree.add_children([NodeInstance(copy(self.planner_nodes[1]))],
+
+        if current_node and not isinstance(current_node.node_main, SummaryNode):
+            new_node = Node(current_node.node_main.producer, current_node.node_main.recipe, mk=current_node.node_main.mk)
+        else:
+            new_node = copy(self.planner_nodes[1])
+        self.nodetree.add_children([NodeInstance(new_node)],
                                at_idx=current_node)
         self.update(selected)
 
