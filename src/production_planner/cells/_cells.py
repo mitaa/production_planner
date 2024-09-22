@@ -6,6 +6,7 @@
 from ..core import (
     get_path,
     set_path,
+    smartround,
     SummaryNode,
 )
 from dataclasses import dataclass
@@ -13,6 +14,8 @@ from dataclasses import dataclass
 from rich.text import Text
 from rich.style import Style
 from rich.color import Color
+
+from numbers import Number
 
 
 @dataclass
@@ -30,7 +33,7 @@ class SetCellValue:
 @dataclass
 class CellValue:
     value: float = 0
-    text = None
+    text: str = None
     clamped: bool = False
 
 
@@ -78,7 +81,7 @@ class Cell:
     def get_styled(self):
         cell = self.get()
         value = cell.value
-        txt = str(cell.text or cell.value)
+        txt = str(cell.text or (smartround(cell.value) if isinstance(cell.value, Number) else cell.value))
         style = Style()
 
         if self.style_summary:

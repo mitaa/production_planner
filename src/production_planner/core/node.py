@@ -97,7 +97,8 @@ class Node:
         self.ingredients = {}
         rate_mult = 60 / self.recipe.cycle_rate
 
-        if self.clamp:
+        if self.clamp and self.count:
+
             for ingredient in self.recipe.inputs:
                 if ingredient.name == self.clamp.name:
                     # self.clock_rate = ((abs(int(clamped.count)) * 100) / (rate_mult / self.count)) / ingredient.count
@@ -127,9 +128,6 @@ class Node:
             else:
                 total = out.count * ingredient_mult
                 self.ingredients[out.name] = total
-            if self.clamp and self.clamp.name == out.name and abs(self.clamp.count - total) > 0.01:
-                from ..core import smartround
-                self.clamp.count = smartround(total)
 
         if self.producer.is_pow_gen:
             pass  # TODO

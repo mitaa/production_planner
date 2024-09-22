@@ -36,11 +36,15 @@ class IngredientCell(NumericEditaleCell):
 
     def get(self) -> CellValue:
         if self.access_guard():
+            value = smartround(self.data.node_main.ingredients[self.vispath])
+
             if self.data.node_main.clamp and self.data.node_main.clamp.name == self.vispath:
-                return CellValue(self.data.node_main.clamp.count, clamped=True)
+                if abs(value - self.data.node_main.clamp.count) > 0.01:
+                    return CellValue(value, text=f"{value} !", clamped=True)
+                else:
+                    return CellValue(value, clamped=True)
             else:
-                value = self.data.node_main.ingredients[self.vispath]
-                return CellValue(smartround(value))
+                return CellValue(value)
         else:
             return CellValue(self.default_na)
 
