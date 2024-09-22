@@ -22,6 +22,8 @@ class IngredientCell(NumericEditaleCell):
     read_only = False
     style_balance = True
     justify = "right"
+    # FIXME: won't reset when over bounds
+    bounds = Bounds(0, 999_999)
 
     def access_guard(self):
         return self.vispath in self.data.node_main.ingredients
@@ -71,27 +73,3 @@ class IngredientCell(NumericEditaleCell):
 
         self.data.node_main.update()
         return False
-
-    @property
-    def bounds(self):
-        ingredient = None
-
-        for inp in self.data.node_main.recipe.inputs:
-            if inp.name == self.vispath:
-                ingredient = inp
-                self.num_sign_is_pos = False
-                break
-
-        if not ingredient:
-            for inp in self.data.node_main.recipe.outputs:
-                if inp.name == self.vispath:
-                    ingredient = inp
-                    break
-
-        if not ingredient:
-            return Bounds(0, 0)
-
-        rate_mult = 60 / self.data.node_main.recipe.cycle_rate
-        ingredient_mult_max = rate_mult * self.data.node_main.count * 250 / 100
-        max_rate = ingredient.count * ingredient_mult_max
-        return Bounds(0, int(abs(max_rate)))
