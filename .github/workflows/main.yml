@@ -40,3 +40,9 @@ jobs:
     - name: Test with pytest
       run: |
         pytest -n auto --runslow
+    - uses: actions/upload-artifact@v4
+      name: Upload Test Results
+      if: ${{ !cancelled() }}
+      with:
+        name: test_results_${{ matrix.os }}-${{ matrix.version }}
+        path: /home/runner/work/production_planner/production_planner/snapshot_report.html
