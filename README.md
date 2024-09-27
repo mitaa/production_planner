@@ -13,6 +13,27 @@ A simple production planner for Satisfactory.
 Requires Python 3.10 or later.\
 Make sure that python has been added to the *PATH* environment variable (tick the checkbox when installing python).
 
+<details>
+  <summary>Release Version</summary>
+
+
+Download a `*.whl.zip` file from one of the [releases](https://github.com/mitaa/production_planner/releases) and extract it.
+
+Run the `install.bat` file
+
+Or open the terminal (e.g. PowerShell) and run the following command
+
+```
+# (adjust the file name accordingly)
+pip install production_planner-0.3-py3-none-any.whl
+```
+</details>
+
+
+<details>
+  <summary>Development Version</summary>
+
+
 [Download](https://github.com/mitaa/production_planner/archive/refs/heads/master.zip) the repository and extract it.
 
 And run the `install.bat` file
@@ -22,6 +43,7 @@ Or open the terminal (e.g. PowerShell) and run the following command
 ```
 pip install git+https://github.com/mitaa/production_planner.git#egg=production_planner
 ```
+</details>
 
 ## Usage
 Run the `run.bat` file
