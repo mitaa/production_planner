@@ -70,7 +70,7 @@ def main():
                 PackFile(root / "README.md"),
                 PackFile(root / "LICENSE")
             ]
-            pack_files += [PackFile(whl, Path("dependencies") / whl.name) for whl in wheels]
+            # pack_files += [PackFile(whl, Path("dependencies") / whl.name) for whl in wheels]
 
             package(root, whl, pack_files)
             break
