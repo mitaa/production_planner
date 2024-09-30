@@ -322,15 +322,19 @@ class PlannerTable(DataTable):
         self.update(selected)
 
     def action_row_add(self):
-        selected = SelectionContext(self, reselection=Reselection(offset=1))
+        selected = SelectionContext(self)
         current_node = selected.instance if selected else None
 
         if current_node and not isinstance(current_node.node_main, SummaryNode):
             new_node = Node(current_node.node_main.producer, current_node.node_main.recipe, mk=current_node.node_main.mk)
         else:
             new_node = copy(self.planner_nodes[1])
-        self.nodetree.add_children([NodeInstance(new_node)],
-                               at_idx=current_node)
+
+        instance = NodeInstance(new_node)
+        self.nodetree.add_children([instance],
+                                   at_idx=current_node)
+        selected.reselection = Reselection(at_node=True,
+                                           node=instance)
         self.update(selected)
 
     def action_row_remove(self):
