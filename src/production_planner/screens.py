@@ -80,26 +80,26 @@ class DataFileAction(Screen[str]):
         current = self.first_dtree.cursor_node
         return None if current is None else current.data.path
 
-    def on_mount(self) -> None:
+    async def on_mount(self) -> None:
         # All these lines to simply move the cursor to the currently open file/folder
         datafile = core.APP.focused_table.sink.sink.target
         if not datafile:
             datafile = DataFile.get(Path(CONFIG.dpath_data) / "")
 
         self.first_dtree = self.FirstDTree(datafile.root)
-        self.mount(self.first_dtree, before=self.query_one(Footer))
+        await self.mount(self.first_dtree, before=self.query_one(Footer))
 
         if self.SecondDTree:
             # TODO: provide a way to change the root for this loading/saving action
             self.second_dtree = self.SecondDTree(datafile.root)
-            self.mount(self.second_dtree, after=self.first_dtree)
+            await self.mount(self.second_dtree, after=self.first_dtree)
 
         if self.entry:
             self.query_one(Input).value = os.path.splitext(str(datafile.subpath.name))[0]
 
         tree = self.first_dtree
         if self.expand_all:
-            tree.expand_all()
+            await tree.expand_all()
 
         def preselect(start=True):
             if start:
