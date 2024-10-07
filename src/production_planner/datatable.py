@@ -403,10 +403,10 @@ class PlannerTable(DataTable):
                 self.num_write_mode = col.edit_backspace()
             case _ if len(event.key) == 1 and 58 > ord(event.key) > 47:
                 self.num_write_mode = col.edit_push_numeral(event.key, self.num_write_mode)
-            case "-" | "+":
-                self.num_write_mode = col.edit_sign()
-            case ".":
-                self.num_write_mode = col.edit_push_dot()
+            # case "-" | "+":
+            #     self.num_write_mode = col.edit_sign()
+            case "full_stop":
+                self.num_write_mode = col.edit_push_dot(None, None)
             case _:
                 self.num_write_mode = False
                 return
