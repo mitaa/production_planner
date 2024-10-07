@@ -116,8 +116,8 @@ class PlannerTable(DataTable):
         ("d", "delete", "Delete"),
         ("f2", "show_hide", "Hide"),
         ("f3", "swap_vis_space", "Show Hidden"),
-        ("comma", "decrement", "-1"),
-        ("full_stop", "increment", "+1"),
+        ("[", "decrement", "-1"),
+        ("]", "increment", "+1"),
     ]
 
     # 1-Building Name, 2-Recipe Name, 3-QTY, 4-Mk, 5-Purity, 6-Clockrate        //, 7-Energy, 8*-Inputs, 9*-Outputs
