@@ -19,7 +19,8 @@ import pytest
                                   ["backspace"],
                                   ["7"] * 3 + ["backspace"],
                                   ["7"] * 3 + ["backspace", "3"],
-                                  ["7"] * 4 + ["backspace"]))
+                                  ["7"] * 4 + ["backspace"],
+                                  ["2", ".", "3", "2"]))
 def test_num_inputs_QTY(snap_compare, keys):
     nav = ["down"] + ["right"] * 2
     assert snap_compare(Planner(), terminal_size=(150, 30), run_before=press_before(nav + keys))
@@ -63,7 +64,8 @@ def test_num_inputs_PURITY(snap_compare, keys):
                                   ["delete"],
                                   ["backspace"],
                                   ["7"] * 3 + ["backspace"],
-                                  ["7"] * 3 + ["backspace", "backspace", "3"]))
+                                  ["7"] * 3 + ["backspace", "backspace", "3"],
+                                  ["2", ".", "3", "2"]))
 def test_num_inputs_CLOCKRATE(snap_compare, keys):
     nav = ["down"] + ["right"] * 5
     assert snap_compare(Planner(), terminal_size=(150, 30), run_before=press_before(nav + keys))
@@ -77,7 +79,9 @@ def test_num_inputs_CLOCKRATE(snap_compare, keys):
                                   ["delete"],
                                   ["backspace"],
                                   ["7"] * 3 + ["backspace", "delete"],
-                                  ["7"] * 3 + ["backspace"]))
+                                  ["7"] * 3 + ["backspace"],
+                                  ["2", ".", "3", "2"],
+                                  ["2", ".", "3", "2", "backspace"]))
 def test_num_inputs_CLAMP(snap_compare, keys):
     nav = ["down"] + ["right"] * 9
     assert snap_compare(Planner(), terminal_size=(150, 30), run_before=press_before(nav + keys))
