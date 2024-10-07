@@ -12,7 +12,6 @@ from ._cells import (
 class MkCell(NumericEditaleCell):
     name = "Mk"
     vispath = "node_main.mk"
-    bounds = Bounds(1, 3)
 
     def access_guard(self):
         return self.data.node_main.producer.is_miner and super().access_guard()

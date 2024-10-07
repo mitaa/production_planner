@@ -15,16 +15,16 @@ from ..core import smartround
 class ClockRateCell(NumericEditaleCell):
     name = "Clockrate"
     vispath = "node_main.clock_rate"
-    bounds = Bounds(0, 250)
 
     def access_guard(self):
         return not self.data.node_main.producer.is_module and super().access_guard()
 
     def get(self) -> CellValue:
-        value = super().get()
+        value: CellValue = super().get()
 
         if value.value:
-            value.value = smartround(value.value)
+            # FIXME: value ** 3
+            value.value = smartround(value.value.value)
 
         if self.data.node_main.clamp:
             value.text = f"<{value.value}>"

@@ -6,6 +6,7 @@
 from ..core import (
     get_path,
     set_path,
+    Bounds,
     smartround,
     SummaryNode,
 )
@@ -16,12 +17,6 @@ from rich.style import Style
 from rich.color import Color
 
 from numbers import Number
-
-
-@dataclass
-class Bounds:
-    lower: int = 0
-    upper: int = 999
 
 
 @dataclass
@@ -46,7 +41,6 @@ class Cell:
     style_summary = False
     Selector = None
     is_numeric_editable = False
-    bounds = Bounds(0, 999)
     vispath = None
     setpath = None
     indent = False
@@ -111,75 +105,55 @@ class Cell:
     def text_postprocess(self, text: str, style: Style) -> (str, Style):
         return (text, style)
 
-    def set(self, value) -> bool:
-        if not self.access_guard() or value is None:
+    def set_guard(self, fn: callable):
+        if not self.access_guard():
             return False
         if self.read_only:  # FIXME: warn, rather than error
             raise TypeError("Cell is Read-Only !")
 
-        set_path(self.data, self.setpath or self.vispath, value)
-        return True
+        edit_value = get_path(self.data, self.setpath or self.vispath)
+        if edit_value:
+            return fn(edit_value)
+        else:
+            return False
+
+    def set(self, value) -> bool:
+        def set(edit):
+            edit.value = value
+        return self.set_guard(set)
 
     def set_num(self, value):
         return self.set(value)
 
-    def edit_push_numeral(self, num: str, write_mode) -> bool:
+    def edit_num(self, num, fn_getter: callable, write_mode: bool):
+        def edit(edit_value):
+            nonlocal write_mode
+            write_mode = fn_getter(edit_value)(num, write_mode)
+            self.data.node_main.update()
+            return write_mode
+
         if not self.is_numeric_editable:
             return
-        prev = str(self.get_num()).strip("+- ").split(".")[0]
-        ccount_min = len(str(self.bounds.lower))
-        ccount_max = len(str(self.bounds.upper))
 
-        if (ccount_min == ccount_max == 1):
-            prev = num
-            write_mode = False
-        elif not write_mode:
-            prev = num
-            write_mode = True
-        else:
-            prev += num
-            write_mode = True
+        return self.set_guard(edit)
 
-        prev = int(prev)
+    def edit_push_numeral(self, num: str, write_mode) -> bool:
+        return self.edit_num(num, lambda edit: edit.edit_push_numeral, write_mode)
 
-        if not (self.bounds.lower <= prev <= self.bounds.upper):
-            prev = max(min(prev, self.bounds.upper), self.bounds.lower)
-            write_mode = False
+    def edit_sign(self, num: str, write_mode) -> bool:
+        return self.edit_num(num, lambda edit: edit.edit_sign, write_mode)
 
-        if not self.num_sign_is_pos:
-            prev *= -1
-
-        self.set_num(prev)
-        self.data.node_main.update()
-        return write_mode
+    def edit_push_dot(self, num: str, write_mode) -> bool:
+        return self.edit_num(num, lambda edit: edit.edit_push_dot, write_mode)
 
     def edit_offset(self, offset):
-        if not self.is_numeric_editable:
-            return
-        prev = str(self.get_num()).strip("+- ").split(".")[0]
-        prev = int(prev) + offset
-        if not (self.bounds.lower <= prev <= self.bounds.upper):
-            prev = max(min(prev, self.bounds.upper), self.bounds.lower)
-        self.set_num(prev)
-        self.data.node_main.update()
+        return self.edit_num(offset, lambda edit: edit.edit_offset, False)
 
     def edit_delete(self) -> bool:
-        if not self.is_numeric_editable:
-            return
-        self.set_num(self.bounds.lower)
-        self.data.node_main.update()
-        return False
+        return self.edit_num(None, lambda edit: edit.edit_delete, False)
 
     def edit_backspace(self) -> bool:
-        if not self.is_numeric_editable:
-            return
-        prev = str(self.get_num())
-        new = prev[:-1].split(".")[0]
-        if len(new) == 0:
-            new = self.bounds.lower
-        self.set_num(int(new))
-        self.data.node_main.update()
-        return True
+        return self.edit_num(None, lambda edit: edit.edit_backspace, True)
 
     def access_guard(self) -> bool:
         """Checks if the node has information relevant to the cell. (e.g. A constructor has no MK value)"""

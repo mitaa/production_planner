@@ -326,7 +326,7 @@ class PlannerTable(DataTable):
         current_node = selected.instance if selected else None
 
         if current_node and not isinstance(current_node.node_main, SummaryNode):
-            new_node = Node(current_node.node_main.producer, current_node.node_main.recipe, mk=current_node.node_main.mk)
+            new_node = Node(current_node.node_main.producer, current_node.node_main.recipe, mk=current_node.node_main.mk.value)
         else:
             new_node = copy(self.planner_nodes[1])
 
@@ -403,6 +403,10 @@ class PlannerTable(DataTable):
                 self.num_write_mode = col.edit_backspace()
             case _ if len(event.key) == 1 and 58 > ord(event.key) > 47:
                 self.num_write_mode = col.edit_push_numeral(event.key, self.num_write_mode)
+            case "-" | "+":
+                self.num_write_mode = col.edit_sign()
+            case ".":
+                self.num_write_mode = col.edit_push_dot()
             case _:
                 self.num_write_mode = False
                 return

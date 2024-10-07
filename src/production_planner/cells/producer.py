@@ -10,6 +10,7 @@ from ._selector import (
 )
 from .. import core
 from ..core import (
+    set_path,
     SummaryNode,
     NodeInstance,
     Node,
@@ -80,7 +81,8 @@ class ProducerCell(EditableCell):
         return True
 
     def set(self, value):
-        if super().set(value):
+        if self.access_guard():
+            set_path(self.data, self.setpath or self.vispath, value)
             self.data.node_main.producer_reset()
             if not self.data.node_main.is_module and self.data.node_children:
                 self.data.node_children.clear()

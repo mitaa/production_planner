@@ -21,9 +21,8 @@ from textual.coordinate import Coordinate
 
 class PurityCell(NumericEditaleCell):
     name = "Purity"
-    vispath = "node_main.purity.name"
+    vispath = "node_main.purity.value.name"
     setpath = "node_main.purity"
-    bounds = Bounds(1, 3)
     purity_map = list(reversed(Purity.__members__))
 
     @classmethod
@@ -52,7 +51,7 @@ class PurityCell(NumericEditaleCell):
                 table.add_columns("Purity")
                 table.add_rows([[p.name.title()] for p in self.data])
                 try:
-                    row = self.data.index(dst_table.selected_node.purity)
+                    row = self.data.index(dst_table.selected_node.purity.value)
                 except ValueError:
                     row = 0
                 table.cursor_coordinate = Coordinate(row, 0)

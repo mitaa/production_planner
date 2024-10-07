@@ -45,8 +45,7 @@ class Producer:
         self.recipe_map = {}
         for recipe in self.recipes:
             self.recipe_map[recipe.name] = recipe
-            if not self.abstract:
-                recipe.recipe_to_producer_map[recipe] = self
+            recipe.recipe_to_producer_map[recipe] = self
 
     def __str__(self):
         if self.abstract:

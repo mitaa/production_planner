@@ -27,15 +27,15 @@ def node_representer(dumper, data):
     buf = {
         "producer": data.producer.name,
         "recipe": data.recipe.name,
-        "count": data.count,
-        "clock_rate": data.clock_rate,
-        "mk": data.mk,
-        "purity": data.purity.value,
+        "count": data.count.value,
+        "clock_rate": data.clock_rate.value,
+        "mk": data.mk.value,
+        "purity": data.purity.value.value,
     }
     if data.clamp:
         buf.update({
             "clamp": {
-                data.clamp.name: data.clamp.count
+                data.clamp.value.name: data.clamp.value.count
             }
         })
     return dumper.represent_mapping(u"!node", buf)

@@ -58,7 +58,7 @@ class Recipe(yaml.YAMLObject):
         if self in self.recipe_to_producer_map:
             return self.recipe_to_producer_map[self]
         else:
-            return None
+            raise ValueError(f"recipe not found in recipe_to_producer_map: {self}")
 
     def __hash__(self):
         return hash((self.name, self.cycle_rate, tuple(self.inputs), tuple(self.outputs)))

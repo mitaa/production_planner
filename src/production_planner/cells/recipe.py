@@ -25,6 +25,7 @@ from ..core import (
     all_recipes_producer,
     Node,
     NodeInstance,
+    set_path,
 )
 from ..core import MODULE_PRODUCER
 from ..core import smartround
@@ -246,7 +247,9 @@ class RecipeCell(EditableCell):
             return (text, style)
 
     def set(self, value):
-        if super().set(value) and self.data.node_main.is_module:
-            self.data.set_module(ModuleFile(self.data.node_main.recipe.name))
-            curname = os.path.splitext(str(core.APP.focused_table.sink.sink.target.linkpath.name))[0]
-            core.APP.focused_table.nodetree.reload_modules([self.data], module_stack=[curname])
+        if self.access_guard():
+            set_path(self.data, self.setpath or self.vispath, value)
+            if self.data.node_main.is_module:
+                self.data.set_module(ModuleFile(self.data.node_main.recipe.name))
+                curname = os.path.splitext(str(core.APP.focused_table.sink.sink.target.linkpath.name))[0]
+                core.APP.focused_table.nodetree.reload_modules([self.data], module_stack=[curname])

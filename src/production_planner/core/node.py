@@ -3,6 +3,8 @@
 #  License, v. 2.0. If a copy of the MPL was not distributed with this
 #  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from .edit import EditValue, Bounds
+
 from .recipe import (
     Recipe,
     Ingredient,
@@ -27,6 +29,41 @@ class Purity(Enum):
                 return self.name
 
 
+class EditPurityValue(EditValue):
+    purity_map = list(reversed(Purity.__members__))
+
+    def get_num(self):
+        return self.purity_map.index(self.value.name) + 1
+
+    def set_num(self, value):
+        value = int(min(max(1, value), 3))
+        self.value = Purity[self.purity_map[int(value - 1)]]
+
+
+class EditClampValue(EditValue):
+    def get_num(self):
+        return self.value.count
+
+    def set_num(self, value):
+        self.value.count = value
+
+
+# class EditProducerValue(EditValue):
+#     def get_num(self):
+#         return self.value.count
+
+#     def set_num(self, value):
+#         self.value.count = value
+
+
+# class EditRecipeValue(EditValue):
+#     def get_num(self):
+#         return self.value.producer
+
+#     def set_num(self, value):
+#         self.value.count = value
+
+
 class Node:
     yaml_tag = "!Node"
 
@@ -43,11 +80,11 @@ class Node:
         self.module_children = []
         self.producer = producer
         self.recipe = recipe
-        self.clamp = clamp
-        self.count = count
-        self.clock_rate = clock_rate
-        self.mk = mk
-        self.purity = purity if producer.is_miner else Purity.NA
+        self.clamp = EditClampValue(clamp) if clamp else None
+        self.count = EditValue(count, bounds=Bounds(0, 999))
+        self.clock_rate = EditValue(clock_rate, bounds=Bounds(0, 250))
+        self.mk = EditValue(mk, bounds=Bounds(1, 3))
+        self.purity = EditPurityValue(purity if producer.is_miner else Purity.NA, bounds=Bounds(1, 3))
         self.uirow = None
         self.ui_elems = []
         self.energy = 0
@@ -86,9 +123,9 @@ class Node:
             self.recipe = self.recipe_cache.get(self.producer.name, default)
 
         if self.producer.is_miner:
-            self.purity = self.purity_cache.get(self.producer.name, Purity.NORMAL)
+            self.purity = self.purity_cache.get(self.producer.name, EditPurityValue(Purity.NORMAL))
         else:
-            self.purity = Purity.NA
+            self.purity = EditPurityValue(Purity.NA)
         self.energy = 0
         self.update()
 
@@ -97,33 +134,31 @@ class Node:
         self.ingredients = {}
         rate_mult = 60 / self.recipe.cycle_rate
 
-        if self.clamp and self.count:
+        if self.clamp and self.count.value:
 
             for ingredient in self.recipe.inputs:
-                if ingredient.name == self.clamp.name:
-                    # self.clock_rate = ((abs(int(clamped.count)) * 100) / (rate_mult / self.count)) / ingredient.count
-                    self.clock_rate = 5 * self.recipe.cycle_rate * abs(self.clamp.count) / (3 * ingredient.count * self.count)
+                if ingredient.name == self.clamp.value.name:
+                    # self.clock_rate.value = ((abs(int(clamped.count.value)) * 100) / (rate_mult / self.count.value)) / ingredient.count.value
+                    self.clock_rate.value = 5 * self.recipe.cycle_rate * abs(self.clamp.value.count) / (3 * ingredient.count * self.count.value)
                     break
             for ingredient in self.recipe.outputs:
-                if ingredient.name == self.clamp.name:
+                if ingredient.name == self.clamp.value.name:
                     if self.producer.is_miner:
-                        self.clock_rate = 5 * self.recipe.cycle_rate * self.purity.value * abs(self.clamp.count) / (3 * pow(2, self.mk) * ingredient.count * self.count)
+                        self.clock_rate.value = 5 * self.recipe.cycle_rate * self.purity.value.value * abs(self.clamp.value.count) / (3 * pow(2, self.mk.value) * ingredient.count * self.count.value)
                     else:
-                        self.clock_rate = 5 * self.recipe.cycle_rate * abs(self.clamp.count) / (3 * ingredient.count * self.count)
+                        self.clock_rate.value = 5 * self.recipe.cycle_rate * abs(self.clamp.value.count) / (3 * ingredient.count * self.count.value)
 
-                    if self.clock_rate > 250:
-                        self.clock_rate = 250
+            if self.clock_rate.value > 250:
+                self.clock_rate.value = 250
 
-        ingredient_mult = rate_mult * (self.clock_rate * self.count) / 100
+        ingredient_mult = rate_mult * (self.clock_rate.value * self.count.value) / 100
         for inp in self.recipe.inputs:
             total = inp.count * ingredient_mult * -1
             self.ingredients[inp.name] = total
-            if self.clamp and self.clamp.name == inp.name and self.clamp.count != total:
-                self.clamp.count = total
 
         for out in self.recipe.outputs:
             if self.producer.is_miner:
-                total = (out.count / self.purity.value) * (pow(2, self.mk)) * ingredient_mult
+                total = (out.count / self.purity.value.value) * (pow(2, self.mk.value)) * ingredient_mult
                 self.ingredients[out.name] = total
             else:
                 total = out.count * ingredient_mult
@@ -132,9 +167,9 @@ class Node:
         if self.producer.is_pow_gen:
             pass  # TODO
         elif self.is_module:
-            self.energy = self.energy_module * self.count
+            self.energy = self.energy_module * self.count.value
         else:
-            self.energy = self.producer.base_power * math.pow((self.clock_rate / 100), 1.321928) * self.count
+            self.energy = self.producer.base_power * math.pow((self.clock_rate.value / 100), 1.321928) * self.count.value
 
     @property
     def is_module(self):
