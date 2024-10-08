@@ -75,12 +75,14 @@ class _ModuleProducer(Producer):
         if idx_delete is not None:
             del self.recipes[idx_delete]
         self.recipes.insert(idx_insert, tree.node_main.recipe)
+        self.update_recipe_map()
         return tree
 
 
 MODULE_PRODUCER = _ModuleProducer(
     "Module",
     is_abstract=True,
+    is_primary=True,
     is_miner=False,
     is_pow_gen=False,
     max_mk=0,
