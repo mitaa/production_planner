@@ -53,6 +53,7 @@ class IngredientCell(NumericEditaleCell):
                 clamp_count = self.data.node_main.clamp.value.count
                 if abs(abs(value) - abs(clamp_count)) > 0.01:
                     # FIXME: DataTable doesn't seem to handle strikethrough very well (small part of the next row is shifted to this one)
+                    # TODO: use rich.text.Text with strikethrough style to show the clamped value
                     return CellValue(value, text=f"{value} !", clamped=True)
                 else:
                     return CellValue(value, clamped=True)

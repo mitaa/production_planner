@@ -80,7 +80,7 @@ class _ModuleProducer(Producer):
 
 MODULE_PRODUCER = _ModuleProducer(
     "Module",
-    abstract=True,
+    is_abstract=True,
     is_miner=False,
     is_pow_gen=False,
     max_mk=0,

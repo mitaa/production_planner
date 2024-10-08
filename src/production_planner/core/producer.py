@@ -22,8 +22,9 @@ PRODUCER_ALIASES = {
 
 
 class Producer:
-    def __init__(self, name, *, is_miner, is_pow_gen, max_mk, base_power, recipes, description, abstract=False):
-        self.abstract = abstract
+    def __init__(self, name, *, is_miner, is_pow_gen, max_mk, base_power, recipes, description, is_abstract=False, is_primary=True):
+        self.is_abstract = is_abstract
+        self.is_primary = is_primary
         self.name = name
         self.is_miner = is_miner
         self.is_pow_gen = is_pow_gen
@@ -45,10 +46,11 @@ class Producer:
         self.recipe_map = {}
         for recipe in self.recipes:
             self.recipe_map[recipe.name] = recipe
-            recipe.recipe_to_producer_map[recipe] = self
+            if self.is_primary:
+                recipe.recipe_to_producer_map[recipe] = self
 
     def __str__(self):
-        if self.abstract:
+        if self.is_abstract:
             return f"<{self.name}>"
         else:
             return self.name
@@ -101,7 +103,7 @@ class Indexer:
 
 EMPTY_PRODUCER = Producer(
     "",
-    abstract=False,
+    is_abstract=False,
     is_miner=False,
     is_pow_gen=False,
     max_mk=0,
@@ -112,7 +114,7 @@ EMPTY_PRODUCER = Producer(
 
 SUMMARY_PRODUCER = Producer(
     "Summary",
-    abstract=False,
+    is_abstract=False,
     is_miner=False,
     is_pow_gen=False,
     max_mk=0,
@@ -140,7 +142,8 @@ def all_recipes_producer():
 
     prod = Producer(
         "<ALL RECIPES>",
-        abstract=True,
+        is_abstract=True,
+        is_primary=False,
         is_miner=False,
         is_pow_gen=False,
         max_mk=0,
