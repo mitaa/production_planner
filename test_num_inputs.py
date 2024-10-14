@@ -85,3 +85,14 @@ def test_num_inputs_CLOCKRATE(snap_compare, keys):
 def test_num_inputs_CLAMP(snap_compare, keys):
     nav = ["down"] + ["right"] * 9
     assert snap_compare(Planner(), terminal_size=(150, 30), run_before=press_before(nav + keys))
+
+
+# tests that increment hotkey works and that new nodes have independent QTY attributes
+# (i.e. that incrementing one nodes QTY doesn't increment the other nodes QTY)
+@pytest.mark.parametrize("keys", (["+",
+                                   "up",
+                                   "+",
+                                   "right", "right",
+                                   "]", "]"],))
+def test_increment_new_nodes(snap_compare, keys):
+    assert snap_compare(Planner(), terminal_size=(150, 30), run_before=press_before(keys))
