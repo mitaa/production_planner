@@ -3,6 +3,8 @@ auxiliary/
 *.stackdump
 .staging
 .*
+apidocs/
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
