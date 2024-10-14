@@ -12,7 +12,7 @@ from production_planner import Planner
 @nottest
 def test_save_file(snap_compare):
     async def run_before1(pilot):
-        for k in ["+", "s"]:
+        for k in ["+", "t", "s"]:
             await pilot.press(k)
         await pilot.pause(1)
 

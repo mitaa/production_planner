@@ -12,6 +12,6 @@ from production_planner import Planner
 @nottest
 def test_load_file(snap_compare):
     async def run_before(pilot):
-        for k in ["l", "up", "enter"]:
+        for k in ["t", "l", "up", "enter"]:
             await pilot.press(k)
     assert snap_compare(Planner(testrun=True), terminal_size=(150, 30), run_before=run_before)

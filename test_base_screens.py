@@ -19,12 +19,12 @@ def test_startup_screen(snap_compare):
 
 def test_load_screen(snap_compare):
     app = Planner()
-    assert snap_compare(app, terminal_size=(150, 30), press=["l"])
+    assert snap_compare(app, terminal_size=(150, 30), press=["t", "down", "enter"])
 
 
 def test_save_screen(snap_compare):
     app = Planner()
-    assert snap_compare(app, terminal_size=(150, 30), press=["s"])
+    assert snap_compare(app, terminal_size=(150, 30), press=["t", "enter"])
 
 
 def test_producer_screen(snap_compare):
