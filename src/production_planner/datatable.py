@@ -326,9 +326,9 @@ class PlannerTable(DataTable):
         current_node = selected.instance if selected else None
 
         if current_node and not isinstance(current_node.node_main, SummaryNode):
-            new_node = Node(current_node.node_main.producer, current_node.node_main.recipe, mk=current_node.node_main.mk.value)
+            new_node = current_node.node_main.duplicate_partially()
         else:
-            new_node = copy(self.planner_nodes[1])
+            new_node = self.planner_nodes[1].duplicate_partially()
 
         instance = NodeInstance(new_node)
         self.nodetree.add_children([instance],

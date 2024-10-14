@@ -13,6 +13,7 @@ from .producer import EMPTY_PRODUCER
 
 import math
 from enum import Enum
+from typing import Self
 
 
 class Purity(Enum):
@@ -91,6 +92,11 @@ class Node:
         self.energy_module = 0
         self.ingredients = {}
         self.update()
+
+    def duplicate_partially(self) -> Self:
+        return Node(self.producer,
+                    self.recipe,
+                    mk=self.mk.value)
 
     @property
     def recipe(self):
