@@ -41,13 +41,18 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from copy import copy
+from functools import partial
 from typing import (
     Optional,
     Tuple
 )
 
+from textual.containers import Container
 from textual.widgets import DataTable
 from textual.coordinate import Coordinate
+from textual.screen import ModalScreen
+from textual.app import ComposeResult
+from textual.binding import Binding
 from textual import events
 
 from rich.style import Style
@@ -111,13 +116,11 @@ class PlannerTable(DataTable):
         ("ctrl+down", "move_down", "Move Down"),
         ("ctrl+right", "expand", "Expand"),
         ("ctrl+left", "collapse", "Collapse"),
-        ("s", "save", "Save"),
-        ("l", "load", "Load"),
-        ("d", "delete", "Delete"),
         ("f2", "show_hide", "Hide"),
         ("f3", "swap_vis_space", "Show Hidden"),
-        ("[", "decrement", "-1"),
         ("]", "increment", "+1"),
+        ("[", "decrement", "-1"),
+        ("t", "table", "Table.."),
     ]
 
     # 1-Building Name, 2-Recipe Name, 3-QTY, 4-Mk, 5-Purity, 6-Clockrate        //, 7-Energy, 8*-Inputs, 9*-Outputs
@@ -169,6 +172,56 @@ class PlannerTable(DataTable):
 
     def action_dataview(self):
         self.app.push_screen(DataView(self))
+
+    def action_table(self):
+        def run(callback):
+            if callback:
+                callback()
+
+        self.app.push_screen(self.ActionSelector(self, [Binding("s", self.action_save, "Save"),
+                                                        Binding("l", self.action_load, "Load"),
+                                                        Binding("d", self.action_delete, "Delete"),
+                             ]),
+        run)
+
+    @classmethod
+    def ActionSelector(cls, dst_table, options: [(str, callable)]):
+        class ActionSelector(ModalScreen[callable]):
+            BINDINGS = [
+                ("escape", "cancel", "Cancel"),
+            ]
+            CSS_PATH = "ActionSelector.tcss"
+            data = options
+
+            def compose(self) -> ComposeResult:
+                yield Container(DataTable())
+
+            def on_mount(self) -> None:
+                for option in options:
+                    def selected(action):
+                        self.dismiss(action)
+
+                    name = option.action.__name__
+                    setattr(self, name, partial(selected, option.action))
+                    action_name = name.removeprefix("action_")
+                    self._bindings.bind(option.key, action_name, option.description)
+
+                table = self.query_one(DataTable)
+                table.cursor_type = "row"
+                table.add_columns("Action")
+                table.add_rows([[binding.description] for binding in self.data])
+                table.cursor_coordinate = Coordinate(0, 0)
+                self.query_one(Container).styles.height = len(self.data) + 3
+
+            def action_cancel(self):
+                self.dismiss([])
+
+            def on_data_table_row_selected(self):
+                table = self.query_one(DataTable)
+                row = table.cursor_coordinate.row
+                callback = self.data[row].action
+                self.dismiss(callback)
+        return ActionSelector()
 
     def save_data(self, subpath=None) -> Optional[Tuple[DataFile]]:
         result = self.sink.sink_commit(subpath)

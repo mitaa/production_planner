@@ -1,0 +1,17 @@
+ActionSelector {
+    align: center middle;
+}
+
+ActionSelector > Container {
+    align: center middle;
+    width: auto;
+    height: auto;
+    border: thick $background 80%;
+}
+
+ActionSelector > Container > DataTable {
+    align: center middle;
+    width: auto;
+    height: auto;
+    margin: 0 0;
+}
